@@ -27,12 +27,24 @@ fun readExcelFile(file: File) = buildList {
     workBook.close()
 }
 
+fun printPairs(pairs: List<Flashcard>) {
+    val maxOriginalWordLength = pairs.maxOfOrNull { it.originalWord.length }!! + 3
+    val originalWords = pairs.map { it.originalWord }
+    val translations = pairs.map { it.translation }.shuffled()
+    for (n in 1..5) {
+        val originalWord = originalWords[n - 1]
+        val translation = translations[n - 1]
+        val numberOfSpaces = maxOriginalWordLength - originalWord.length
+        val spaces = " ".repeat(numberOfSpaces)
+        println("$n. $originalWord$spaces$n. $translation")
+    }
+}
+
 fun main() {
     val file = File("vocabulary.xlsx")
     val vocabulary = readExcelFile(file)
     val game = Game(vocabulary)
-    game.getFiveWords().forEach {
-        println("O: ${it.originalWord} T: ${it.translation}")
-    }
+    val fiveWords = game.getFiveWords()
+    printPairs(fiveWords)
 
 }
