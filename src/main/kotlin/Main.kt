@@ -30,5 +30,9 @@ fun readExcelFile(file: File) = buildList {
 fun main() {
     val file = File("vocabulary.xlsx")
     val vocabulary = readExcelFile(file)
+    val game = Game(vocabulary)
+    game.getFiveWords().forEach {
+        println("O: ${it.originalWord} T: ${it.translation}")
+    }
 
 }
