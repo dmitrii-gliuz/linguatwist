@@ -1,7 +1,5 @@
 package org.dmitriigliuz.learnnewwords
 
-fun String.strikethrough() = "\u001B[9m$this\u001B[0m"
-
 fun input(message: String): String {
     print("$message ")
     return readln()
@@ -13,10 +11,10 @@ fun inputPairIndexes(): List<Int> {
     return indexes.map { it.toInt() - 1 }
 }
 
-fun enterIndexesAndPrintResult(twoColumns: TwoColumns) {
+fun enterIndexesAndPrintResult(round: Round) {
     val indexes = inputPairIndexes()
-    val result = twoColumns.choosePair(indexes)
-    val (firstWord, secondWord) = twoColumns.getTwoWordsByIndexes(indexes)
+    val result = round.choosePair(indexes)
+    val (firstWord, secondWord) = round.getTwoWordsByIndexes(indexes)
     println("Your choice:\n" +
             "${indexes[0] + 1}. $firstWord\n" +
             "${indexes[1] + 1}. $secondWord\n")
@@ -25,11 +23,24 @@ fun enterIndexesAndPrintResult(twoColumns: TwoColumns) {
 }
 
 fun main() {
-    val game = Game("vocabulary.xlsx")
-    game.setNewFivePairs()
-    val twoColumns = game.getTwoColumns()
-    while (true){
-        println(twoColumns)
-        enterIndexesAndPrintResult(twoColumns)
+    val vocabularyPath = "vocabulary.xlsx"
+    println("Let's learn new words!\n" +
+            "Loading vocabulary file: $vocabularyPath")
+    val vocabulary = VocabularyLoader(vocabularyPath).load()
+    val game = Game(vocabulary)
+    println("${game.vocabularySize} words loaded.\n")
+    val numberOfRounds = input("How many rounds do you want to play?").toInt()
+    game.start(numberOfRounds)
+
+    for (round in 1..roundsNumber) {
+        println("Round $round!")
+        game.setNewPairsGroup()
+        val twoColumns = game.getTwoColumns()
+        while (!twoColumns.solved()){
+            println(twoColumns)
+            enterIndexesAndPrintResult(twoColumns)
+        }
+        println("Solved")
     }
+
 }

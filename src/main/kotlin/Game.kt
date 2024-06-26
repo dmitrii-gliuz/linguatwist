@@ -1,6 +1,5 @@
 package org.dmitriigliuz.learnnewwords
 
-
 data class WordPair(val originalWord: String, val translation: String) {
     var guessed = false
 
@@ -11,8 +10,13 @@ data class WordPair(val originalWord: String, val translation: String) {
     fun getTranslationStrikethroughOrNot() = getStrikethroughOrNot(translation)
 }
 
-class TwoColumns(private val pairs: List<WordPair>) {
-    private val shuffledIndexes = (0..4).shuffled()
+class Round(private val pairs: List<WordPair>) {
+    private val size = pairs.size
+    private val shuffledIndexes = (0 until size).shuffled()
+    private var guessedPairs = 0
+    var mistakes = 0
+
+    fun solved() = guessedPairs == size
 
     fun getTwoWordsByIndexes(indexes: List<Int>) = listOf(
         pairs[indexes[0]].originalWord,
@@ -20,18 +24,24 @@ class TwoColumns(private val pairs: List<WordPair>) {
         )
 
     fun choosePair(indexes: List<Int>): Boolean {
+        val pair = pairs[indexes[0]]
+        if (pair.guessed) throw IllegalArgumentException("This pair is already guessed")
         return if (checkIndexes(indexes)) {
-            val pairIndex = indexes[0]
-            pairs[pairIndex].guessed = true
+            pair.guessed = true
+            guessedPairs++
             true
-        } else false
+        } else {
+            mistakes++
+            false
+        }
+
     }
 
     private fun checkIndexes(indexes: List<Int>) = indexes[0] == shuffledIndexes[indexes[1]]
 
     override fun toString() = buildString {
         val maxLength = pairs.maxOf { it.originalWord.length } + 3
-        for (n in 1..5) {
+        for (n in 1..size) {
             val index = n - 1
             val firstWord = pairs[index].originalWord
             val firstWordOutput = pairs[index].getOriginalWordStrikethroughOrNot()
@@ -44,15 +54,26 @@ class TwoColumns(private val pairs: List<WordPair>) {
     }
 }
 
-class Game(vocabularyPath: String) {
-    private val vocabulary = readExcelFile(vocabularyPath)
+class Game(private val vocabulary: List<WordPair>) {
+    val vocabularySize = vocabulary.size
     private val unusedWords = vocabulary.shuffled().toMutableList()
     private val currentPairs: MutableList<WordPair> = mutableListOf()
+    private var groupSize = 4
+    private val rounds = mutableListOf<Round>()
+
+    fun start(numberOfRounds: Int) {
+        rounds.clear()
+        setNewPairsGroup()
+    }
+
+    fun isFinished(): Boolean {
+        return true
+    }
 
     private fun getShuffledVocabulary() = vocabulary.shuffled().toMutableList()
 
-    private fun getFiveWords() = buildList {
-        repeat (5) {
+    private fun getWordsGroup() = buildList {
+        repeat (groupSize) {
             if (unusedWords.isNotEmpty()) {
                 add(unusedWords.removeLast())
             } else {
@@ -61,9 +82,10 @@ class Game(vocabularyPath: String) {
         }
     }
 
-    fun setNewFivePairs() {
-        currentPairs.addAll(getFiveWords())
+    fun setNewPairsGroup() {
+        currentPairs.clear()
+        currentPairs.addAll(getWordsGroup())
     }
 
-    fun getTwoColumns() = TwoColumns(currentPairs)
+    fun getTwoColumns() = Round(currentPairs)
 }
