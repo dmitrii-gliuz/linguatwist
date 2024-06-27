@@ -1,39 +1,31 @@
 package org.dmitriigliuz.learnnewwords
 
-data class WordPair(val originalWord: String, val translation: String) {
-    var guessed = false
-
-    private fun getStrikethroughOrNot(text: String) = if (guessed) text.strikethrough() else text
-
-    fun getOriginalWordStrikethroughOrNot() = getStrikethroughOrNot(originalWord)
-
-    fun getTranslationStrikethroughOrNot() = getStrikethroughOrNot(translation)
-}
+const val numberOfWordsInRound = 5
 
 class Round(private val pairs: List<WordPair>) {
     private val size = pairs.size
     private val shuffledIndexes = (0 until size).shuffled()
     private var guessedPairs = 0
-    var mistakes = 0
+    private var mistakes = 0
 
-    fun solved() = guessedPairs == size
+    fun isFinished() = guessedPairs == size
 
-    fun getTwoWordsByIndexes(indexes: List<Int>) = listOf(
+    private fun getTwoWordsByIndexes(indexes: List<Int>) = listOf(
         pairs[indexes[0]].originalWord,
         pairs[shuffledIndexes[indexes[1]]].translation
         )
 
-    fun choosePair(indexes: List<Int>): Boolean {
+    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
         val pair = pairs[indexes[0]]
         if (pair.guessed) throw IllegalArgumentException("This pair is already guessed")
-        return if (checkIndexes(indexes)) {
+        return Pair(if (checkIndexes(indexes)) {
             pair.guessed = true
             guessedPairs++
             true
         } else {
             mistakes++
             false
-        }
+        }, getTwoWordsByIndexes(indexes))
 
     }
 
@@ -54,26 +46,30 @@ class Round(private val pairs: List<WordPair>) {
     }
 }
 
-class Game(private val vocabulary: List<WordPair>) {
+class Game(private val vocabulary: List<WordPair>, val roundsNumber: Int = 20) {
     val vocabularySize = vocabulary.size
     private val unusedWords = vocabulary.shuffled().toMutableList()
-    private val currentPairs: MutableList<WordPair> = mutableListOf()
-    private var groupSize = 4
-    private val rounds = mutableListOf<Round>()
+    private val rounds = List(roundsNumber) { createRound() }
+    var currentRoundNumber = 1
 
-    fun start(numberOfRounds: Int) {
-        rounds.clear()
-        setNewPairsGroup()
+
+    fun currentRound() = rounds[currentRoundNumber - 1]
+
+    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
+        val round = currentRound()
+        val result = round.choosePair(indexes)
+        if (round.isFinished() && currentRoundNumber < roundsNumber) {
+            currentRoundNumber++
+        }
+        return result
     }
 
-    fun isFinished(): Boolean {
-        return true
-    }
+    fun isFinished() = currentRoundNumber == roundsNumber && currentRound().isFinished()
 
     private fun getShuffledVocabulary() = vocabulary.shuffled().toMutableList()
 
-    private fun getWordsGroup() = buildList {
-        repeat (groupSize) {
+    private fun takeWordsGroup() = buildList {
+        repeat (numberOfWordsInRound) {
             if (unusedWords.isNotEmpty()) {
                 add(unusedWords.removeLast())
             } else {
@@ -82,10 +78,5 @@ class Game(private val vocabulary: List<WordPair>) {
         }
     }
 
-    fun setNewPairsGroup() {
-        currentPairs.clear()
-        currentPairs.addAll(getWordsGroup())
-    }
-
-    fun getTwoColumns() = Round(currentPairs)
+    private fun createRound() = Round(takeWordsGroup())
 }

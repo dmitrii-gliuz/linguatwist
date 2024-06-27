@@ -11,10 +11,10 @@ fun inputPairIndexes(): List<Int> {
     return indexes.map { it.toInt() - 1 }
 }
 
-fun enterIndexesAndPrintResult(round: Round) {
+private fun Game.enterIndexesAndPrintResult() {
     val indexes = inputPairIndexes()
-    val result = round.choosePair(indexes)
-    val (firstWord, secondWord) = round.getTwoWordsByIndexes(indexes)
+    val (result, words) = choosePair(indexes)
+    val (firstWord, secondWord) = words
     println("Your choice:\n" +
             "${indexes[0] + 1}. $firstWord\n" +
             "${indexes[1] + 1}. $secondWord\n")
@@ -22,25 +22,23 @@ fun enterIndexesAndPrintResult(round: Round) {
     println("$printingResult!\n")
 }
 
-fun main() {
-    val vocabularyPath = "vocabulary.xlsx"
+fun main(args: Array<String>) {
+    val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
+
     println("Let's learn new words!\n" +
             "Loading vocabulary file: $vocabularyPath")
-    val vocabulary = VocabularyLoader(vocabularyPath).load()
+
+    val vocabulary = SpreadsheetReader(vocabularyPath).load()
     val game = Game(vocabulary)
     println("${game.vocabularySize} words loaded.\n")
-    val numberOfRounds = input("How many rounds do you want to play?").toInt()
-    game.start(numberOfRounds)
-
-    for (round in 1..roundsNumber) {
-        println("Round $round!")
-        game.setNewPairsGroup()
-        val twoColumns = game.getTwoColumns()
-        while (!twoColumns.solved()){
-            println(twoColumns)
-            enterIndexesAndPrintResult(twoColumns)
-        }
-        println("Solved")
+    val horizontalLine = "=".repeat(35)
+    while (!game.isFinished()) {
+        println("Round ${game.currentRoundNumber}\n" +
+                horizontalLine +
+                "\n${game.currentRound()}\n" +
+                horizontalLine
+        )
+        game.enterIndexesAndPrintResult()
     }
 
 }

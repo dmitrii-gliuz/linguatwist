@@ -4,7 +4,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 
 
-class VocabularyLoader(private val path: String) {
+class SpreadsheetReader(private val path: String) {
     fun load(): List<WordPair> {
         val file = File(path)
         val workBook = XSSFWorkbook(file)
