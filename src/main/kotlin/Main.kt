@@ -34,10 +34,12 @@ fun main(args: Array<String>) {
     val game = Game(vocabulary)
     val horizontalLine = "=".repeat(35)
     while (!game.isFinished()) {
-        println("Round ${game.currentRoundNumber}\n" +
+        println("Round ${game.currentRoundNumber}" +
+                (if (game.mistakesInRound() > 0) " (Mistakes: ${game.mistakesInRound()})" else "") + "\n" +
                 horizontalLine +
                 "\n${game.currentRound()}\n" +
-                horizontalLine
+                horizontalLine +
+                "\nScore: 0\tMistakes: ${game.mistakes}\n"
         )
         game.enterIndexesAndPrintResult()
     }

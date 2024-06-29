@@ -6,7 +6,8 @@ class Round(private val pairs: List<WordPair>) {
     private val size = pairs.size
     private val shuffledIndexes = (0 until size).shuffled()
     private var guessedPairs = 0
-    private var mistakes = 0
+    var mistakes = 0
+
 
     fun isFinished() = guessedPairs == size
 
@@ -49,13 +50,16 @@ class Round(private val pairs: List<WordPair>) {
 class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2) {
     private val rounds = List(roundsNumber) { createRound() }
     var currentRoundNumber = 1
+    var mistakes = 0
 
+    fun mistakesInRound() = currentRound().mistakes
 
     fun currentRound() = rounds[currentRoundNumber - 1]
 
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
         val round = currentRound()
         val result = round.choosePair(indexes)
+        if (!result.first) mistakes++
         if (round.isFinished() && currentRoundNumber < roundsNumber) {
             currentRoundNumber++
         }
