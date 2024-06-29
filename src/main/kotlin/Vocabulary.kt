@@ -10,6 +10,21 @@ data class WordPair(val originalWord: String, val translation: String) {
     fun getTranslationStrikethroughOrNot() = getStrikethroughOrNot(translation)
 }
 
-//class Vocabulary {
-//
-//}
+class Vocabulary(private val wordPairs: List<WordPair>) {
+    val size = wordPairs.size
+    private val unusedPairs = getShuffledPairs().toMutableList()
+
+    private fun getShuffledPairs() = wordPairs.shuffled()
+
+
+    fun takeGroupOfPairs(numberOfPairs: Int): List<WordPair> {
+        if (unusedPairs.size < numberOfPairs) {
+            unusedPairs.clear()
+            unusedPairs.addAll(getShuffledPairs())
+        }
+        val group = unusedPairs.take(numberOfPairs)
+        unusedPairs.removeAll(group)
+        return group
+    }
+
+}

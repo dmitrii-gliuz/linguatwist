@@ -27,10 +27,11 @@ fun main(args: Array<String>) {
 
     println("Let's learn new words!\n" +
             "Loading vocabulary file: $vocabularyPath")
+    val spreadsheet = Spreadsheet(vocabularyPath)
+    val vocabulary = spreadsheet.loadVocabulary()
+    println("${vocabulary.size} words loaded.\n")
 
-    val vocabulary = SpreadsheetReader(vocabularyPath).load()
     val game = Game(vocabulary)
-    println("${game.vocabularySize} words loaded.\n")
     val horizontalLine = "=".repeat(35)
     while (!game.isFinished()) {
         println("Round ${game.currentRoundNumber}\n" +
@@ -40,5 +41,6 @@ fun main(args: Array<String>) {
         )
         game.enterIndexesAndPrintResult()
     }
-
+    println("Congratulations! You have finished the game!")
+    spreadsheet.close()
 }

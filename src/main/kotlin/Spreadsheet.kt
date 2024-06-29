@@ -4,11 +4,16 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 
 
-class SpreadsheetReader(private val path: String) {
-    fun load(): List<WordPair> {
-        val file = File(path)
-        val workBook = XSSFWorkbook(file)
-        val sheet = workBook.getSheetAt(0)
+class Spreadsheet(path: String) {
+    private val file = File(path)
+    private val workBook = XSSFWorkbook(file)
+    private val sheet = workBook.getSheetAt(0)
+
+    fun close() {
+        workBook.close()
+    }
+
+    fun loadVocabulary(): Vocabulary {
         val wordPairs = mutableListOf<WordPair>()
         for (row in sheet) {
             if (row.rowNum == 0) continue
@@ -22,7 +27,6 @@ class SpreadsheetReader(private val path: String) {
                 continue
             }
         }
-        workBook.close()
-        return wordPairs
+        return Vocabulary(wordPairs)
     }
 }
