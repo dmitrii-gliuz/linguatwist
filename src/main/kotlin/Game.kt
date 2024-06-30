@@ -59,7 +59,7 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
     }
 }
 
-class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2) {
+class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 20) {
     private val rounds = List(roundsNumber) { createRound(it + 1) }
     var currentRoundNumber = 1
     var mistakes = 0
@@ -67,6 +67,12 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2
     var isFailed = false
     private var answersAmount = 0
     private var rightAnswersAmount = 0
+
+    fun completionPercentage(): Int {
+        val totalWords = roundsNumber * numberOfWordsInRound
+        val guessedWords = rounds.sumBy { it.guessedPairs }
+        return guessedWords * 100 / totalWords
+    }
 
     private fun rightAnswersPercentage() = rightAnswersAmount * 100 / answersAmount
 

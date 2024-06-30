@@ -2,11 +2,14 @@ package org.dmitriigliuz.learnnewwords
 
 import kotlin.system.exitProcess
 
+
+const val bye = "👋 Bye!"
+
 fun input(message: String): String {
     print("👉 $message ")
-    val userInput = readLine() ?: ""
+    val userInput = readln().trim()
     if (userInput == "exit") {
-        println("👋 Bye!")
+        println(bye)
         exitProcess(0)
     }
     return userInput
@@ -16,6 +19,20 @@ fun inputPairIndexes(): List<Int> {
     val userInput = input("Enter indexes for matching words:")
     val indexes = userInput.split("""\s+""".toRegex())
     return indexes.map { it.toInt() - 1 }
+}
+
+fun printProgressBar(percents: Int) {
+    val progressBarLength = 20
+    val progressBar = buildString {
+        val progress = percents * progressBarLength / 100
+        append("🟩".repeat(progress))
+        append("⬜".repeat(progressBarLength - progress))
+        append(" ")
+        append(percents)
+        append("%")
+        newLine()
+    }
+    println(progressBar)
 }
 
 private fun Game.enterIndexesAndPrintResult() {
@@ -59,19 +76,25 @@ fun outputRound(round: Round) = buildString {
     append(horizontalLine)
 }
 
+fun printRoundScore(game: Game) {
+    print(outputRound(game.currentRound()))
+    println("🌟Score: ${game.score}\t❌Mistakes: ${game.mistakes}\n")
+    printProgressBar(game.completionPercentage())
+}
+
 fun gameProcess(game: Game) {
     while (!game.isFinished()) {
-        print(outputRound(game.currentRound()))
-        println("🌟Score: ${game.score}\t❌Mistakes: ${game.mistakes}\n")
+        printRoundScore(game)
         game.enterIndexesAndPrintResult()
     }
+    printRoundScore(game)
     println(if (game.isFailed) {
         "😢 Sorry, you have made three mistakes and failed the game!"
     } else {
         "🎉 Congratulations! You have finished the game!"
     })
     val (percent, score) = game.getPercentageAndVerbalScore()
-    println("🎯 Your result: $percent%\n🏆 $score\n")
+    println("🎯 Your result: $percent%\n$score\n")
 }
 
 
@@ -86,15 +109,26 @@ fun main(args: Array<String>) {
     val spreadsheet = Spreadsheet(vocabularyPath)
     val vocabulary = spreadsheet.loadVocabulary()
     println("✅ ${vocabulary.size} words loaded.\n")
+    val roundsNumber: Int
+    if (vocabulary.size < 5) {
+        println("⚠️ Error: Not enough words to play the game. Add more words to the vocabulary file.")
+        exitProcess(1)
+    } else if (vocabulary.size < 100) {
+        println("⚠️ Warning: The vocabulary is small. Consider adding more words to the vocabulary file.")
+        val optimalRoundsNumber = vocabulary.size / 5
+        roundsNumber = input("Enter the number of rounds (default: $optimalRoundsNumber):").toIntOrNull() ?: optimalRoundsNumber
+    } else {
+        roundsNumber = input("Enter the number of rounds (default: 20):").toIntOrNull() ?: 20
+    }
     var play = true
     while (play) {
-        val game = Game(vocabulary)
+        val game = Game(vocabulary, roundsNumber = roundsNumber)
         gameProcess(game)
         val playAgain = input("Do you want to play again? (Y/n)").lowercase()
         play = playAgain == "y" || playAgain == "yes" || playAgain.isEmpty()
         println(
             "\n" + if (play) "🔄 Ok, let's play again!\n"
-            else "🎮 Thank you for playing! 👋 Bye!"
+            else "🎮 Thank you for playing!\n$bye"
         )
 
     }
