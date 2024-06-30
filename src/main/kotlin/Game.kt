@@ -2,32 +2,39 @@ package org.dmitriigliuz.learnnewwords
 
 const val numberOfWordsInRound = 5
 
-class Round(private val pairs: List<WordPair>) {
+class Round(private val pairs: List<WordPair>, val number: Int) {
     private val size = pairs.size
     private val shuffledIndexes = (0 until size).shuffled()
-    private var guessedPairs = 0
+    var guessedPairs = 0
     var mistakes = 0
     private val turns = mutableListOf<List<Int>>()
 
 
     fun isFinished() = guessedPairs == size
 
+    private fun getPairInFirstColumn(indexes: List<Int>) = pairs[indexes[0]]
+
+    private fun getPairInSecondColumn(indexes: List<Int>) = pairs[shuffledIndexes[indexes[1]]]
+
     private fun getTwoWordsByIndexes(indexes: List<Int>) = listOf(
-        pairs[indexes[0]].originalWord,
-        pairs[shuffledIndexes[indexes[1]]].translation
+        getPairInFirstColumn(indexes).originalWord,
+        getPairInSecondColumn(indexes).translation
         )
 
-    private fun checkIndexes(indexes: List<Int>): Boolean {
-
-        return indexes[0] == shuffledIndexes[indexes[1]]
-    }
+    private fun checkIndexes(indexes: List<Int>): Boolean = indexes[0] == shuffledIndexes[indexes[1]]
 
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
-        val pair = pairs[indexes[0]]
-        if (turns.contains(indexes)) throw IllegalArgumentException("This pair of indexes has already been used")
+        val pairInFirstColumn = pairs[indexes[0]]
+        val pairInSecondColumn = getPairInSecondColumn(indexes)
+        if (pairInFirstColumn.guessed || pairInSecondColumn.guessed) {
+            throw IllegalArgumentException("This pair has already been guessed")
+        }
+        if (turns.contains(indexes)) {
+            throw IllegalArgumentException("This pair of indexes has already been used")
+        }
         turns.add(indexes)
         return Pair(if (checkIndexes(indexes)) {
-            pair.guessed = true
+            pairInFirstColumn.guessed = true
             guessedPairs++
             true
         } else {
@@ -53,28 +60,63 @@ class Round(private val pairs: List<WordPair>) {
 }
 
 class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2) {
-    private val rounds = List(roundsNumber) { createRound() }
+    private val rounds = List(roundsNumber) { createRound(it + 1) }
     var currentRoundNumber = 1
     var mistakes = 0
-//    var score = 0
+    var score = 0
     var isFailed = false
+    private var answersAmount = 0
+    private var rightAnswersAmount = 0
 
-    fun mistakesInRound() = currentRound().mistakes
+    private fun rightAnswersPercentage() = rightAnswersAmount * 100 / answersAmount
+
+    private fun getVerbalScore(percentage: Int) = when {
+        percentage == 100 -> "🎉 Perfect 🎉"
+        percentage >= 95 -> "👏 Almost Perfect 👏"
+        percentage >= 90 -> "✨ Excellent ✨"
+        percentage >= 85 -> "👍 Very Good 👍"
+        percentage >= 80 -> "😊 Good 😊"
+        percentage >= 75 -> "🙂 Above Average 🙂"
+        percentage >= 70 -> "😐 Average 😐"
+        percentage >= 65 -> "😕 Below Average 😕"
+        percentage >= 60 -> "😟 Poor 😟"
+        percentage >= 55 -> "😢 Very Poor 😢"
+        else -> "😭 Try again 😭"
+    }
+
+    fun getPercentageAndVerbalScore(): Pair<Int, String> {
+        val percentage = rightAnswersPercentage()
+        return Pair(percentage, getVerbalScore(percentage))
+    }
 
     fun currentRound() = rounds[currentRoundNumber - 1]
 
-    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
-        val round = currentRound()
-        val result = round.choosePair(indexes)
-        if (!result.first) mistakes++
+    fun previousRound() = rounds[currentRoundNumber - 2]
+
+    private fun handleResult(result: Boolean) {
+        answersAmount++
+        if (result) {
+            rightAnswersAmount++
+            score++
+        } else {
+            score--
+            mistakes++
+        }
         if (mistakes == 3) isFailed = true
-        if (round.isFinished() && currentRoundNumber < roundsNumber) {
+        if (currentRound().isFinished() && currentRoundNumber < roundsNumber) {
             currentRoundNumber++
         }
-        return result
+    }
+
+    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
+        val round = currentRound()
+        val resultAndChosenWords = round.choosePair(indexes)
+        val (result, _) = resultAndChosenWords
+        handleResult(result)
+        return resultAndChosenWords
     }
 
     fun isFinished() = isFailed || (currentRoundNumber == roundsNumber && currentRound().isFinished())
 
-    private fun createRound() = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound))
+    private fun createRound(number: Int) = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound), number)
 }
