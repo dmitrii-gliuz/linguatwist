@@ -7,6 +7,7 @@ class Round(private val pairs: List<WordPair>) {
     private val shuffledIndexes = (0 until size).shuffled()
     private var guessedPairs = 0
     var mistakes = 0
+    private val turns = mutableListOf<List<Int>>()
 
 
     fun isFinished() = guessedPairs == size
@@ -16,9 +17,15 @@ class Round(private val pairs: List<WordPair>) {
         pairs[shuffledIndexes[indexes[1]]].translation
         )
 
+    private fun checkIndexes(indexes: List<Int>): Boolean {
+
+        return indexes[0] == shuffledIndexes[indexes[1]]
+    }
+
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
         val pair = pairs[indexes[0]]
-        if (pair.guessed) throw IllegalArgumentException("This pair is already guessed")
+        if (turns.contains(indexes)) throw IllegalArgumentException("This pair of indexes has already been used")
+        turns.add(indexes)
         return Pair(if (checkIndexes(indexes)) {
             pair.guessed = true
             guessedPairs++
@@ -29,8 +36,6 @@ class Round(private val pairs: List<WordPair>) {
         }, getTwoWordsByIndexes(indexes))
 
     }
-
-    private fun checkIndexes(indexes: List<Int>) = indexes[0] == shuffledIndexes[indexes[1]]
 
     override fun toString() = buildString {
         val maxLength = pairs.maxOf { it.originalWord.length } + 3

@@ -13,13 +13,18 @@ fun inputPairIndexes(): List<Int> {
 
 private fun Game.enterIndexesAndPrintResult() {
     val indexes = inputPairIndexes()
-    val (result, words) = choosePair(indexes)
-    val (firstWord, secondWord) = words
-    println("Your choice:\n" +
-            "${indexes[0] + 1}. $firstWord\n" +
-            "${indexes[1] + 1}. $secondWord\n")
-    val printingResult = if (result) "Right" else "Wrong"
-    println("$printingResult!\n")
+    try {
+        val (result, words) = choosePair(indexes)
+        val (firstWord, secondWord) = words
+        println("Your choice:\n" +
+                "${indexes[0] + 1}. $firstWord\n" +
+                "${indexes[1] + 1}. $secondWord\n")
+        val printingResult = if (result) "Right" else "Wrong"
+        println("$printingResult!\n")
+    } catch (e: IllegalArgumentException) {
+        println("Error: ${e.message}.\nTry again!\n")
+    }
+
 }
 
 fun gameProcess(game: Game) {
@@ -43,7 +48,6 @@ fun gameProcess(game: Game) {
 
 fun main(args: Array<String>) {
     val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
-
     println("Let's learn new words!\n" +
             "Loading vocabulary file: $vocabularyPath")
     val spreadsheet = Spreadsheet(vocabularyPath)
