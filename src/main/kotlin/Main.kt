@@ -22,16 +22,7 @@ private fun Game.enterIndexesAndPrintResult() {
     println("$printingResult!\n")
 }
 
-fun main(args: Array<String>) {
-    val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
-
-    println("Let's learn new words!\n" +
-            "Loading vocabulary file: $vocabularyPath")
-    val spreadsheet = Spreadsheet(vocabularyPath)
-    val vocabulary = spreadsheet.loadVocabulary()
-    println("${vocabulary.size} words loaded.\n")
-
-    val game = Game(vocabulary)
+fun gameProcess(game: Game) {
     val horizontalLine = "=".repeat(35)
     while (!game.isFinished()) {
         println("Round ${game.currentRoundNumber}" +
@@ -48,6 +39,27 @@ fun main(args: Array<String>) {
     } else {
         println("Congratulations! You have finished the game!")
     }
+}
 
-     spreadsheet.close()
+fun main(args: Array<String>) {
+    val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
+
+    println("Let's learn new words!\n" +
+            "Loading vocabulary file: $vocabularyPath")
+    val spreadsheet = Spreadsheet(vocabularyPath)
+    val vocabulary = spreadsheet.loadVocabulary()
+    println("${vocabulary.size} words loaded.\n")
+    var play = true
+    while (play) {
+        val game = Game(vocabulary)
+        gameProcess(game)
+        val playAgain = input("Do you want to play again? (Y/n)").lowercase()
+        play = playAgain == "y" || playAgain == "yes" || playAgain.isEmpty()
+        println(
+            "\n" + if (play) "Ok, let's play again!\n"
+            else "Thank you for playing! Bye!"
+        )
+
+    }
+    spreadsheet.close()
 }
