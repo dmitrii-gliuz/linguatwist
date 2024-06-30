@@ -51,6 +51,8 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2
     private val rounds = List(roundsNumber) { createRound() }
     var currentRoundNumber = 1
     var mistakes = 0
+//    var score = 0
+    var isFailed = false
 
     fun mistakesInRound() = currentRound().mistakes
 
@@ -60,13 +62,14 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2
         val round = currentRound()
         val result = round.choosePair(indexes)
         if (!result.first) mistakes++
+        if (mistakes == 3) isFailed = true
         if (round.isFinished() && currentRoundNumber < roundsNumber) {
             currentRoundNumber++
         }
         return result
     }
 
-    fun isFinished() = currentRoundNumber == roundsNumber && currentRound().isFinished()
+    fun isFinished() = isFailed || (currentRoundNumber == roundsNumber && currentRound().isFinished())
 
     private fun createRound() = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound))
 }

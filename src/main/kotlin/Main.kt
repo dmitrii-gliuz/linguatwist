@@ -43,6 +43,11 @@ fun main(args: Array<String>) {
         )
         game.enterIndexesAndPrintResult()
     }
-    println("Congratulations! You have finished the game!")
-    spreadsheet.close()
+    if (game.isFailed) {
+        println("Sorry, you have made three mistakes and failed the game!")
+    } else {
+        println("Congratulations! You have finished the game!")
+    }
+
+     spreadsheet.close()
 }
