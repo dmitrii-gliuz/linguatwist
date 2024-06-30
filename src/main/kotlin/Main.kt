@@ -1,8 +1,15 @@
 package org.dmitriigliuz.learnnewwords
 
+import kotlin.system.exitProcess
+
 fun input(message: String): String {
     print("👉 $message ")
-    return readln()
+    val userInput = readLine() ?: ""
+    if (userInput == "exit") {
+        println("👋 Bye!")
+        exitProcess(0)
+    }
+    return userInput
 }
 
 fun inputPairIndexes(): List<Int> {
@@ -72,7 +79,10 @@ fun gameProcess(game: Game) {
 fun main(args: Array<String>) {
     val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
     println("🚀 Let's learn new words!\n" +
-            "📚 Loading vocabulary file: $vocabularyPath...")
+            "📖 The game is about matching words with their translations.\n" +
+            "🔢 Enter indexes the words you think match with space between them.\n" +
+            "📝 Enter 'exit' to quit the game at any time.\n" +
+            "\n📚 Loading vocabulary file: $vocabularyPath...")
     val spreadsheet = Spreadsheet(vocabularyPath)
     val vocabulary = spreadsheet.loadVocabulary()
     println("✅ ${vocabulary.size} words loaded.\n")
@@ -83,8 +93,8 @@ fun main(args: Array<String>) {
         val playAgain = input("Do you want to play again? (Y/n)").lowercase()
         play = playAgain == "y" || playAgain == "yes" || playAgain.isEmpty()
         println(
-            "\n" + if (play) "Ok, let's play again!\n"
-            else "Thank you for playing! Bye!"
+            "\n" + if (play) "🔄 Ok, let's play again!\n"
+            else "🎮 Thank you for playing! 👋 Bye!"
         )
 
     }
