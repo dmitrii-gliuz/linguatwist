@@ -70,7 +70,7 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2
 
     fun completionPercentage(): Int {
         val totalWords = roundsNumber * numberOfWordsInRound
-        val guessedWords = rounds.sumBy { it.guessedPairs }
+        val guessedWords = rounds.sumOf { it.guessedPairs }
         return guessedWords * 100 / totalWords
     }
 
