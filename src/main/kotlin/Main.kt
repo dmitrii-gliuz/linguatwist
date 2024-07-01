@@ -4,11 +4,12 @@ import kotlin.system.exitProcess
 
 
 const val bye = "👋 Bye!"
+const val exitCommand = "exit"
 
 fun input(message: String): String {
     print("👉 $message ")
     val userInput = readln().trim()
-    if (userInput == "exit") {
+    if (userInput == exitCommand) {
         println(bye)
         exitProcess(0)
     }
@@ -94,29 +95,38 @@ fun gameProcess(game: Game) {
         "🎉 Congratulations! You have finished the game!"
     })
     val (percent, score) = game.getPercentageAndVerbalScore()
-    println("🎯 Your result: $percent%\n$score\n")
+    println("🎯 Your result: $percent%\n${score.emoji} ${score.description} ${score.emoji}\n")
 }
 
 
+fun playAgain(): Boolean {
+    val playAgain = input("Do you want to play again? (Y/n)").lowercase()
+    return playAgain == "y" || playAgain == "yes" || playAgain.isEmpty()
+}
+
+
+fun printGreetings(vocabularyPath: String) = println("""🚀 Let's learn new words!
+📖 The game is about matching words with their translations.
+🔢 Enter indexes the words you think match with space between them.
+📝 Enter '$exitCommand' to quit the game at any time.
+
+📚 Loading vocabulary file: $vocabularyPath...""")
 
 fun main(args: Array<String>) {
     val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
-    println("🚀 Let's learn new words!\n" +
-            "📖 The game is about matching words with their translations.\n" +
-            "🔢 Enter indexes the words you think match with space between them.\n" +
-            "📝 Enter 'exit' to quit the game at any time.\n" +
-            "\n📚 Loading vocabulary file: $vocabularyPath...")
+    printGreetings(vocabularyPath)
     val spreadsheet = Spreadsheet(vocabularyPath)
     val vocabulary = spreadsheet.loadVocabulary()
     println("✅ ${vocabulary.size} words loaded.\n")
+
     val roundsNumber: Int
-    if (vocabulary.size < 5) {
+    if (vocabulary.size < numberOfWordsInRound) {
         println("⚠️ Error: Not enough words to play the game. Add more words to the vocabulary file.")
         exitProcess(1)
-    } else if (vocabulary.size < 100) {
+    } else if (vocabulary.size < recommendedVocabularySize) {
         println("⚠️ Warning: The vocabulary is small. Consider adding more words to the vocabulary file.")
-        val optimalRoundsNumber = vocabulary.size / 5
-        roundsNumber = input("Enter the number of rounds (default: $optimalRoundsNumber):").toIntOrNull() ?: optimalRoundsNumber
+        roundsNumber = input("Enter the number of rounds (default: ${vocabulary.optimalNumberOfRounds()}):")
+            .toIntOrNull() ?: vocabulary.optimalNumberOfRounds()
     } else {
         roundsNumber = input("Enter the number of rounds (default: 20):").toIntOrNull() ?: 20
     }
@@ -124,8 +134,7 @@ fun main(args: Array<String>) {
     while (play) {
         val game = Game(vocabulary, roundsNumber = roundsNumber)
         gameProcess(game)
-        val playAgain = input("Do you want to play again? (Y/n)").lowercase()
-        play = playAgain == "y" || playAgain == "yes" || playAgain.isEmpty()
+        play = playAgain()
         println(
             "\n" + if (play) "🔄 Ok, let's play again!\n"
             else "🎮 Thank you for playing!\n$bye"

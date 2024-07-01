@@ -16,6 +16,7 @@ class Vocabulary(private val wordPairs: List<WordPair>) {
 
     private fun getShuffledPairs() = wordPairs.shuffled()
 
+    fun optimalNumberOfRounds() = size / numberOfWordsInRound
 
     fun takeGroupOfPairs(numberOfPairs: Int): List<WordPair> {
         if (unusedPairs.size < numberOfPairs) {
@@ -26,5 +27,4 @@ class Vocabulary(private val wordPairs: List<WordPair>) {
         unusedPairs.removeAll(group)
         return group
     }
-
 }

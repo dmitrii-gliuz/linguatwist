@@ -1,6 +1,8 @@
 package org.dmitriigliuz.learnnewwords
 
 const val numberOfWordsInRound = 5
+const val defaultNumberOfRounds = 10
+const val recommendedVocabularySize = numberOfWordsInRound * defaultNumberOfRounds
 
 class Round(private val pairs: List<WordPair>, val number: Int) {
     private val size = pairs.size
@@ -41,7 +43,6 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
             mistakes++
             false
         }, getTwoWordsByIndexes(indexes))
-
     }
 
     override fun toString() = buildString {
@@ -59,7 +60,21 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
     }
 }
 
-class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 20) {
+enum class VerbalScore(val percentage: Int, val emoji: String, val description: String) {
+    PERFECT(100, "🎉", "Perfect"),
+    ALMOST_PERFECT(95, "👏", "Almost Perfect"),
+    EXCELLENT(90, "✨", "Excellent"),
+    VERY_GOOD(85, "👍", "Very Good"),
+    GOOD(80, "😊", "Good"),
+    ABOVE_AVERAGE(75, "🙂", "Above Average"),
+    AVERAGE(70, "😐", "Average"),
+    BELOW_AVERAGE(65, "😕", "Below Average"),
+    POOR(60, "😟", "Poor"),
+    VERY_POOR(55, "😢", "Very Poor"),
+    TRY_AGAIN(0, "😭", "Try again");
+}
+
+class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = defaultNumberOfRounds) {
     private val rounds = List(roundsNumber) { createRound(it + 1) }
     var currentRoundNumber = 1
     var mistakes = 0
@@ -76,21 +91,9 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = 2
 
     private fun rightAnswersPercentage() = rightAnswersAmount * 100 / answersAmount
 
-    private fun getVerbalScore(percentage: Int) = when {
-        percentage == 100 -> "🎉 Perfect 🎉"
-        percentage >= 95 -> "👏 Almost Perfect 👏"
-        percentage >= 90 -> "✨ Excellent ✨"
-        percentage >= 85 -> "👍 Very Good 👍"
-        percentage >= 80 -> "😊 Good 😊"
-        percentage >= 75 -> "🙂 Above Average 🙂"
-        percentage >= 70 -> "😐 Average 😐"
-        percentage >= 65 -> "😕 Below Average 😕"
-        percentage >= 60 -> "😟 Poor 😟"
-        percentage >= 55 -> "😢 Very Poor 😢"
-        else -> "😭 Try again 😭"
-    }
+    private fun getVerbalScore(percentage: Int) = VerbalScore.entries.first { it.percentage <= percentage }
 
-    fun getPercentageAndVerbalScore(): Pair<Int, String> {
+    fun getPercentageAndVerbalScore(): Pair<Int, VerbalScore> {
         val percentage = rightAnswersPercentage()
         return Pair(percentage, getVerbalScore(percentage))
     }
