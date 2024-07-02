@@ -49,10 +49,11 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
         val maxLength = pairs.maxOf { it.originalWord.length } + 3
         for (n in 1..size) {
             val index = n - 1
-            val firstWord = pairs[index].originalWord
-            val firstWordOutput = pairs[index].getOriginalWordStrikethroughOrNot()
-            val secondWordOutput = pairs[shuffledIndexes[index]].getTranslationStrikethroughOrNot()
-            val numberOfSpaces = maxLength - firstWord.length
+            val leftPair = pairs[index]
+            val rightPair = pairs[shuffledIndexes[index]]
+            val firstWordOutput = leftPair.originalWordStrikethroughIfGuessed()
+            val secondWordOutput = rightPair.translationStrikethroughIfGuessed()
+            val numberOfSpaces = maxLength - leftPair.originalWordLength()
             val spaces = " ".repeat(numberOfSpaces)
             append("$n. $firstWordOutput$spaces$n. $secondWordOutput")
             append("\n")
@@ -74,9 +75,9 @@ enum class VerbalScore(val percentage: Int, val emoji: String, val description: 
     TRY_AGAIN(0, "😭", "Try again");
 }
 
-class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = defaultNumberOfRounds) {
-    private val rounds = List(roundsNumber) { createRound(it + 1) }
-    var currentRoundNumber = 1
+class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
+    private val rounds = List(numberOfRounds) { createRound(it + 1) }
+    private var currentRoundNumber = 1
     var mistakes = 0
     var score = 0
     var isFailed = false
@@ -84,25 +85,25 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = d
     private var rightAnswersAmount = 0
 
     fun completionPercentage(): Int {
-        val totalWords = roundsNumber * numberOfWordsInRound
+        val totalWords = numberOfRounds * numberOfWordsInRound
         val guessedWords = rounds.sumOf { it.guessedPairs }
         return guessedWords * 100 / totalWords
     }
 
     private fun rightAnswersPercentage() = rightAnswersAmount * 100 / answersAmount
 
-    private fun getVerbalScore(percentage: Int) = VerbalScore.entries.first { it.percentage <= percentage }
+    private fun verbalScore(percentage: Int) = VerbalScore.entries.first { it.percentage <= percentage }
 
-    fun getPercentageAndVerbalScore(): Pair<Int, VerbalScore> {
+    fun percentageAndVerbalScore(): Pair<Int, VerbalScore> {
         val percentage = rightAnswersPercentage()
-        return Pair(percentage, getVerbalScore(percentage))
+        return Pair(percentage, verbalScore(percentage))
     }
 
     fun currentRound() = rounds[currentRoundNumber - 1]
 
     fun previousRound() = rounds[currentRoundNumber - 2]
 
-    private fun handleResult(result: Boolean) {
+    private fun processRoundOutcome(result: Boolean) {
         answersAmount++
         if (result) {
             rightAnswersAmount++
@@ -112,20 +113,19 @@ class Game(private val vocabulary: Vocabulary, private val roundsNumber: Int = d
             mistakes++
         }
         if (mistakes == 3) isFailed = true
-        if (currentRound().isFinished() && currentRoundNumber < roundsNumber) {
+        if (currentRound().isFinished() && currentRoundNumber < numberOfRounds) {
             currentRoundNumber++
         }
     }
 
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
-        val round = currentRound()
-        val resultAndChosenWords = round.choosePair(indexes)
+        val resultAndChosenWords = currentRound().choosePair(indexes)
         val (result, _) = resultAndChosenWords
-        handleResult(result)
+        processRoundOutcome(result)
         return resultAndChosenWords
     }
 
-    fun isFinished() = isFailed || (currentRoundNumber == roundsNumber && currentRound().isFinished())
+    fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound().isFinished())
 
     private fun createRound(number: Int) = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound), number)
 }
