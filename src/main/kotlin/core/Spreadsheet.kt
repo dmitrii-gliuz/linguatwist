@@ -1,4 +1,4 @@
-package org.dmitriigliuz.learnnewwords
+package org.dmitriigliuz.learnnewwords.core
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File

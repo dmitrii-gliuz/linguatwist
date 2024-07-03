@@ -1,4 +1,4 @@
-package org.dmitriigliuz.learnnewwords
+package org.dmitriigliuz.learnnewwords.core
 
 const val numberOfWordsInRound = 5
 const val defaultNumberOfRounds = 10
@@ -23,16 +23,26 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
         getPairInSecondColumn(indexes).translation
         )
 
+    private fun validateIndexes(indexes: List<Int>) {
+        if (indexes.size != 2) {
+            throw IllegalArgumentException("You should enter two indexes")
+        }
+        if (indexes.any { it !in 0 until size }) {
+            throw IllegalArgumentException("Indexes should be in the range from 1 to $size")
+        }
+        if (turns.contains(indexes)) {
+            throw IllegalArgumentException("This pair of indexes has already been used")
+        }
+    }
+
     private fun checkIndexes(indexes: List<Int>): Boolean = indexes[0] == shuffledIndexes[indexes[1]]
 
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
+        validateIndexes(indexes)
         val pairInFirstColumn = pairs[indexes[0]]
         val pairInSecondColumn = getPairInSecondColumn(indexes)
         if (pairInFirstColumn.guessed || pairInSecondColumn.guessed) {
             throw IllegalArgumentException("This pair has already been guessed")
-        }
-        if (turns.contains(indexes)) {
-            throw IllegalArgumentException("This pair of indexes has already been used")
         }
         turns.add(indexes)
         return Pair(if (checkIndexes(indexes)) {

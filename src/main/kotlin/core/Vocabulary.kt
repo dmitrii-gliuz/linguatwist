@@ -1,4 +1,6 @@
-package org.dmitriigliuz.learnnewwords
+package org.dmitriigliuz.learnnewwords.core
+
+import org.dmitriigliuz.learnnewwords.console.strikethrough
 
 data class WordPair(val originalWord: String, val translation: String) {
     var guessed = false
