@@ -82,5 +82,13 @@ fun playConsoleGame(args: Array<String>) {
         play = input("Do you want to play again? (Y/n)").lowercase() in listOf("y", "yes", "")
         println( "\n" + if (play) "🔄 Ok, let's play again!\n" else "🎮 Thank you for playing!\n$bye" )
     }
+    spreadsheet.writeScores(vocabulary)
+    println("📝 Scores saved to $vocabularyPath.")
     spreadsheet.close()
+}
+
+fun Vocabulary.printStatistics() {
+    wordPairs.forEach {
+        println("${it.originalWord} - ${it.translation} - ${it.score}")
+    }
 }

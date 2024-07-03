@@ -31,7 +31,7 @@ fun Game.enterIndexesAndPrintResult() {
         println("Your choice:\n" +
                 "${indexes[0] + 1}. $firstWord\n" +
                 "${indexes[1] + 1}. $secondWord\n")
-        if (round.isFinished()) println(previousRound().getFormattedOutput())
+        if (round.isFinished()) println(round.getFormattedOutput())
         println(getFormattedResult(result))
     } catch (e: IllegalArgumentException) {
         println("⚠️ Error: ${e.message}.\n   Try again!\n")
@@ -44,6 +44,7 @@ fun Game.run() {
         enterIndexesAndPrintResult()
     }
     printCurrentRound()
+    vocabulary.printStatistics()
     println(if (isFailed) {
         "😢 Sorry, you have made three mistakes and failed the game!"
     } else {

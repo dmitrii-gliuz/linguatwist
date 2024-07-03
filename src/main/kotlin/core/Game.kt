@@ -33,23 +33,27 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
         if (turns.contains(indexes)) {
             throw IllegalArgumentException("This pair of indexes has already been used")
         }
-    }
-
-    private fun checkIndexes(indexes: List<Int>): Boolean = indexes[0] == shuffledIndexes[indexes[1]]
-
-    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
-        validateIndexes(indexes)
         val pairInFirstColumn = pairs[indexes[0]]
         val pairInSecondColumn = getPairInSecondColumn(indexes)
         if (pairInFirstColumn.guessed || pairInSecondColumn.guessed) {
             throw IllegalArgumentException("This pair has already been guessed")
         }
+    }
+
+    private fun areIndexesBelongToOnePair(indexes: List<Int>): Boolean = indexes[0] == shuffledIndexes[indexes[1]]
+
+    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
+        validateIndexes(indexes)
         turns.add(indexes)
-        return Pair(if (checkIndexes(indexes)) {
-            pairInFirstColumn.guessed = true
+        val pairInFirstColumn = getPairInFirstColumn(indexes)
+        val pairInSecondColumn = getPairInSecondColumn(indexes)
+        return Pair(if (areIndexesBelongToOnePair(indexes)) {
+            pairInFirstColumn.markAsGuessedAndIncreaseScore()
             guessedPairs++
             true
         } else {
+            pairInFirstColumn.decreaseScore()
+            pairInSecondColumn.decreaseScore()
             mistakes++
             false
         }, getTwoWordsByIndexes(indexes))
@@ -85,7 +89,7 @@ enum class VerbalScore(val percentage: Int, val emoji: String, val description: 
     TRY_AGAIN(0, "😭", "Try again");
 }
 
-class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
+class Game(val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
     private val rounds = List(numberOfRounds) { createRound(it + 1) }
     private var currentRoundNumber = 1
     var mistakes = 0
@@ -122,7 +126,7 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
             score--
             mistakes++
         }
-        if (mistakes == 3) isFailed = true
+        if (mistakes > 3) isFailed = true
         if (currentRound().isFinished() && currentRoundNumber < numberOfRounds) {
             currentRoundNumber++
         }

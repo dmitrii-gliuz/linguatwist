@@ -2,8 +2,16 @@ package org.dmitriigliuz.learnnewwords.core
 
 import org.dmitriigliuz.learnnewwords.console.strikethrough
 
-data class WordPair(val originalWord: String, val translation: String) {
+data class WordPair(val originalWord: String, val translation: String, var score: Int = 0) {
     var guessed = false
+
+    fun markAsGuessedAndIncreaseScore() {
+        guessed = true
+        score++
+    }
+    fun decreaseScore() {
+        score--
+    }
 
     fun originalWordLength() = originalWord.length
 
@@ -14,7 +22,7 @@ data class WordPair(val originalWord: String, val translation: String) {
     fun translationStrikethroughIfGuessed() = applyStrikethroughIfGuessed(translation)
 }
 
-class Vocabulary(private val wordPairs: List<WordPair>) {
+class Vocabulary(val wordPairs: List<WordPair>) {
     val size = wordPairs.size
     private val unusedPairs = wordPairs.shuffled().toMutableList()
     val optimalNumberOfRounds
