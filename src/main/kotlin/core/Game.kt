@@ -1,7 +1,7 @@
-package org.dmitriigliuz.learnnewwords.core
+package org.dmitriigliuz.linguatwist.core
 
 const val numberOfWordsInRound = 5
-const val defaultNumberOfRounds = 10
+const val defaultNumberOfRounds = 5
 const val recommendedVocabularySize = numberOfWordsInRound * defaultNumberOfRounds
 
 class Round(private val pairs: List<WordPair>, val number: Int) {
@@ -25,18 +25,18 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
 
     private fun validateIndexes(indexes: List<Int>) {
         if (indexes.size != 2) {
-            throw IllegalArgumentException("You should enter two indexes")
+            throw IllegalArgumentException(message("YouShouldEnterTwoIndexes"))
         }
         if (indexes.any { it !in 0 until size }) {
-            throw IllegalArgumentException("Indexes should be in the range from 1 to $size")
+            throw IllegalArgumentException("${message("IndexesShouldBeInTheRange")} $size")
         }
         if (turns.contains(indexes)) {
-            throw IllegalArgumentException("This pair of indexes has already been used")
+            throw IllegalArgumentException(message("ThisPairOfIndexesHasAlreadyBeenUsed"))
         }
         val pairInFirstColumn = pairs[indexes[0]]
         val pairInSecondColumn = getPairInSecondColumn(indexes)
         if (pairInFirstColumn.guessed || pairInSecondColumn.guessed) {
-            throw IllegalArgumentException("This pair has already been guessed")
+            throw IllegalArgumentException(message("ThisPairHasAlreadyBeenGuessed"))
         }
     }
 
@@ -77,19 +77,19 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
 
 enum class VerbalScore(val percentage: Int, val emoji: String, val description: String) {
     PERFECT(100, "🎉", "Perfect"),
-    ALMOST_PERFECT(95, "👏", "Almost Perfect"),
+    ALMOST_PERFECT(95, "👏", "AlmostPerfect"),
     EXCELLENT(90, "✨", "Excellent"),
-    VERY_GOOD(85, "👍", "Very Good"),
+    VERY_GOOD(85, "👍", "VeryGood"),
     GOOD(80, "😊", "Good"),
-    ABOVE_AVERAGE(75, "🙂", "Above Average"),
+    ABOVE_AVERAGE(75, "🙂", "AboveAverage"),
     AVERAGE(70, "😐", "Average"),
-    BELOW_AVERAGE(65, "😕", "Below Average"),
+    BELOW_AVERAGE(65, "😕", "BelowAverage"),
     POOR(60, "😟", "Poor"),
-    VERY_POOR(55, "😢", "Very Poor"),
-    TRY_AGAIN(0, "😭", "Try again");
+    VERY_POOR(55, "😢", "VeryPoor"),
+    TRY_AGAIN(0, "😭", "TryAgain");
 }
 
-class Game(val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
+class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
     private val rounds = List(numberOfRounds) { createRound(it + 1) }
     private var currentRoundNumber = 1
     var mistakes = 0
@@ -114,8 +114,6 @@ class Game(val vocabulary: Vocabulary, private val numberOfRounds: Int = default
     }
 
     fun currentRound() = rounds[currentRoundNumber - 1]
-
-    fun previousRound() = rounds[currentRoundNumber - 2]
 
     private fun processRoundOutcome(result: Boolean) {
         answersAmount++

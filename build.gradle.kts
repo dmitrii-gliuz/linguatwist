@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "1.9.24"
 }
 
-group = "org.dmitriigliuz.learnnewwords"
+group = "org.dmitriigliuz.linguatwist"
 version = "1.0-SNAPSHOT"
 
 repositories {

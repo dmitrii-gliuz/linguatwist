@@ -1,10 +1,11 @@
-package org.dmitriigliuz.learnnewwords.core
+package org.dmitriigliuz.linguatwist.core
 
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 
 
 class Spreadsheet(path: String) {
@@ -76,13 +77,12 @@ class Spreadsheet(path: String) {
                 scoreCell.setCellValue(pair.score.toDouble())
             }
         }
-        val outputStream = file.outputStream()
-        try {
-            workBook.write(outputStream)
-        } catch (e: Exception) {
-            println("⚠️ Error: ${e.message}")
-        } finally {
-            outputStream.close()
+//        try {
+        FileOutputStream(file).use {
+            workBook.write(it)
         }
+//        } catch (e: Exception) {
+//            println("⚠️ Error: ${e.message}")
+//        }
     }
 }

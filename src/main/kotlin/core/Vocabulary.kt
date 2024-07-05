@@ -1,6 +1,6 @@
-package org.dmitriigliuz.learnnewwords.core
+package org.dmitriigliuz.linguatwist.core
 
-import org.dmitriigliuz.learnnewwords.console.strikethrough
+import org.dmitriigliuz.linguatwist.console.strikethrough
 
 data class WordPair(val originalWord: String, val translation: String, var score: Int = 0) {
     var guessed = false
@@ -24,14 +24,16 @@ data class WordPair(val originalWord: String, val translation: String, var score
 
 class Vocabulary(val wordPairs: List<WordPair>) {
     val size = wordPairs.size
-    private val unusedPairs = wordPairs.shuffled().toMutableList()
+    private val unusedPairs = getShuffledPairsSortedByScore()
     val optimalNumberOfRounds
         get() = size / numberOfWordsInRound
+
+    private fun getShuffledPairsSortedByScore() = wordPairs.shuffled().sortedBy { it.score }.toMutableList()
 
     fun takeGroupOfPairs(numberOfPairs: Int): List<WordPair> {
         if (unusedPairs.size < numberOfPairs) {
             unusedPairs.clear()
-            unusedPairs.addAll(wordPairs.shuffled())
+            unusedPairs.addAll(getShuffledPairsSortedByScore())
         }
         val group = unusedPairs.take(numberOfPairs)
         unusedPairs.removeAll(group)

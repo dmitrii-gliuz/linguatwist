@@ -1,13 +1,14 @@
-package org.dmitriigliuz.learnnewwords.console
+package org.dmitriigliuz.linguatwist.console
 
-import org.dmitriigliuz.learnnewwords.core.Game
+import org.dmitriigliuz.linguatwist.core.Game
+import org.dmitriigliuz.linguatwist.core.message
 
 fun Game.printCurrentRound() {
     val progressBarLength = 20
     val progressBar = buildString {
         val percents = completionPercentage()
         val progress = percents * progressBarLength / 100
-        append("🌟Score: $score\t❌Mistakes: $mistakes")
+        append("🌟${message("Score")}: $score\t❌${message("Mistakes")}: $mistakes")
         newLine()
         append("🟩".repeat(progress))
         append("⬜".repeat(progressBarLength - progress))
@@ -21,20 +22,21 @@ fun Game.printCurrentRound() {
 }
 
 fun Game.enterIndexesAndPrintResult() {
-    val indexes = input("Enter indexes for matching words:")
+    val indexes = input("${message("EnterIndexesForMatchingWords")}:")
+        .trim()
         .split("""\s+""".toRegex())
         .map { it.toInt() - 1 }
     val round = currentRound()
     try {
         val (result, words) = choosePair(indexes)
         val (firstWord, secondWord) = words
-        println("Your choice:\n" +
+        println("${message("YourChoice")}:\n" +
                 "${indexes[0] + 1}. $firstWord\n" +
                 "${indexes[1] + 1}. $secondWord\n")
         if (round.isFinished()) println(round.getFormattedOutput())
         println(getFormattedResult(result))
     } catch (e: IllegalArgumentException) {
-        println("⚠️ Error: ${e.message}.\n   Try again!\n")
+        println("⚠️ ${message("Error")}: ${e.message}.\n   ${message("TryAgain")}!\n")
     }
 }
 
@@ -44,12 +46,11 @@ fun Game.run() {
         enterIndexesAndPrintResult()
     }
     printCurrentRound()
-    vocabulary.printStatistics()
     println(if (isFailed) {
-        "😢 Sorry, you have made three mistakes and failed the game!"
+        "😢 ${message("SorryYouFailed")}"
     } else {
-        "🎉 Congratulations! You have finished the game!"
+        "🎉 ${message("CongratulationsYouFinished")}"
     })
     val (percent, score) = percentageAndVerbalScore()
-    println("🎯 Your result: $percent%\n${score.emoji} ${score.description} ${score.emoji}\n")
+    println("🎯 ${message("YourResult")}: $percent%\n${score.emoji} ${message(score.description)} ${score.emoji}\n")
 }
