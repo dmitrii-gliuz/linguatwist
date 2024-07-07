@@ -7,26 +7,23 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 
+class SpreadsheetException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 class Spreadsheet(path: String) {
     private val file = File(path)
-//    init {
-//        validateFile()
-//    }
     private val workBook: XSSFWorkbook
 
     init {
-        FileInputStream(file).use {
-            workBook = XSSFWorkbook(it)
+        try {
+            FileInputStream(file).use {
+                workBook = XSSFWorkbook(it)
+            }
+        } catch (e: Exception) {
+            throw SpreadsheetException(e.message ?: "unexpected error", e)
         }
     }
     private val sheet = workBook.getSheetAt(0)
-    private fun validateFile() {
-        if (!file.exists()) throw IllegalArgumentException("The file doesn't exist")
-        if (!file.isFile) throw IllegalArgumentException("The path is not a file")
-        if (!file.canRead()) throw IllegalArgumentException("The file is not readable")
-        if (!file.canWrite()) throw IllegalArgumentException("The file is not writable")
-    }
+
     fun close() {
         workBook.close()
     }
@@ -84,12 +81,12 @@ class Spreadsheet(path: String) {
                 scoreCell.setCellValue(pair.score.toDouble())
             }
         }
-//        try {
-        FileOutputStream(file).use {
-            workBook.write(it)
+        try {
+            FileOutputStream(file).use {
+                workBook.write(it)
+            }
+        } catch (e: Exception) {
+            throw SpreadsheetException(e.message ?: "unexpected error", e)
         }
-//        } catch (e: Exception) {
-//            println("⚠️ Error: ${e.message}")
-//        }
     }
 }

@@ -34,6 +34,7 @@ class Vocabulary(val wordPairs: List<WordPair>) {
         if (unusedPairs.size < numberOfPairs) {
             unusedPairs.clear()
             unusedPairs.addAll(getShuffledPairsSortedByScore())
+            unusedPairs.forEach { it.guessed = false }
         }
         val group = unusedPairs.take(numberOfPairs)
         unusedPairs.removeAll(group)

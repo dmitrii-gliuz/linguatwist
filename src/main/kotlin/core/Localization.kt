@@ -10,4 +10,4 @@ fun getResourceBundle(languageTag: String): ResourceBundle {
 
 var resourceBundle = getResourceBundle(languageTag)
 
-fun message(key: String): String = resourceBundle.getString(key)
+fun getLocaleMessage(key: String): String = resourceBundle.getString(key)

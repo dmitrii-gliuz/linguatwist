@@ -8,11 +8,13 @@ const val exitCommand = "exit"
 const val skipCommand = "skip"
 
 
-val bye = "👋 ${message("Bye")}"
+val bye = "👋 ${getLocaleMessage("Bye")}"
+
+fun errorMessage(message: String) = "⚠️ ${getLocaleMessage("Error")}: $message.\n"
 
 
 fun exit(messageText: String = "") {
-    if (messageText.isNotEmpty()) println("⛔️ $messageText")
+    if (messageText.isNotEmpty()) println("⛔️ ${getLocaleMessage("Error")} $messageText")
     println(bye)
     exitProcess(0)
 }
@@ -26,13 +28,13 @@ fun input(messageText: String): String {
 
 fun setNumberOfRounds(vocabulary: Vocabulary): Int {
     if (vocabulary.size < numberOfWordsInRound) {
-        exit("⚠️ ${message("Error")}: ${message("NotEnoughWordsToPlayTheGame")}")
+        exit(getLocaleMessage("NotEnoughWordsToPlayTheGame"))
     }
     val defaultValue = if (vocabulary.size < recommendedVocabularySize) {
-        println("⚠️ ${message("Warning")}: ${message("TheVocabularyIsSmall")}")
+        println("⚠️ ${getLocaleMessage("Warning")}: ${getLocaleMessage("TheVocabularyIsSmall")}")
         vocabulary.optimalNumberOfRounds
     } else defaultNumberOfRounds
-    return input("${message("EnterTheNumberOfRounds")} (${message("Default")}: $defaultValue):")
+    return input("${getLocaleMessage("EnterTheNumberOfRounds")} (${getLocaleMessage("Default")}: $defaultValue):")
         .toIntOrNull() ?: defaultValue
 }
 
@@ -48,8 +50,8 @@ fun Round.getFormattedOutput() = buildString {
         3 -> "🟠" // Late stage of the round
         else -> "🔴" // End of the round
     }
-    append("$roundProgressEmoji ${message("Round")} ${this@getFormattedOutput.number}")
-    if (this@getFormattedOutput.mistakes > 0) append(" (${message("Mistakes")}: ${this@getFormattedOutput.mistakes})")
+    append("$roundProgressEmoji ${getLocaleMessage("Round")} ${this@getFormattedOutput.number}")
+    if (this@getFormattedOutput.mistakes > 0) append(" (${getLocaleMessage("Mistakes")}: ${this@getFormattedOutput.mistakes})")
     newLine()
     append(horizontalLine)
     append(this@getFormattedOutput.toString())
@@ -57,22 +59,22 @@ fun Round.getFormattedOutput() = buildString {
 }
 
 fun getFormattedResult(result: Boolean) = buildString {
-    append(if (result) "✅ ${message("Right")}!" else "❌ ${message("Wrong")}!")
+    append(if (result) "✅ ${getLocaleMessage("Right")}!" else "❌ ${getLocaleMessage("Wrong")}!")
     newLine()
     append(if (result) "🔼 +1" else "🔽 -1")
-    append(" ${message("Point")}.")
+    append(" ${getLocaleMessage("Point")}.")
     newLine()
 }
 
-fun printGreetings(vocabularyPath: String) = println("""🚀 ${message("Welcome")}! ${message("LetsLearnWords")}!
-📖 ${message("TheGameIsAboutMatchingWords")}
-🔢 ${message("EnterTheIndexesOfWordsYouThinkMatch")}
-📝 ${message("EnterExitToQuitAtAnyTime")}
+fun printGreetings(vocabularyPath: String) = println("""🚀 ${getLocaleMessage("Welcome")}! ${getLocaleMessage("LetsLearnWords")}!
+📖 ${getLocaleMessage("TheGameIsAboutMatchingWords")}
+🔢 ${getLocaleMessage("EnterTheIndexesOfWordsYouThinkMatch")}
+📝 ${getLocaleMessage("EnterExitToQuitAtAnyTime")}
 
-📚 ${message("LoadingVocabularyFile")}: $vocabularyPath...""")
+📚 ${getLocaleMessage("LoadingVocabularyFile")}: $vocabularyPath...""")
 
 
-fun Vocabulary.printNumberOfLoadedWords() = println("✅ ${message("TheNumberOfLoadedWords")}: $size.\n")
+fun Vocabulary.printNumberOfLoadedWords() = println("✅ ${getLocaleMessage("TheNumberOfLoadedWords")}: $size.\n")
 
 fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
     while (true) {
@@ -81,8 +83,8 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
             break
         } catch (e: Exception) {
 
-            val action = input("⚠️ ${message("Error")}: ${e.message}.\n" +
-                    "${message("EnterSkipOrExit")}:")
+            val action = input("⚠️ ${getLocaleMessage("Error")}: ${e.message}.\n" +
+                    "${getLocaleMessage("EnterSkipOrExit")}:")
             if (action == skipCommand) break
 
         }
@@ -91,10 +93,13 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
 
 fun playConsoleGame(vocabularyPath: String) {
     printGreetings(vocabularyPath)
-//    try {
-//        val spreadsheet = Spreadsheet(vocabularyPath)
-//    }
-    val spreadsheet = Spreadsheet(vocabularyPath)
+    val spreadsheet: Spreadsheet
+    try {
+        spreadsheet = Spreadsheet(vocabularyPath)
+    } catch (e: SpreadsheetException) {
+        exit(e.message ?: "")
+        throw e
+    }
     val vocabulary = spreadsheet.loadVocabulary()
     vocabulary.printNumberOfLoadedWords()
     var play = true
@@ -102,10 +107,10 @@ fun playConsoleGame(vocabularyPath: String) {
         val numberOfRounds = setNumberOfRounds(vocabulary)
         val game = Game(vocabulary, numberOfRounds = numberOfRounds)
         game.run()
-        play = input("${message("DoYouWantToPlayAgain")} (Y/n)").lowercase() in listOf("y", "yes", "")
+        play = input("${getLocaleMessage("DoYouWantToPlayAgain")} (Y/n)").lowercase() in listOf("y", "yes", "")
         spreadsheet.writeScoresSafely(vocabulary)
-        println("📝 ${message("ScoresSavedTo")} $vocabularyPath.")
-        println( "\n" + if (play) "🔄 ${message("OKLetsPlayAgain")}!\n" else "🎮 ${message("ThankYouForPlaying")}!\n$bye" )
+        println("📝 ${getLocaleMessage("ScoresSavedTo")} $vocabularyPath.")
+        println( "\n" + if (play) "🔄 ${getLocaleMessage("OKLetsPlayAgain")}!\n" else "🎮 ${getLocaleMessage("ThankYouForPlaying")}!\n$bye" )
     }
     spreadsheet.close()
 }

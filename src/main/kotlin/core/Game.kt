@@ -25,18 +25,18 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
 
     private fun validateIndexes(indexes: List<Int>) {
         if (indexes.size != 2) {
-            throw IllegalArgumentException(message("YouShouldEnterTwoIndexes"))
+            throw IllegalArgumentException(getLocaleMessage("YouShouldEnterTwoIndexes"))
         }
         if (indexes.any { it !in 0 until size }) {
-            throw IllegalArgumentException("${message("IndexesShouldBeInTheRange")} $size")
+            throw IllegalArgumentException("${getLocaleMessage("IndexesShouldBeInTheRange")} $size")
         }
         if (turns.contains(indexes)) {
-            throw IllegalArgumentException(message("ThisPairOfIndexesHasAlreadyBeenUsed"))
+            throw IllegalArgumentException(getLocaleMessage("ThisPairOfIndexesHasAlreadyBeenUsed"))
         }
         val pairInFirstColumn = pairs[indexes[0]]
         val pairInSecondColumn = getPairInSecondColumn(indexes)
         if (pairInFirstColumn.guessed || pairInSecondColumn.guessed) {
-            throw IllegalArgumentException(message("ThisPairHasAlreadyBeenGuessed"))
+            throw IllegalArgumentException(getLocaleMessage("ThisPairHasAlreadyBeenGuessed"))
         }
     }
 

@@ -24,7 +24,6 @@ enum class Arguments(private val long: String, private val short: String, privat
     }
 }
 
-
 fun main(args: Array<String>) {
     val vocabularyPath = Arguments.VOCABULARY.getValue(args)
     val languageTag = Arguments.LANGUAGE.getValue(args)
