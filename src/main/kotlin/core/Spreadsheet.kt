@@ -10,6 +10,9 @@ import java.io.FileOutputStream
 
 class Spreadsheet(path: String) {
     private val file = File(path)
+//    init {
+//        validateFile()
+//    }
     private val workBook: XSSFWorkbook
 
     init {
@@ -18,7 +21,12 @@ class Spreadsheet(path: String) {
         }
     }
     private val sheet = workBook.getSheetAt(0)
-
+    private fun validateFile() {
+        if (!file.exists()) throw IllegalArgumentException("The file doesn't exist")
+        if (!file.isFile) throw IllegalArgumentException("The path is not a file")
+        if (!file.canRead()) throw IllegalArgumentException("The file is not readable")
+        if (!file.canWrite()) throw IllegalArgumentException("The file is not writable")
+    }
     fun close() {
         workBook.close()
     }
@@ -29,7 +37,6 @@ class Spreadsheet(path: String) {
     }
 
     private fun getScore(row: Row): Int {
-//        if (getScoreCell(row) == null) return 0
         return try {
             getScoreCell(row).numericCellValue.toInt()
         } catch (e: IllegalStateException) {

@@ -89,9 +89,11 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
     }
 }
 
-fun playConsoleGame(args: Array<String>) {
-    val vocabularyPath = if (args.isNotEmpty()) args[0] else "vocabulary.xlsx"
+fun playConsoleGame(vocabularyPath: String) {
     printGreetings(vocabularyPath)
+//    try {
+//        val spreadsheet = Spreadsheet(vocabularyPath)
+//    }
     val spreadsheet = Spreadsheet(vocabularyPath)
     val vocabulary = spreadsheet.loadVocabulary()
     vocabulary.printNumberOfLoadedWords()
