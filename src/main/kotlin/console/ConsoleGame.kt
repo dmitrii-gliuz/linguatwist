@@ -7,11 +7,7 @@ import kotlin.system.exitProcess
 const val exitCommand = "exit"
 const val skipCommand = "skip"
 
-
 val bye = "👋 ${getLocaleMessage("Bye")}"
-
-fun errorMessage(message: String) = "⚠️ ${getLocaleMessage("Error")}: $message.\n"
-
 
 fun exit(messageText: String = "") {
     if (messageText.isNotEmpty()) println("⛔️ ${getLocaleMessage("Error")} $messageText")
@@ -82,7 +78,6 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
             writeScores(vocabulary)
             break
         } catch (e: Exception) {
-
             val action = input("⚠️ ${getLocaleMessage("Error")}: ${e.message}.\n" +
                     "${getLocaleMessage("EnterSkipOrExit")}:")
             if (action == skipCommand) break
@@ -104,8 +99,13 @@ fun playConsoleGame(vocabularyPath: String) {
     vocabulary.printNumberOfLoadedWords()
     var play = true
     while (play) {
-        val numberOfRounds = setNumberOfRounds(vocabulary)
-        val game = Game(vocabulary, numberOfRounds = numberOfRounds)
+        val game = try {
+            val numberOfRounds = setNumberOfRounds(vocabulary)
+            Game(vocabulary, numberOfRounds = numberOfRounds)
+        } catch (e: IllegalArgumentException) {
+            println("⚠️ ${getLocaleMessage("Error")}: ${e.message}\n   ${getLocaleMessage("TryAgain")}!\n")
+            continue
+        }
         game.run()
         play = input("${getLocaleMessage("DoYouWantToPlayAgain")} (Y/n)").lowercase() in listOf("y", "yes", "")
         spreadsheet.writeScoresSafely(vocabulary)

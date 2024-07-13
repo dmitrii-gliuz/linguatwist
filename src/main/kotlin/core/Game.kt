@@ -90,8 +90,13 @@ enum class VerbalScore(val percentage: Int, val emoji: String, val description: 
 }
 
 class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
-    private val rounds = List(numberOfRounds) { createRound(it + 1) }
+    init {
+        if (numberOfRounds !in 1..100) {
+            throw IllegalArgumentException(getLocaleMessage("NumberOfRoundsShouldBeInRange"))
+        }
+    }
     private var currentRoundNumber = 1
+    private val rounds = mutableListOf(createRound())
     var mistakes = 0
     var score = 0
     var isFailed = false
@@ -115,6 +120,13 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
 
     fun currentRound() = rounds[currentRoundNumber - 1]
 
+    private fun changeRoundIfFinished() {
+        if (currentRound().isFinished() && currentRoundNumber < numberOfRounds) {
+            currentRoundNumber++
+            rounds.add(createRound())
+        }
+    }
+
     private fun processRoundOutcome(result: Boolean) {
         answersAmount++
         if (result) {
@@ -125,9 +137,7 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
             mistakes++
         }
         if (mistakes > 3) isFailed = true
-        if (currentRound().isFinished() && currentRoundNumber < numberOfRounds) {
-            currentRoundNumber++
-        }
+        else changeRoundIfFinished()
     }
 
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
@@ -139,5 +149,5 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
 
     fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound().isFinished())
 
-    private fun createRound(number: Int) = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound), number)
+    private fun createRound() = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound), currentRoundNumber)
 }

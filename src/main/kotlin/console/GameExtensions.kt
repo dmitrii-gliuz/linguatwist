@@ -22,22 +22,33 @@ fun Game.printCurrentRound() {
 }
 
 fun Game.enterIndexesAndPrintResult() {
-    val indexes = input("${getLocaleMessage("EnterIndexesForMatchingWords")}:")
-        .trim()
-        .split("""\s+""".toRegex())
-        .map { it.toInt() - 1 }
-    val round = currentRound()
-    try {
-        val (result, words) = choosePair(indexes)
-        val (firstWord, secondWord) = words
-        println("${getLocaleMessage("YourChoice")}:\n" +
-                "${indexes[0] + 1}. $firstWord\n" +
-                "${indexes[1] + 1}. $secondWord\n")
-        if (round.isFinished()) println(round.getFormattedOutput())
-        println(getFormattedResult(result))
-    } catch (e: IllegalArgumentException) {
-        println("⚠️ ${getLocaleMessage("Error")}: ${e.message}.\n   ${getLocaleMessage("TryAgain")}!\n")
-    }
+    var errorHappened: Boolean
+    do {
+        try {
+            val indexes = input("${getLocaleMessage("EnterIndexesForMatchingWords")}:")
+                .trim()
+                .split("""\s+""".toRegex())
+                .map { it.toInt() - 1 }
+            val round = currentRound()
+            val (result, words) = choosePair(indexes)
+            val (firstWord, secondWord) = words
+            println("${getLocaleMessage("YourChoice")}:\n" +
+                    "${indexes[0] + 1}. $firstWord\n" +
+                    "${indexes[1] + 1}. $secondWord\n")
+            if (round.isFinished()) println(round.getFormattedOutput())
+            println(getFormattedResult(result))
+            errorHappened = false
+        } catch (e: NumberFormatException) {
+            println("⚠️ ${getLocaleMessage("Error")}: The input should contain numbers.\n   ${getLocaleMessage("TryAgain")}!\n")
+            errorHappened = true
+        } catch (e: IllegalArgumentException) {
+            println("⚠️ ${getLocaleMessage("Error")}: ${e.message}\n   ${getLocaleMessage("TryAgain")}!\n")
+            errorHappened = true
+        } catch (e: IndexOutOfBoundsException) {
+            println("⚠️ ${getLocaleMessage("Error")}: ${getLocaleMessage("IndexesShouldBeInTheRange")}\n   ${getLocaleMessage("TryAgain")}!\n")
+            errorHappened = true
+        }
+    } while (errorHappened)
 }
 
 fun Game.run() {
