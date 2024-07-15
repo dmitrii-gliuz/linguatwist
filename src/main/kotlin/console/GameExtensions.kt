@@ -4,11 +4,15 @@ import org.dmitriigliuz.linguatwist.core.Game
 import org.dmitriigliuz.linguatwist.core.getLocaleMessage
 
 fun Game.printCurrentRound() {
+    if (maxStringLengthsInRounds.size < currentRound().number) {
+        maxStringLengthsInRounds.add(currentRound().outputLines().maxOf { it.length })
+    }
     val progressBarLength = 20
+    val result = "🌟${getLocaleMessage("Score")}: $score  ❌${getLocaleMessage("Mistakes")}: $mistakes"
     val progressBar = buildString {
         val percents = completionPercentage()
         val progress = percents * progressBarLength / 100
-        append("🌟${getLocaleMessage("Score")}: $score\t❌${getLocaleMessage("Mistakes")}: $mistakes")
+        append(result)
         newLine()
         append("🟩".repeat(progress))
         append("⬜".repeat(progressBarLength - progress))

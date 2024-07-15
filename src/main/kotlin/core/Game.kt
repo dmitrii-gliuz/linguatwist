@@ -4,9 +4,9 @@ const val numberOfWordsInRound = 5
 const val defaultNumberOfRounds = 5
 const val recommendedVocabularySize = numberOfWordsInRound * defaultNumberOfRounds
 
-class Round(private val pairs: List<WordPair>, val number: Int) {
-    private val size = pairs.size
-    private val shuffledIndexes = (0 until size).shuffled()
+class Round(val pairs: List<WordPair>, val number: Int) {
+    val size = pairs.size
+    val shuffledIndexes = (0 until size).shuffled()
     var guessedPairs = 0
     var mistakes = 0
     private val turns = mutableListOf<List<Int>>()
@@ -57,21 +57,6 @@ class Round(private val pairs: List<WordPair>, val number: Int) {
             mistakes++
             false
         }, getTwoWordsByIndexes(indexes))
-    }
-
-    override fun toString() = buildString {
-        val maxLength = pairs.maxOf { it.originalWord.length } + 3
-        for (n in 1..size) {
-            val index = n - 1
-            val leftPair = pairs[index]
-            val rightPair = pairs[shuffledIndexes[index]]
-            val firstWordOutput = leftPair.originalWordStrikethroughIfGuessed()
-            val secondWordOutput = rightPair.translationStrikethroughIfGuessed()
-            val numberOfSpaces = maxLength - leftPair.originalWordLength()
-            val spaces = " ".repeat(numberOfSpaces)
-            append("$n. $firstWordOutput$spaces$n. $secondWordOutput")
-            append("\n")
-        }
     }
 }
 

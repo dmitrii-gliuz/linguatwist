@@ -9,6 +9,8 @@ const val skipCommand = "skip"
 
 val bye = "👋 ${getLocaleMessage("Bye")}"
 
+val maxStringLengthsInRounds = mutableListOf<Int>()
+
 fun exit(messageText: String = "") {
     if (messageText.isNotEmpty()) println("⛔️ ${getLocaleMessage("Error")} $messageText")
     println(bye)
@@ -32,26 +34,6 @@ fun setNumberOfRounds(vocabulary: Vocabulary): Int {
     } else defaultNumberOfRounds
     return input("${getLocaleMessage("EnterTheNumberOfRounds")} (${getLocaleMessage("Default")}: $defaultValue):")
         .toIntOrNull() ?: defaultValue
-}
-
-fun Round.getFormattedOutput() = buildString {
-    val horizontalLine = buildString {
-    append("=".repeat(35))
-    newLine()
-}
-    val roundProgressEmoji = when (this@getFormattedOutput.guessedPairs) {
-        0 -> "🔵" // Beginning of the round
-        1 -> "🟢" // Early stage of the round
-        2 -> "🟡" // Middle stage of the round
-        3 -> "🟠" // Late stage of the round
-        else -> "🔴" // End of the round
-    }
-    append("$roundProgressEmoji ${getLocaleMessage("Round")} ${this@getFormattedOutput.number}")
-    if (this@getFormattedOutput.mistakes > 0) append(" (${getLocaleMessage("Mistakes")}: ${this@getFormattedOutput.mistakes})")
-    newLine()
-    append(horizontalLine)
-    append(this@getFormattedOutput.toString())
-    append(horizontalLine)
 }
 
 fun getFormattedResult(result: Boolean) = buildString {
