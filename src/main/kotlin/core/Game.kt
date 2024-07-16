@@ -37,7 +37,7 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
     private val startedAt = Instant.now()
 
 
-    fun getDuration(): Duration {
+    private fun getDuration(): Duration {
         val finishedAt = Instant.now()
         return Duration.between(startedAt, finishedAt)
     }

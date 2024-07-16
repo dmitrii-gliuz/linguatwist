@@ -30,7 +30,7 @@ fun setNumberOfRounds(vocabulary: Vocabulary): Int {
     }
     val defaultValue = if (vocabulary.size < recommendedVocabularySize) {
         println("⚠️ ${getLocaleMessage("Warning")}: ${getLocaleMessage("TheVocabularyIsSmall")}")
-        vocabulary.optimalNumberOfRounds
+        vocabulary.numberOfRoundsToCoverAllWords
     } else defaultNumberOfRounds
     return input("${getLocaleMessage("EnterTheNumberOfRounds")} (${getLocaleMessage("Default")}: $defaultValue):")
         .toIntOrNull() ?: defaultValue
@@ -52,7 +52,8 @@ fun printGreetings(vocabularyPath: String) = println("""🚀 ${getLocaleMessage(
 📚 ${getLocaleMessage("LoadingVocabularyFile")}: $vocabularyPath...""")
 
 
-fun Vocabulary.printNumberOfLoadedWords() = println("✅ ${getLocaleMessage("TheNumberOfLoadedWords")}: $size.\n")
+fun Vocabulary.printNumberOfLoadedWords() = println("✅ ${getLocaleMessage("TheNumberOfLoadedWords")}: $size.\n" +
+        "🔤 ${getLocaleMessage("TheNumberOfRoundsToCoverAllWords")}: $numberOfRoundsToCoverAllWords.\n")
 
 fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
     while (true) {
