@@ -67,5 +67,7 @@ fun Game.run() {
         "🎉 ${getLocaleMessage("CongratulationsYouFinished")}"
     })
     val (percent, score) = percentageAndVerbalScore()
-    println("🎯 ${getLocaleMessage("YourResult")}: $percent%\n${score.emoji} ${getLocaleMessage(score.description)} ${score.emoji}\n")
+    println("🎯 ${getLocaleMessage("YourResult")}: $percent%\n${score.emoji} ${getLocaleMessage(score.description)} ${score.emoji}")
+    val spentTime = getSpentTime()
+    println("⏱ ${getLocaleMessage("CompletionTime")}: $spentTime\n")
 }
