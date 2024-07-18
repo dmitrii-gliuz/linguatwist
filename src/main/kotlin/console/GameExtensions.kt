@@ -1,14 +1,14 @@
 package org.dmitriigliuz.linguatwist.console
 
 import org.dmitriigliuz.linguatwist.core.Game
-import org.dmitriigliuz.linguatwist.core.getLocaleMessage
+import org.dmitriigliuz.linguatwist.core.localeString
 
-fun Game.printCurrentRound() {
-    if (maxStringLengthsInRounds.size < currentRound().number) {
-        maxStringLengthsInRounds.add(currentRound().outputLines().maxOf { it.length })
+fun Game.printCurrentRoundAndGameState() {
+    if (maxStringLengthsInRounds.size < currentRound.number) {
+        maxStringLengthsInRounds.add(currentRound.outputLines().maxOf { it.length })
     }
     val progressBarLength = 20
-    val result = "🌟${getLocaleMessage("Score")}: $score  ❌${getLocaleMessage("Mistakes")}: $mistakes"
+    val result = "🌟${localeString("Score")}: $score  ❌${localeString("Mistakes")}: $mistakes"
     val progressBar = buildString {
         val percents = completionPercentage()
         val progress = percents * progressBarLength / 100
@@ -21,7 +21,7 @@ fun Game.printCurrentRound() {
         append("%")
         newLine()
     }
-    println(currentRound().getFormattedOutput())
+    println(currentRound.card())
     println(progressBar)
 }
 
@@ -29,45 +29,49 @@ fun Game.enterIndexesAndPrintResult() {
     var errorHappened: Boolean
     do {
         try {
-            val indexes = input("${getLocaleMessage("EnterIndexesForMatchingWords")}:")
+            val indexes = input("${localeString("EnterIndexesForMatchingWords")}:")
                 .trim()
                 .split("""\s+""".toRegex())
                 .map { it.toInt() - 1 }
-            val round = currentRound()
+//            val round = currentRound
             val (result, words) = choosePair(indexes)
             val (firstWord, secondWord) = words
-            println("${getLocaleMessage("YourChoice")}:\n" +
+            println("${localeString("YourChoice")}:\n" +
                     "${indexes[0] + 1}. $firstWord\n" +
                     "${indexes[1] + 1}. $secondWord\n")
-            if (round.isFinished()) println(round.getFormattedOutput())
+            if (currentRound.isFinished()) println(currentRound.card())
             println(getFormattedResult(result))
             errorHappened = false
         } catch (e: NumberFormatException) {
-            println("⚠️ ${getLocaleMessage("Error")}: The input should contain numbers.\n   ${getLocaleMessage("TryAgain")}!\n")
+            println("⚠️ ${localeString("Error")}: The input should contain numbers.\n   ${localeString("TryAgain")}!\n")
             errorHappened = true
         } catch (e: IllegalArgumentException) {
-            println("⚠️ ${getLocaleMessage("Error")}: ${e.message}\n   ${getLocaleMessage("TryAgain")}!\n")
+            println("⚠️ ${localeString("Error")}: ${e.message}\n   ${localeString("TryAgain")}!\n")
             errorHappened = true
         } catch (e: IndexOutOfBoundsException) {
-            println("⚠️ ${getLocaleMessage("Error")}: ${getLocaleMessage("IndexesShouldBeInTheRange")}\n   ${getLocaleMessage("TryAgain")}!\n")
+            println(
+                "⚠️ ${localeString("Error")}: ${localeString("IndexesShouldBeInTheRange")}\n   ${localeString("TryAgain")}!\n")
             errorHappened = true
         }
     } while (errorHappened)
 }
 
+
+
 fun Game.run() {
+    maxStringLengthsInRounds.clear()
     while (!isFinished()) {
-        printCurrentRound()
+        printCurrentRoundAndGameState()
         enterIndexesAndPrintResult()
     }
-    printCurrentRound()
+    printCurrentRoundAndGameState()
     println(if (isFailed) {
-        "😢 ${getLocaleMessage("SorryYouFailed")}"
+        "😢 ${localeString("SorryYouFailed")}"
     } else {
-        "🎉 ${getLocaleMessage("CongratulationsYouFinished")}"
+        "🎉 ${localeString("CongratulationsYouFinished")}"
     })
     val (percent, score) = percentageAndVerbalScore()
-    println("🎯 ${getLocaleMessage("YourResult")}: $percent%\n${score.emoji} ${getLocaleMessage(score.description)} ${score.emoji}")
+    println("🎯 ${localeString("YourResult")}: $percent%\n${score.emoji} ${localeString(score.description)} ${score.emoji}")
     val spentTime = getSpentTime()
-    println("⏱ ${getLocaleMessage("CompletionTime")}: $spentTime\n")
+    println("⏱ ${localeString("CompletionTime")}: $spentTime\n")
 }

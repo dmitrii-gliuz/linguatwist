@@ -7,12 +7,12 @@ import kotlin.system.exitProcess
 const val exitCommand = "exit"
 const val skipCommand = "skip"
 
-val bye = "👋 ${getLocaleMessage("Bye")}"
+val bye = "👋 ${localeString("Bye")}"
 
 val maxStringLengthsInRounds = mutableListOf<Int>()
 
 fun exit(messageText: String = "") {
-    if (messageText.isNotEmpty()) println("⛔️ ${getLocaleMessage("Error")} $messageText")
+    if (messageText.isNotEmpty()) println("⛔️ ${localeString("Error")}: $messageText.")
     println(bye)
     exitProcess(0)
 }
@@ -24,36 +24,55 @@ fun input(messageText: String): String {
     return userInput
 }
 
-fun setNumberOfRounds(vocabulary: Vocabulary): Int {
-    if (vocabulary.size < numberOfWordsInRound) {
-        exit(getLocaleMessage("NotEnoughWordsToPlayTheGame"))
-    }
-    val defaultValue = if (vocabulary.size < recommendedVocabularySize) {
-        println("⚠️ ${getLocaleMessage("Warning")}: ${getLocaleMessage("TheVocabularyIsSmall")}")
-        vocabulary.numberOfRoundsToCoverAllWords
-    } else defaultNumberOfRounds
-    return input("${getLocaleMessage("EnterTheNumberOfRounds")} (${getLocaleMessage("Default")}: $defaultValue):")
-        .toIntOrNull() ?: defaultValue
+
+fun setNumberOfRounds(spreadsheet: Spreadsheet): Int {
+    val defaultValue = spreadsheet.defaultNumberOfRounds
+    return input(
+        "${localeString("EnterTheNumberOfRounds")} (${localeString("Default")}: $defaultValue):"
+    ).toIntOrNull() ?: defaultValue
 }
 
 fun getFormattedResult(result: Boolean) = buildString {
-    append(if (result) "✅ ${getLocaleMessage("Right")}!" else "❌ ${getLocaleMessage("Wrong")}!")
+    append(if (result) "✅ ${localeString("Right")}!" else "❌ ${localeString("Wrong")}!")
     newLine()
     append(if (result) "🔼 +1" else "🔽 -1")
-    append(" ${getLocaleMessage("Point")}.")
+    append(" ${localeString("Point")}.")
     newLine()
 }
 
-fun printGreetings(vocabularyPath: String) = println("""🚀 ${getLocaleMessage("Welcome")}! ${getLocaleMessage("LetsLearnWords")}!
-📖 ${getLocaleMessage("TheGameIsAboutMatchingWords")}
-🔢 ${getLocaleMessage("EnterTheIndexesOfWordsYouThinkMatch")}
-📝 ${getLocaleMessage("EnterExitToQuitAtAnyTime")}
+fun printGreetings(vocabularyPath: String) = println("""🚀 ${localeString("Welcome")}! ${localeString("LetsLearnWords")}!
+📖 ${localeString("TheGameIsAboutMatchingWords")}
+🔢 ${localeString("EnterTheIndexesOfWordsYouThinkMatch")}
+📝 ${localeString("EnterExitToQuitAtAnyTime")}
 
-📚 ${getLocaleMessage("LoadingVocabularyFile")}: $vocabularyPath...""")
+📚 ${localeString("LoadingVocabularyFile")}: $vocabularyPath...""")
 
 
-fun Vocabulary.printNumberOfLoadedWords() = println("✅ ${getLocaleMessage("TheNumberOfLoadedWords")}: $size.\n" +
-        "🔤 ${getLocaleMessage("TheNumberOfRoundsToCoverAllWords")}: $numberOfRoundsToCoverAllWords.\n")
+fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) = println(
+    buildString {
+        var warnings = false
+        fun warningIf(condition: Boolean, message: String) {
+            if (condition) {
+                warnings = true
+                append("⚠️ ${localeString("Warning")}: $message.")
+                newLine()
+            }
+        }
+        append("✅ ${localeString("TheNumberOfLoadedWords")}: ${vocabulary.size}")
+        newLine()
+        warningIf(vocabulary.size < recommendedVocabularySize, localeString("TheVocabularyIsSmall"))
+        warningIf(spreadsheet.duplicates > 0,
+            "${localeString("NumberOfDuplicates")}: ${spreadsheet.duplicates}")
+        warningIf(spreadsheet.pairsWithSameWords > 0,
+            "${localeString("NumberOfPairsWithSameWords")}: ${spreadsheet.pairsWithSameWords}")
+        if (warnings) {
+            append("🔍 ${localeString("CheckTheVocabularyFile")}.")
+            repeat(2) { newLine() }
+        }
+        append("🔤 ${localeString("TheNumberOfRoundsToCoverAllWords")}: ${spreadsheet.numberOfRoundsToCoverAllWords}.")
+        newLine()
+    }
+)
 
 fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
     while (true) {
@@ -61,10 +80,9 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
             writeScores(vocabulary)
             break
         } catch (e: Exception) {
-            val action = input("⚠️ ${getLocaleMessage("Error")}: ${e.message}.\n" +
-                    "${getLocaleMessage("EnterSkipOrExit")}:")
+            val action = input("⚠️ ${localeString("Error")}: ${e.message}.\n" +
+                    "${localeString("EnterSkipOrExit")}:")
             if (action == skipCommand) break
-
         }
     }
 }
@@ -72,28 +90,28 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
 fun playConsoleGame(vocabularyPath: String) {
     printGreetings(vocabularyPath)
     val spreadsheet: Spreadsheet
-    try {
-        spreadsheet = Spreadsheet(vocabularyPath)
+    val vocabulary = try {
+        spreadsheet= Spreadsheet(vocabularyPath)
+        spreadsheet.loadVocabulary()
     } catch (e: SpreadsheetException) {
         exit(e.message ?: "")
         throw e
     }
-    val vocabulary = spreadsheet.loadVocabulary()
-    vocabulary.printNumberOfLoadedWords()
+    printNumberOfLoadedWords(vocabulary, spreadsheet)
     var play = true
     while (play) {
         val game = try {
-            val numberOfRounds = setNumberOfRounds(vocabulary)
+            val numberOfRounds = setNumberOfRounds(spreadsheet)
             Game(vocabulary, numberOfRounds = numberOfRounds)
         } catch (e: IllegalArgumentException) {
-            println("⚠️ ${getLocaleMessage("Error")}: ${e.message}\n   ${getLocaleMessage("TryAgain")}!\n")
+            println("⚠️ ${localeString("Error")}: ${e.message}\n   ${localeString("TryAgain")}!\n")
             continue
         }
         game.run()
-        play = input("${getLocaleMessage("DoYouWantToPlayAgain")} (Y/n)").lowercase() in listOf("y", "yes", "")
+        play = input("${localeString("DoYouWantToPlayAgain")} (Y/n)").lowercase() in listOf("y", "yes", "")
         spreadsheet.writeScoresSafely(vocabulary)
-        println("📝 ${getLocaleMessage("ScoresSavedTo")} $vocabularyPath.")
-        println( "\n" + if (play) "🔄 ${getLocaleMessage("OKLetsPlayAgain")}!\n" else "🎮 ${getLocaleMessage("ThankYouForPlaying")}!\n$bye" )
+        println("📝 ${localeString("ScoresSavedTo")} $vocabularyPath.")
+        println( "\n" + if (play) "🔄 ${localeString("OKLetsPlayAgain")}!\n" else "🎮 ${localeString("ThankYouForPlaying")}!\n$bye" )
     }
     spreadsheet.close()
 }

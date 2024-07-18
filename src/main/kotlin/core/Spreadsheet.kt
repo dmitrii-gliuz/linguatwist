@@ -12,6 +12,8 @@ class SpreadsheetException(message: String, cause: Throwable? = null) : Exceptio
 class Spreadsheet(path: String) {
     private val file = File(path)
     private val workBook: XSSFWorkbook
+    var duplicates = 0
+    var pairsWithSameWords = 0
 
     init {
         try {
@@ -24,13 +26,54 @@ class Spreadsheet(path: String) {
     }
     private val sheet = workBook.getSheetAt(0)
 
+    private val wordPairs = buildList {
+        for (row in sheet) {
+            if (row.rowNum == 0) continue
+            try {
+                val (originalWord, translation) = getWordsFromTwoFirstCells(row)
+                val score = getScore(row)
+                if (this.checkIfPairAlreadyUsed(originalWord, translation)) {
+                    duplicates++
+                } else {
+                    val newPair = WordPair(originalWord, translation, score)
+                    if (this.checkIfOneOfWordsAlreadyUsed(newPair)) {
+                        pairsWithSameWords++
+                    }
+                    add(newPair)
+                }
+            } catch (e: IllegalArgumentException) {
+                continue
+            }
+        }
+        pairsWithSameWords *= 2
+    }
+
+    val numberOfRoundsToCoverAllWords: Int
+        get() {
+            if (wordPairs.size < numberOfPairsInRound) {
+                throw SpreadsheetException(localeString("NotEnoughWordsToPlayTheGame"))
+            }
+            val numberOfRoundsWithUniquePairs = wordPairs.size / numberOfPairsInRound + if (wordPairs.size % numberOfPairsInRound > 0) 1 else 0
+            var result = numberOfRoundsWithUniquePairs
+            if (pairsWithSameWords > numberOfRoundsWithUniquePairs) {
+                result += pairsWithSameWords - numberOfRoundsWithUniquePairs
+            }
+            return result
+        }
+
+    val defaultNumberOfRounds =
+        if (wordPairs.size < recommendedVocabularySize) numberOfRoundsToCoverAllWords else org.dmitriigliuz.linguatwist.core.defaultNumberOfRounds
+
     fun close() {
         workBook.close()
     }
 
     private fun getWordsFromTwoFirstCells(row: Row) = (0..1).map {
-        if (row.getCell(it) == null) throw IllegalArgumentException("The cell is empty")
-        row.getCell(it).toString().trim()
+        val errorMessage = "The cell is empty"
+        val cell = row.getCell(it) ?: throw IllegalArgumentException(errorMessage)
+        val value = cell.toString().trim()
+        if (value.isEmpty()) throw IllegalArgumentException(errorMessage)
+        value
     }
 
     private fun getScore(row: Row): Int {
@@ -43,18 +86,22 @@ class Spreadsheet(path: String) {
 
     private fun getScoreCell(row: Row): Cell = row.getCell(2) ?: row.createCell(2)
 
-    fun loadVocabulary(): Vocabulary {
-        val wordPairs = mutableListOf<WordPair>()
-        for (row in sheet) {
-            if (row.rowNum == 0) continue
-            try {
-                val (originalWord, translation) = getWordsFromTwoFirstCells(row)
-                val score = getScore(row)
-                wordPairs.add(WordPair(originalWord, translation, score))
-            } catch (e: IllegalArgumentException) {
-                continue
-            }
+    private fun validateVocabularySize(wordPairs: List<WordPair>) {
+        if (wordPairs.size < numberOfPairsInRound) {
+            throw SpreadsheetException(localeString("NotEnoughWordsToPlayTheGame"))
         }
+        val numberOfUniquePairs = wordPairs.size - pairsWithSameWords
+        val minimalNumberOfUniquePairsInRound = numberOfPairsInRound - 1
+        if (numberOfUniquePairs < minimalNumberOfUniquePairsInRound) {
+            throw SpreadsheetException(
+                "${localeString("RequiredNumberOfUniquePairs")}: $minimalNumberOfUniquePairsInRound." +
+                        " ${localeString("Found")}: $numberOfUniquePairs"
+            )
+        }
+    }
+
+    fun loadVocabulary(): Vocabulary {
+        validateVocabularySize(wordPairs)
         return Vocabulary(wordPairs)
     }
 

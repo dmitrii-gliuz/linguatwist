@@ -1,7 +1,7 @@
 package org.dmitriigliuz.linguatwist.console
 
 import org.dmitriigliuz.linguatwist.core.Round
-import org.dmitriigliuz.linguatwist.core.getLocaleMessage
+import org.dmitriigliuz.linguatwist.core.localeString
 
 fun Round.outputLines(): List<String> = buildList {
     val maxLength = pairs.maxOf { it.originalWord.length } + 3
@@ -17,10 +17,12 @@ fun Round.outputLines(): List<String> = buildList {
         }
 }
 
-fun Round.getFormattedOutput(): String {
-    val bottomCaption = if (this.mistakes > 0) "${getLocaleMessage("MistakesInRound")}: ${this.mistakes}" else ""
-    val caption = "${getLocaleMessage("Round")} ${this.number}"
+fun Round.card(): String {
+    val bottomCaption = if (this.mistakes > 0) "${localeString("MistakesInRound")}: ${this.mistakes}" else ""
+    val caption = "${localeString("Round")} ${this.number}"
     val roundOutputLines: List<String> = this.outputLines()
-    val maxLengthOfString = if (maxStringLengthsInRounds.size >= this.number) maxStringLengthsInRounds[this.number - 1] else -1
+    val maxLengthOfString = if (maxStringLengthsInRounds.size >= this.number) {
+        maxStringLengthsInRounds[this.number - 1]
+    } else -1
     return roundOutputLines.drawFrame(caption, bottomCaption, maxLengthOfString)
 }

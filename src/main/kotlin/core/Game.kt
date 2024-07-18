@@ -3,9 +3,9 @@ package org.dmitriigliuz.linguatwist.core
 import java.time.Instant
 import java.time.Duration
 
-const val numberOfWordsInRound = 5
+const val numberOfPairsInRound = 5
 const val defaultNumberOfRounds = 5
-const val recommendedVocabularySize = numberOfWordsInRound * defaultNumberOfRounds
+const val recommendedVocabularySize = numberOfPairsInRound * defaultNumberOfRounds
 
 enum class VerbalScore(val percentage: Int, val emoji: String, val description: String) {
     PERFECT(100, "🎉", "Perfect"),
@@ -24,7 +24,7 @@ enum class VerbalScore(val percentage: Int, val emoji: String, val description: 
 class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
     init {
         if (numberOfRounds !in 1..100) {
-            throw IllegalArgumentException(getLocaleMessage("NumberOfRoundsShouldBeInRange"))
+            throw IllegalArgumentException(localeString("NumberOfRoundsShouldBeInRange"))
         }
     }
     private var currentRoundNumber = 1
@@ -51,7 +51,7 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
     }
 
     fun completionPercentage(): Int {
-        val totalWords = numberOfRounds * numberOfWordsInRound
+        val totalWords = numberOfRounds * numberOfPairsInRound
         val guessedWords = rounds.sumOf { it.guessedPairs }
         return guessedWords * 100 / totalWords
     }
@@ -65,10 +65,11 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
         return Pair(percentage, verbalScore(percentage))
     }
 
-    fun currentRound() = rounds[currentRoundNumber - 1]
+    val currentRound: Round
+        get() = rounds[currentRoundNumber - 1]
 
     private fun changeRoundIfFinished() {
-        if (currentRound().isFinished() && currentRoundNumber < numberOfRounds) {
+        if (currentRound.isFinished() && currentRoundNumber < numberOfRounds) {
             currentRoundNumber++
             rounds.add(createRound())
         }
@@ -88,13 +89,13 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
     }
 
     fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
-        val resultAndChosenWords = currentRound().choosePair(indexes)
+        val resultAndChosenWords = currentRound.choosePair(indexes)
         val (result, _) = resultAndChosenWords
         processRoundOutcome(result)
         return resultAndChosenWords
     }
 
-    fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound().isFinished())
+    fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound.isFinished())
 
-    private fun createRound() = Round(vocabulary.takeGroupOfPairs(numberOfWordsInRound), currentRoundNumber)
+    private fun createRound() = Round(vocabulary.takeGroupOfPairs(numberOfPairsInRound), currentRoundNumber)
 }
