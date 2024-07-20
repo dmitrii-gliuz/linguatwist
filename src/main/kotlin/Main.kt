@@ -1,6 +1,6 @@
 package org.dmitriigliuz.linguatwist
 
-import org.dmitriigliuz.linguatwist.console.playConsoleGame
+import org.dmitriigliuz.linguatwist.console.main
 import org.dmitriigliuz.linguatwist.core.getResourceBundle
 import org.dmitriigliuz.linguatwist.core.resourceBundle
 
@@ -24,9 +24,11 @@ enum class Arguments(private val long: String, private val short: String, privat
     }
 }
 
+lateinit var vocabularyPath: String
+
 fun main(args: Array<String>) {
-    val vocabularyPath = Arguments.VOCABULARY.getValue(args)
+    vocabularyPath = Arguments.VOCABULARY.getValue(args)
     val languageTag = Arguments.LANGUAGE.getValue(args)
     resourceBundle = getResourceBundle(languageTag)
-    playConsoleGame(vocabularyPath)
+    main()
 }

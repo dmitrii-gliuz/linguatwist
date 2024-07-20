@@ -1,6 +1,7 @@
 package org.dmitriigliuz.linguatwist.console
 
 import org.dmitriigliuz.linguatwist.core.*
+import org.dmitriigliuz.linguatwist.vocabularyPath
 import kotlin.system.exitProcess
 
 
@@ -11,7 +12,7 @@ val bye = "👋 ${localeString("Bye")}"
 
 val maxStringLengthsInRounds = mutableListOf<Int>()
 
-fun exit(messageText: String = "") {
+fun exitGame(messageText: String = "") {
     if (messageText.isNotEmpty()) println("⛔️ ${localeString("Error")}: $messageText.")
     println(bye)
     exitProcess(0)
@@ -20,7 +21,7 @@ fun exit(messageText: String = "") {
 fun input(messageText: String): String {
     print("👉 $messageText ")
     val userInput = readln().trim()
-    if (userInput == exitCommand) exit()
+    if (userInput == exitCommand) exitGame()
     return userInput
 }
 
@@ -40,12 +41,11 @@ fun getFormattedResult(result: Boolean) = buildString {
     newLine()
 }
 
-fun printGreetings(vocabularyPath: String) = println("""🚀 ${localeString("Welcome")}! ${localeString("LetsLearnWords")}!
+fun printGreetings() = println("""🚀 ${localeString("Welcome")}! ${localeString("LetsLearnWords")}!
 📖 ${localeString("TheGameIsAboutMatchingWords")}
 🔢 ${localeString("EnterTheIndexesOfWordsYouThinkMatch")}
 📝 ${localeString("EnterExitToQuitAtAnyTime")}
-
-📚 ${localeString("LoadingVocabularyFile")}: $vocabularyPath...""")
+""")
 
 
 fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) = println(
@@ -87,14 +87,14 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
     }
 }
 
-fun playConsoleGame(vocabularyPath: String) {
-    printGreetings(vocabularyPath)
+fun startGame() {
+    println("\uD83D\uDCDA ${localeString("LoadingVocabularyFile")}: $vocabularyPath...")
     val spreadsheet: Spreadsheet
     val vocabulary = try {
         spreadsheet= Spreadsheet(vocabularyPath)
         spreadsheet.loadVocabulary()
     } catch (e: SpreadsheetException) {
-        exit(e.message ?: "")
+        exitGame(e.message ?: "")
         throw e
     }
     printNumberOfLoadedWords(vocabulary, spreadsheet)
@@ -111,7 +111,25 @@ fun playConsoleGame(vocabularyPath: String) {
         play = input("${localeString("DoYouWantToPlayAgain")} (Y/n)").lowercase() in listOf("y", "yes", "")
         spreadsheet.writeScoresSafely(vocabulary)
         println("📝 ${localeString("ScoresSavedTo")} $vocabularyPath.")
-        println( "\n" + if (play) "🔄 ${localeString("OKLetsPlayAgain")}!\n" else "🎮 ${localeString("ThankYouForPlaying")}!\n$bye" )
+        println( "\n" + if (play) "🔄 ${localeString("OKLetsPlayAgain")}!\n" else "🎮 ${localeString("ThankYouForPlaying")}!" )
     }
     spreadsheet.close()
+}
+
+val ascii_logo = """
+╭───────────────────────────────────────────────────────────────────────────────────────╮
+│ ██      ██ ███    ██  ██████  ██    ██  █████  ████████ ██     ██ ██ ███████ ████████ │
+│ ██      ██ ████   ██ ██       ██    ██ ██   ██    ██    ██     ██ ██ ██         ██    │
+│ ██      ██ ██ ██  ██ ██   ███ ██    ██ ███████    ██    ██  █  ██ ██ ███████    ██    │
+│ ██      ██ ██  ██ ██ ██    ██ ██    ██ ██   ██    ██    ██ ███ ██ ██      ██    ██    │
+│ ███████ ██ ██   ████  ██████   ██████  ██   ██    ██     ███ ███  ██ ███████    ██    │
+╰───────────────────────────────────────────────────────────────────────────────────────╯   
+
+""".trimMargin()
+
+
+fun main() {
+    println(ascii_logo)
+    printGreetings()
+    Menu.navigate()
 }
