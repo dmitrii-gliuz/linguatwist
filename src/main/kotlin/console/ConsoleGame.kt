@@ -74,19 +74,6 @@ fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) =
     }
 )
 
-fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary) {
-    while (true) {
-        try {
-            writeScores(vocabulary)
-            break
-        } catch (e: Exception) {
-            val action = input("⚠️ ${localeString("Error")}: ${e.message}.\n" +
-                    "${localeString("EnterSkipOrExit")}:")
-            if (action == skipCommand) break
-        }
-    }
-}
-
 fun startGame() {
     println("\uD83D\uDCDA ${localeString("LoadingVocabularyFile")}: $vocabularyPath...")
     val spreadsheet: Spreadsheet

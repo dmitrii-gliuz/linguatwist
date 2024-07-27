@@ -3,26 +3,25 @@ package org.dmitriigliuz.linguatwist.console
 import org.dmitriigliuz.linguatwist.core.Game
 import org.dmitriigliuz.linguatwist.core.localeString
 
-fun Game.printCurrentRoundAndGameState() {
-    if (maxStringLengthsInRounds.size < currentRound.number) {
-        maxStringLengthsInRounds.add(currentRound.outputLines().maxOf { it.length })
-    }
-    val progressBarLength = 20
-    val result = "🌟${localeString("Score")}: $score  ❌${localeString("Mistakes")}: $mistakes"
-    val progressBar = buildString {
-        val percents = completionPercentage()
-        val progress = percents * progressBarLength / 100
-        append(result)
-        newLine()
+fun Game.progressBar(progressBarLength: Int): String {
+    val percents = completionPercentage()
+    if (percents !in 0..100) throw IllegalArgumentException("The percentage should be in the range from 0 to 100.")
+    val progress = percents * progressBarLength / 100
+    return buildString {
         append("🟩".repeat(progress))
         append("⬜".repeat(progressBarLength - progress))
         append(" ")
         append(percents)
         append("%")
-        newLine()
+    }
+}
+
+fun Game.printCurrentRoundAndGameState() {
+    if (maxStringLengthsInRounds.size < currentRound.number) {
+        maxStringLengthsInRounds.add(currentRound.outputLines().maxOf { it.length })
     }
     println(currentRound.card())
-    println(progressBar)
+    println(progressBar(20))
 }
 
 fun Game.enterIndexesAndPrintResult() {
