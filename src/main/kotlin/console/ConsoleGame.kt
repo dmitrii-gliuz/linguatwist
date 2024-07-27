@@ -7,9 +7,7 @@ import kotlin.system.exitProcess
 
 const val exitCommand = "exit"
 const val skipCommand = "skip"
-
 val bye = "👋 ${localeString("Bye")}"
-
 val maxStringLengthsInRounds = mutableListOf<Int>()
 
 fun exitGame(messageText: String = "") {
@@ -78,7 +76,7 @@ fun startGame() {
     println("\uD83D\uDCDA ${localeString("LoadingVocabularyFile")}: $vocabularyPath...")
     val spreadsheet: Spreadsheet
     val vocabulary = try {
-        spreadsheet= Spreadsheet(vocabularyPath)
+        spreadsheet = Spreadsheet(vocabularyPath)
         spreadsheet.loadVocabulary()
     } catch (e: SpreadsheetException) {
         exitGame(e.message ?: "")

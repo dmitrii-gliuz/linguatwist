@@ -10,7 +10,7 @@ fun Game.progressBar(progressBarLength: Int): String {
     return buildString {
         append("🟩".repeat(progress))
         append("⬜".repeat(progressBarLength - progress))
-        append(" ")
+        space()
         append(percents)
         append("%")
     }
@@ -32,7 +32,6 @@ fun Game.enterIndexesAndPrintResult() {
                 .trim()
                 .split("""\s+""".toRegex())
                 .map { it.toInt() - 1 }
-//            val round = currentRound
             val (result, words) = choosePair(indexes)
             val (firstWord, secondWord) = words
             println("${localeString("YourChoice")}:\n" +

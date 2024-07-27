@@ -32,7 +32,7 @@ class Spreadsheet(path: String) {
             try {
                 val (originalWord, translation) = getWordsFromTwoFirstCells(row)
                 val score = getScore(row)
-                if (this.checkIfPairAlreadyUsed(originalWord, translation)) {
+                if (this.checkIfPairWasUsed(originalWord, translation)) {
                     duplicates++
                 } else {
                     val newPair = WordPair(originalWord, translation, score)
@@ -62,7 +62,9 @@ class Spreadsheet(path: String) {
         }
 
     val defaultNumberOfRounds =
-        if (wordPairs.size < recommendedVocabularySize) numberOfRoundsToCoverAllWords else org.dmitriigliuz.linguatwist.core.defaultNumberOfRounds
+        if (wordPairs.size < recommendedVocabularySize) {
+            numberOfRoundsToCoverAllWords
+        } else org.dmitriigliuz.linguatwist.core.defaultNumberOfRounds
 
     fun close() {
         workBook.close()
@@ -76,13 +78,11 @@ class Spreadsheet(path: String) {
         value
     }
 
-    private fun getScore(row: Row): Int {
-        return try {
+    private fun getScore(row: Row)= try {
             getScoreCell(row).numericCellValue.toInt()
         } catch (e: IllegalStateException) {
             0
         }
-    }
 
     private fun getScoreCell(row: Row): Cell = row.getCell(2) ?: row.createCell(2)
 

@@ -16,7 +16,7 @@ data class WordPair(val originalWord: String, val translation: String, var score
     }
 }
 
-fun List<WordPair>.checkIfPairAlreadyUsed(original: String, translation: String): Boolean {
+fun List<WordPair>.checkIfPairWasUsed(original: String, translation: String): Boolean {
     return this.any { it.originalWord.isSame(original) && it.translation.isSame(translation) }
 }
 
@@ -26,5 +26,5 @@ fun List<WordPair>.checkIfOneOfWordsAlreadyUsed(anotherWordPair: WordPair): Bool
             return true
         }
     }
-return false
+    return false
 }

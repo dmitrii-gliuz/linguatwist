@@ -29,7 +29,6 @@ object Menu {
         val itemName = items.keys.elementAt(index - 1)
         val item = items[itemName] ?: return
         item.invoke()
-
     }
 
     fun navigate() {

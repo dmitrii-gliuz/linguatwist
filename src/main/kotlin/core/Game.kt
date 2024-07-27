@@ -35,6 +35,8 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
     private var answersAmount = 0
     private var rightAnswersAmount = 0
     private val startedAt = Instant.now()
+    val currentRound: Round
+        get() = rounds[currentRoundNumber - 1]
 
 
     private fun getDuration(): Duration {
@@ -42,13 +44,9 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
         return Duration.between(startedAt, finishedAt)
     }
 
-    fun getSpentTime(): String {
-        val duration = getDuration()
-        val hours = duration.toHours()
-        val minutes = duration.toMinutes() % 60
-        val seconds = duration.seconds % 60
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    }
+    fun getSpentTime() = getDuration().run {
+            String.format("%02d:%02d:%02d", toHours(), toMinutes() % 60, seconds % 60)
+        }
 
     fun completionPercentage(): Int {
         val totalWords = numberOfRounds * numberOfPairsInRound
@@ -60,13 +58,9 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
 
     private fun verbalScore(percentage: Int) = VerbalScore.entries.first { it.percentage <= percentage }
 
-    fun percentageAndVerbalScore(): Pair<Int, VerbalScore> {
-        val percentage = rightAnswersPercentage()
-        return Pair(percentage, verbalScore(percentage))
+    fun percentageAndVerbalScore() = rightAnswersPercentage().run {
+        Pair(this, verbalScore(this))
     }
-
-    val currentRound: Round
-        get() = rounds[currentRoundNumber - 1]
 
     private fun changeRoundIfFinished() {
         if (currentRound.isFinished() && currentRoundNumber < numberOfRounds) {

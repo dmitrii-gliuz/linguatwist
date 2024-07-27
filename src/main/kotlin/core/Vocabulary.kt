@@ -13,10 +13,10 @@ class Vocabulary(val wordPairs: List<WordPair>) {
             if (seen.size + newGroup.size == wordPairs.size) {
                 throw IllegalStateException("All words are used")
             }
-            if (unusedPairs.size < numberOfPairs) {
-                unusedPairs.clear()
-                unusedPairs.addAll(getShuffledPairsSortedByScore().filter { !seen.contains(it) && !newGroup.contains(it) })
-                unusedPairs.forEach { it.guessed = false }
+            if (unusedPairs.size < numberOfPairs) with (unusedPairs) {
+                clear()
+                addAll(getShuffledPairsSortedByScore().filter { !seen.contains(it) && !newGroup.contains(it) })
+                forEach { it.guessed = false }
             }
             val wordPair = unusedPairs.removeFirst()
             if (seen.contains(wordPair) || newGroup.contains(wordPair)) continue
