@@ -25,6 +25,10 @@ fun input(messageText: String): String {
     return userInput
 }
 
+fun inputIndexes() = input("${localeString("EnterIndexesForMatchingWords")}:")
+                .trim()
+                .split("""\s+""".toRegex())
+                .map { it.toInt() - 1 }
 
 fun setNumberOfRounds(spreadsheet: Spreadsheet): Int {
     val defaultValue = spreadsheet.defaultNumberOfRounds
@@ -74,6 +78,13 @@ fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) =
     }
 )
 
+fun printError(e: Exception, customText: String = "") {
+    val message = customText.ifEmpty { e.message }
+    println(
+        "⚠️ ${localeString("Error")}: ${message}.\n   ${localeString("TryAgain")}!\n"
+    )
+}
+
 fun startGame() {
     println("\uD83D\uDCDA ${localeString("LoadingVocabularyFile")}: $vocabularyPath...")
     val spreadsheet: Spreadsheet
@@ -91,7 +102,7 @@ fun startGame() {
             val numberOfRounds = setNumberOfRounds(spreadsheet)
             Game(vocabulary, numberOfRounds = numberOfRounds)
         } catch (e: IllegalArgumentException) {
-            println("⚠️ ${localeString("Error")}: ${e.message}\n   ${localeString("TryAgain")}!\n")
+            printError(e)
             continue
         }
         game.run()
