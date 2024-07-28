@@ -10,7 +10,7 @@ fun Game.progressBar(progressBarLength: Int): String {
     return buildString {
         append("🟩".repeat(progress))
         append("⬜".repeat(progressBarLength - progress))
-        space()
+        append(" ")
         append(percents)
         append("%")
     }
@@ -21,40 +21,39 @@ fun Game.printCurrentRoundAndGameState() {
         maxStringLengthsInRounds.add(currentRound.outputLines().maxOf { it.length })
     }
     println(currentRound.card())
+    println("🌟${localeString("Score")}: $score  ❌${localeString("Mistakes")}: $mistakes")
     println(progressBar(20))
 }
 
 fun Game.enterIndexesAndPrintResult() {
-    var errorHappened: Boolean
-    do {
-        try {
-            val indexes = input("${localeString("EnterIndexesForMatchingWords")}:")
-                .trim()
-                .split("""\s+""".toRegex())
-                .map { it.toInt() - 1 }
-            val (result, words) = choosePair(indexes)
-            val (firstWord, secondWord) = words
-            println("${localeString("YourChoice")}:\n" +
-                    "${indexes[0] + 1}. $firstWord\n" +
-                    "${indexes[1] + 1}. $secondWord\n")
-            if (currentRound.isFinished()) println(currentRound.card())
-            println(getFormattedResult(result))
-            errorHappened = false
+    var finished = false
+    while (!finished) {
+        val indexes = try {
+            inputIndexes()
         } catch (e: NumberFormatException) {
-            println("⚠️ ${localeString("Error")}: The input should contain numbers.\n   ${localeString("TryAgain")}!\n")
-            errorHappened = true
-        } catch (e: IllegalArgumentException) {
-            println("⚠️ ${localeString("Error")}: ${e.message}\n   ${localeString("TryAgain")}!\n")
-            errorHappened = true
-        } catch (e: IndexOutOfBoundsException) {
-            println(
-                "⚠️ ${localeString("Error")}: ${localeString("IndexesShouldBeInTheRange")}\n   ${localeString("TryAgain")}!\n")
-            errorHappened = true
+            printError(e, localeString("InputShouldContainOnlyTwoNumbers"))
+            continue
         }
-    } while (errorHappened)
+        val (result, words) = try {
+            choosePair(indexes)
+        } catch (e: IllegalArgumentException) {
+            printError(e)
+            continue
+        }
+        val (first, second) = words
+        println(buildString {
+            append("${localeString("YourChoice")}:\n")
+            append("${indexes[0] + 1}. $first\n")
+            append("${indexes[1] + 1}. $second\n")
+            if (currentRound.isFinished()) {
+                append(currentRound.card())
+                newLine()
+            }
+            append(getFormattedResult(result))
+        })
+        finished = true
+    }
 }
-
-
 
 fun Game.run() {
     maxStringLengthsInRounds.clear()

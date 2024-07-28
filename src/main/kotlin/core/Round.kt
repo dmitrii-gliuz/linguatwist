@@ -24,7 +24,7 @@ class Round(val pairs: List<WordPair>, val number: Int) {
             throw IllegalArgumentException(localeString("YouShouldEnterTwoIndexes"))
         } else if (indexes.any { it !in 0 until size }) {
             throw IllegalArgumentException("${localeString("IndexesShouldBeInTheRange")} $size")
-        } else if (turns.contains(indexes)) {
+        }else if (turns.contains(indexes)) {
             throw IllegalArgumentException(localeString("ThisPairOfIndexesHasAlreadyBeenUsed"))
         }
         val pairInFirstColumn = pairs[indexes[0]]
