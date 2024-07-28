@@ -7,45 +7,41 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 
-class SpreadsheetException(message: String, cause: Throwable? = null) : Exception(message, cause)
+lateinit var spreadsheetPath: String
+
+class SpreadsheetException(message: String?, cause: Throwable? = null) : Exception(message, cause)
 
 class Spreadsheet(path: String) {
     private val file = File(path)
-    private val workBook: XSSFWorkbook
+    private val workBook: XSSFWorkbook = try {
+        FileInputStream(file).use { XSSFWorkbook(it) }
+    } catch (e: Exception) {
+        throw SpreadsheetException(e.message, e)
+    }
     var duplicates = 0
     var pairsWithSameWords = 0
-
-    init {
-        try {
-            FileInputStream(file).use {
-                workBook = XSSFWorkbook(it)
-            }
-        } catch (e: Exception) {
-            throw SpreadsheetException(e.message ?: "unexpected error", e)
-        }
-    }
+    private var isClosed = false
     private val sheet = workBook.getSheetAt(0)
 
     private val wordPairs = buildList {
         for (row in sheet) {
             if (row.rowNum == 0) continue
-            try {
+            val newPair = try {
                 val (originalWord, translation) = getWordsFromTwoFirstCells(row)
-                val score = getScore(row)
-                if (this.checkIfPairWasUsed(originalWord, translation)) {
+                if (alreadyContains(originalWord, translation)) {
                     duplicates++
+                    continue
                 } else {
-                    val newPair = WordPair(originalWord, translation, score)
-                    if (this.checkIfOneOfWordsAlreadyUsed(newPair)) {
-                        pairsWithSameWords++
+                    val score = getScore(row)
+                    WordPair(originalWord, translation, score).also {
+                        if (alreadyContainsOneOfWords(it)) pairsWithSameWords += 2
                     }
-                    add(newPair)
                 }
             } catch (e: IllegalArgumentException) {
                 continue
             }
+            add(newPair)
         }
-        pairsWithSameWords *= 2
     }
 
     val numberOfRoundsToCoverAllWords: Int
@@ -66,9 +62,7 @@ class Spreadsheet(path: String) {
             numberOfRoundsToCoverAllWords
         } else org.dmitriigliuz.linguatwist.core.defaultNumberOfRounds
 
-    fun close() {
-        workBook.close()
-    }
+    fun close() { if (!isClosed) workBook.close().also { isClosed = true } }
 
     private fun getWordsFromTwoFirstCells(row: Row) = (0..1).map {
         val errorMessage = "The cell is empty"
@@ -78,7 +72,7 @@ class Spreadsheet(path: String) {
         value
     }
 
-    private fun getScore(row: Row)= try {
+    private fun getScore(row: Row) = try {
             getScoreCell(row).numericCellValue.toInt()
         } catch (e: IllegalStateException) {
             0
@@ -129,11 +123,9 @@ class Spreadsheet(path: String) {
             }
         }
         try {
-            FileOutputStream(file).use {
-                workBook.write(it)
-            }
+            FileOutputStream(file).use { workBook.write(it) }
         } catch (e: Exception) {
-            throw SpreadsheetException(e.message ?: "unexpected error", e)
+            throw SpreadsheetException(e.message, e)
         }
     }
 }

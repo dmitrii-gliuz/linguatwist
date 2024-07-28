@@ -1,11 +1,13 @@
 package org.dmitriigliuz.linguatwist
 
-import org.dmitriigliuz.linguatwist.console.main
+import org.dmitriigliuz.linguatwist.console.consoleGame
 import org.dmitriigliuz.linguatwist.core.getResourceBundle
 import org.dmitriigliuz.linguatwist.core.resourceBundle
+import org.dmitriigliuz.linguatwist.core.spreadsheetPath
+
 
 enum class Arguments(private val long: String, private val short: String, private val defaultValue: String) {
-    VOCABULARY("--vocabulary", "-v", "vocabulary.xlsx"),
+    SPREADSHEET("--spreadsheet", "-s", "vocabulary.xlsx"),
     LANGUAGE("--language", "-l", "en");
 
     fun getValue(args: Array<String>): String {
@@ -24,11 +26,9 @@ enum class Arguments(private val long: String, private val short: String, privat
     }
 }
 
-lateinit var vocabularyPath: String
 
 fun main(args: Array<String>) {
-    vocabularyPath = Arguments.VOCABULARY.getValue(args)
-    val languageTag = Arguments.LANGUAGE.getValue(args)
-    resourceBundle = getResourceBundle(languageTag)
-    main()
+    spreadsheetPath = Arguments.SPREADSHEET.getValue(args)
+    Arguments.LANGUAGE.getValue(args).let { resourceBundle = getResourceBundle(it) }
+    consoleGame()
 }
