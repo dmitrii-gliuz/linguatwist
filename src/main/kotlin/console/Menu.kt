@@ -4,20 +4,19 @@ import org.dmitriigliuz.linguatwist.core.localeString
 
 object Menu {
     private val items = mapOf(
-        "Start the game" to ::startGame,
-        "Exit" to ::exitGameWrapper
+        localeString("StartTheGame") to ::startGame,
+        localeString("Exit") to ::exitGameWrapper
     )
 
-    private fun show() {
-        val keys = items.keys.mapIndexed { index, line -> "${index + 1}. $line" }
-        println(keys.drawFrame(caption = "Main menu"))
-    }
+    private fun show() = println(
+        items.keys.mapIndexed { index, line -> "${index + 1}. $line" }.drawFrame(caption = localeString("MainMenu"))
+    )
 
     private fun inputIndex(): Int {
         while (true) {
-            val index = input("${localeString("EnterTheNumber")}:").toIntOrNull()
+            val index = input("${localeString("EnterMenuItemNumber")}:").toIntOrNull()
             if (index != null && index in 1..items.size) return index
-            println("⚠️ ${localeString("Error")}: ${localeString("EnterTheCorrectNumber")}.")
+            printError(text = localeString("IncorrectNumberOfMenuItem"))
         }
     }
 
@@ -34,8 +33,7 @@ object Menu {
     fun navigate() {
         while (true) {
             show()
-            val index = inputIndex()
-            selectItem(index)
+            selectItem(inputIndex())
         }
     }
 }

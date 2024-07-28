@@ -4,8 +4,9 @@ import java.time.Instant
 import java.time.Duration
 
 const val numberOfPairsInRound = 5
-const val defaultNumberOfRounds = 5
+const val defaultNumberOfRounds = 10
 const val recommendedVocabularySize = numberOfPairsInRound * defaultNumberOfRounds
+const val maxNumberOfRounds = 100
 
 enum class VerbalScore(val percentage: Int, val emoji: String, val description: String) {
     PERFECT(100, "🎉", "Perfect"),
@@ -23,7 +24,7 @@ enum class VerbalScore(val percentage: Int, val emoji: String, val description: 
 
 class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int = defaultNumberOfRounds) {
     init {
-        if (numberOfRounds !in 1..100) {
+        if (numberOfRounds !in 1..maxNumberOfRounds) {
             throw IllegalArgumentException(localeString("NumberOfRoundsShouldBeInRange"))
         }
     }
@@ -38,15 +39,12 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
     val currentRound: Round
         get() = rounds[currentRoundNumber - 1]
 
-
     private fun getDuration(): Duration {
         val finishedAt = Instant.now()
         return Duration.between(startedAt, finishedAt)
     }
 
-    fun getSpentTime() = getDuration().run {
-            String.format("%02d:%02d:%02d", toHours(), toMinutes() % 60, seconds % 60)
-        }
+    fun spentTime() = getDuration().run { String.format("%02d:%02d:%02d", toHours(), toMinutes() % 60, seconds % 60) }
 
     fun completionPercentage(): Int {
         val totalWords = numberOfRounds * numberOfPairsInRound
@@ -58,15 +56,11 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
 
     private fun verbalScore(percentage: Int) = VerbalScore.entries.first { it.percentage <= percentage }
 
-    fun percentageAndVerbalScore() = rightAnswersPercentage().run {
-        Pair(this, verbalScore(this))
-    }
+    fun percentageAndVerbalScore() = rightAnswersPercentage().run { Pair(this, verbalScore(this)) }
 
-    private fun changeRoundIfFinished() {
-        if (currentRound.isFinished() && currentRoundNumber < numberOfRounds) {
-            currentRoundNumber++
-            rounds.add(createRound())
-        }
+    private fun changeRound() {
+        currentRoundNumber++
+        rounds.add(createRound())
     }
 
     private fun processRoundOutcome(result: Boolean) {
@@ -79,15 +73,10 @@ class Game(private val vocabulary: Vocabulary, private val numberOfRounds: Int =
             mistakes++
         }
         if (mistakes > 3) isFailed = true
-        else changeRoundIfFinished()
+        else if (currentRound.isFinished() && currentRoundNumber < numberOfRounds) changeRound()
     }
 
-    fun choosePair(indexes: List<Int>): Pair<Boolean, List<String>> {
-        val resultAndChosenWords = currentRound.choosePair(indexes)
-        val (result, _) = resultAndChosenWords
-        processRoundOutcome(result)
-        return resultAndChosenWords
-    }
+    fun choosePair(indexes: List<Int>) = currentRound.choosePair(indexes).also { processRoundOutcome(it.first) }
 
     fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound.isFinished())
 

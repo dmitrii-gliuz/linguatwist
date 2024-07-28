@@ -10,8 +10,9 @@ class Vocabulary(val wordPairs: List<WordPair>) {
         val seen = mutableListOf<WordPair>()
         val newGroup = mutableListOf<WordPair>()
         while (newGroup.size < numberOfPairs) {
+//            Just in case to prevent infinite loop
             if (seen.size + newGroup.size == wordPairs.size) {
-                throw IllegalStateException("All words are used")
+                throw IllegalStateException(localeString("AllWordsAreUsed"))
             }
             if (unusedPairs.size < numberOfPairs) with (unusedPairs) {
                 clear()
@@ -20,7 +21,7 @@ class Vocabulary(val wordPairs: List<WordPair>) {
             }
             val wordPair = unusedPairs.removeFirst()
             if (seen.contains(wordPair) || newGroup.contains(wordPair)) continue
-            if (newGroup.checkIfOneOfWordsAlreadyUsed(wordPair)) {
+            if (newGroup.alreadyContainsOneOfWords(wordPair)) {
                 seen.add(wordPair)
                 continue
             }
