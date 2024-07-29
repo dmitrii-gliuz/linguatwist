@@ -58,13 +58,15 @@ fun printGreetings() = println("""🚀 ${localeString("Welcome")}! ${localeStrin
 📝 ${localeString("EnterExitToQuitAtAnyTime")}
 """)
 
+fun warningString(warning: String) = "⚠️ ${localeString("Warning")}: $warning."
+
 
 fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) = printbs {
     var warnings = false
     fun warningIf(condition: Boolean, message: String) {
         if (condition) {
             warnings = true
-            appendLine("⚠️ ${localeString("Warning")}: $message.")
+            appendLine(warningString(message))
         }
     }
     appendLine("✅ ${localeString("TheNumberOfLoadedWords")}: ${vocabulary.size}")
@@ -119,6 +121,9 @@ fun startGame() {
 
 fun consoleGame() {
     println(ascii_logo)
+    if (!checkIfLocaleAvailable(languageTag)) {
+        println(warningString(localeString("TheLanguageIsNotAvailable")))
+    }
     printGreetings()
     Menu.navigate()
 }
