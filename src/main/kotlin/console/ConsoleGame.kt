@@ -75,6 +75,7 @@ fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) =
         "${localeString("NumberOfDuplicates")}: ${spreadsheet.duplicates}")
     warningIf(spreadsheet.pairsWithSameWords > 0,
         "${localeString("NumberOfPairsWithSameWords")}: ${spreadsheet.pairsWithSameWords}")
+    warningIf(spreadsheet.incorrectRows > 0, "${localeString("IncorrectRows")}: ${spreadsheet.incorrectRows}")
     if (warnings) {
         appendLine("🔍 ${localeString("CheckTheVocabularyFile")}.")
         newLine()

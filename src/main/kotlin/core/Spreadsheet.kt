@@ -20,6 +20,7 @@ class Spreadsheet(path: String) {
     }
     var duplicates = 0
     var pairsWithSameWords = 0
+    var incorrectRows = 0
     private var isClosed = false
     private val sheet = workBook.getSheetAt(0)
 
@@ -38,6 +39,7 @@ class Spreadsheet(path: String) {
                     }
                 }
             } catch (e: IllegalArgumentException) {
+                incorrectRows++
                 continue
             }
             add(newPair)
@@ -64,13 +66,15 @@ class Spreadsheet(path: String) {
 
     fun close() { if (!isClosed) workBook.close().also { isClosed = true } }
 
-    private fun getWordsFromTwoFirstCells(row: Row) = (0..1).map {
-        val errorMessage = "The cell is empty"
-        val cell = row.getCell(it) ?: throw IllegalArgumentException(errorMessage)
+    private fun validateCellAndGetString(cell: Cell?): String {
+        if (cell == null) throw IllegalArgumentException(localeString("CellIEmpty"))
         val value = cell.toString().trim()
-        if (value.isEmpty()) throw IllegalArgumentException(errorMessage)
-        value
+        if (value.isEmpty()) throw IllegalArgumentException(localeString("CellIEmpty"))
+        if (value.none { char -> char.isLetter() }) throw IllegalArgumentException(localeString("CellContainsNoLetters"))
+        return value
     }
+
+    private fun getWordsFromTwoFirstCells(row: Row) = (0..1).map { validateCellAndGetString(row.getCell(it)) }
 
     private fun getScore(row: Row) = try {
             getScoreCell(row).numericCellValue.toInt()
