@@ -4,15 +4,27 @@ import org.dmitriigliuz.linguatwist.core.Game
 import org.dmitriigliuz.linguatwist.core.localeString
 
 fun Game.progressBar(progressBarLength: Int): String {
-    val percents = completionPercentage().also { when (it) {
-        100 -> return "🟩".repeat(progressBarLength) + " 100%"
-        0 -> return "⬜".repeat(progressBarLength) + " 0%"
+    val square = if (useEmojis) Emojis.ProgressBar.toString() else "#"
+    val emptySquare = if (useEmojis) Emojis.ProgressBarEmpty.toString() else " "
+    val bar: String
+    val percents = completionPercentage()
+    bar = when (percents) {
+        100 -> square.repeat(progressBarLength)
+        0 -> emptySquare.repeat(progressBarLength)
         !in 0..100 -> throw IllegalArgumentException(localeString("PercentageShouldBeInRange"))
-    }}
-    val progress = percents * progressBarLength / 100
+        else -> {
+            val progress = percents * progressBarLength / 100
+            buildString { append(square.repeat(progress))
+                append(emptySquare.repeat(progressBarLength - progress))
+            }
+        }
+    }
     return buildString {
-        append("🟩".repeat(progress)).append("⬜".repeat(progressBarLength - progress)).space().
-        append(percents).append("%")
+        if (!useEmojis) append("[")
+        append(bar)
+        if (!useEmojis) append("]")
+        space()
+        append("$percents%")
     }
 }
 
@@ -31,7 +43,7 @@ fun Game.addMaxLengthOfRound() {
 
 fun Game.printCurrentRoundAndGameState() = printbs {
     appendLine(currentRound.card())
-    appendLine("🌟${localeString("Score")}: $score  ❌${localeString("Mistakes")}: $mistakes")
+    appendLine("${Emojis.ScoresSaved.withoutSpace()}${localeString("Score")}: $score  ${Emojis.Mistakes.withoutSpace()}${localeString("Mistakes")}: $mistakes")
     appendLine(progressBar(20))
 }
 
@@ -76,11 +88,17 @@ fun Game.run() {
     val spentTime = spentTime()
     printCurrentRoundAndGameState()
     println(if (isFailed) {
-        "😢 ${localeString("SorryYouFailed")}"
+        "${Emojis.Sorry}${localeString("SorryYouFailed")}"
     } else {
-        "🎉 ${localeString("CongratulationsYouFinished")}"
+        "${Emojis.Congratulations}${localeString("CongratulationsYouFinished")}"
     })
     val (percent, score) = percentageAndVerbalScore()
-    println("🎯 ${localeString("YourResult")}: $percent%\n${score.emoji} ${localeString(score.description)} ${score.emoji}")
-    println("⏱ ${localeString("CompletionTime")}: $spentTime\n")
+    val scoreOutput = if (useEmojis) {
+        "${score.emoji} ${localeString(score.description)} ${score.emoji}"
+    } else {
+        localeString(score.description)
+    }
+
+    println("${Emojis.YourResult}${localeString("YourResult")}: $percent%\n$scoreOutput")
+    println("${Emojis.CompletionTime}${localeString("CompletionTime")}: $spentTime\n")
 }

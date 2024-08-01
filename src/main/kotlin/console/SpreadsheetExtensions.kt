@@ -10,7 +10,7 @@ fun Spreadsheet.writeScoresSafely(vocabulary: Vocabulary): Boolean {
             writeScores(vocabulary)
             return true
         } catch (e: Exception) {
-            input("⚠️ ${localeString("Error")}: ${e.message}.\n${localeString("EnterSkipOrExit")}:" )
+            input("${Emojis.Warning}${localeString("Error")}: ${e.message}.\n${localeString("EnterSkipOrExit")}:" )
                 .also { if (it == skipCommand) return false }
         }
     }

@@ -22,14 +22,14 @@ lateinit var spreadsheet: Spreadsheet
 
 
 fun exitGame(messageText: String = "") {
-    if (messageText.isNotEmpty()) println("⛔️ ${localeString("Error")}: $messageText.")
-    println("👋 ${localeString("Bye")}")
+    if (messageText.isNotEmpty()) println("${Emojis.CriticalError}${localeString("Error")}: $messageText.")
+    println("${Emojis.Bye}${localeString("Bye")}")
     if (::spreadsheet.isInitialized) spreadsheet.close()
     exitProcess(0)
 }
 
 fun input(messageText: String): String {
-    print("👉 $messageText ")
+    print("${Emojis.Enter}$messageText ")
     val userInput = readln().trim()
     if (userInput == exitCommand) exitGame()
     return userInput
@@ -47,18 +47,20 @@ fun setNumberOfRounds(spreadsheet: Spreadsheet): Int {
 }
 
 fun formattedResult(result: Boolean) = buildString {
-    appendLine(if (result) "✅ ${localeString("Right")}!" else "❌ ${localeString("Wrong")}!")
-    append(if (result) "🔼 +1" else "🔽 -1")
+    appendLine(if (result) "${Emojis.Right}${localeString("Right")}!" else "${Emojis.Wrong}${localeString("Wrong")}!")
+    append(if (result) "${Emojis.Point}+1" else "${Emojis.PointMinus}-1")
     appendLine(" ${localeString("Point")}.")
 }
 
-fun printGreetings() = println("""🚀 ${localeString("Welcome")}! ${localeString("LetsLearnWords")}!
-📖 ${localeString("TheGameIsAboutMatchingWords")}
-🔢 ${localeString("EnterTheIndexesOfWordsYouThinkMatch")}
-📝 ${localeString("EnterExitToQuitAtAnyTime")}
-""")
+fun printGreetings() = println(
+    """${Emojis.Welcome}${localeString("Welcome")}! ${localeString("LetsLearnWords")}!
+${Emojis.GameRules}${localeString("TheGameIsAboutMatchingWords")}
+${Emojis.EnterIndexes}${localeString("EnterTheIndexesOfWordsYouThinkMatch")}
+${Emojis.GameDescription}${localeString("EnterExitToQuitAtAnyTime")}
+"""
+)
 
-fun warningString(warning: String) = "⚠️ ${localeString("Warning")}: $warning."
+fun warningString(warning: String) = "${Emojis.Warning}${localeString("Warning")}: $warning."
 
 
 fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) = printbs {
@@ -69,7 +71,7 @@ fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) =
             appendLine(warningString(message))
         }
     }
-    appendLine("✅ ${localeString("TheNumberOfLoadedWords")}: ${vocabulary.size}")
+    appendLine("${Emojis.Ready}${localeString("TheNumberOfLoadedWords")}: ${vocabulary.size}")
     warningIf(vocabulary.size < recommendedVocabularySize, localeString("TheVocabularyIsSmall"))
     warningIf(spreadsheet.duplicates > 0,
         "${localeString("NumberOfDuplicates")}: ${spreadsheet.duplicates}")
@@ -77,25 +79,24 @@ fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) =
         "${localeString("NumberOfPairsWithSameWords")}: ${spreadsheet.pairsWithSameWords}")
     warningIf(spreadsheet.incorrectRows > 0, "${localeString("IncorrectRows")}: ${spreadsheet.incorrectRows}")
     if (warnings) {
-        appendLine("🔍 ${localeString("CheckTheVocabularyFile")}.")
-        newLine()
+        appendLine("${Emojis.CheckVocabulary}${localeString("CheckTheVocabularyFile")}.").newLine()
     }
-    appendLine("🔤 ${localeString("TheNumberOfRoundsToCoverAllWords")}: ${spreadsheet.numberOfRoundsToCoverAllWords}.")
+    appendLine("${Emojis.NumberOfRoundsToCoverAllWords}${localeString("TheNumberOfRoundsToCoverAllWords")}: ${spreadsheet.numberOfRoundsToCoverAllWords}.")
 }
 
 fun printError(e: Exception? = null, text: String = "") {
     val message = text.ifEmpty { e?.message ?: localeString("UnexpectedError") }
-    println("⚠️ ${localeString("Error")}: ${message}.\n   ${localeString("TryAgain")}!\n")
+    println("${Emojis.Warning}${localeString("Error")}: ${message}.\n   ${localeString("TryAgain")}!\n")
 }
 
 fun responseToPlayAgainAnswer(play: Boolean, scoresSaved: Boolean) = buildString {
-    if (scoresSaved) appendLine("📝 ${localeString("ScoresSavedTo")} $spreadsheetPath.").newLine()
-    append(if (play) "🔄 ${localeString("OKLetsPlayAgain")}" else "🎮 ${localeString("ThankYouForPlaying")}")
+    if (scoresSaved) appendLine("${Emojis.ScoresSaved}${localeString("ScoresSavedTo")} $spreadsheetPath.").newLine()
+    append(if (play) "${Emojis.LetsPlayAgain}${localeString("OKLetsPlayAgain")}" else "${Emojis.ThankYou}${localeString("ThankYouForPlaying")}")
     appendLine("!")
 }
 
 fun startGame() {
-    println("\uD83D\uDCDA ${localeString("LoadingVocabularyFile")}: $spreadsheetPath...")
+    println("${Emojis.LoadingFile}${localeString("LoadingVocabularyFile")}: $spreadsheetPath...")
     val vocabulary = try {
         spreadsheet = Spreadsheet(spreadsheetPath)
         spreadsheet.loadVocabulary()
