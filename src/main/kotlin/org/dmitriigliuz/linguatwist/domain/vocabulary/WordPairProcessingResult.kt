@@ -1,12 +1,12 @@
 package org.dmitriigliuz.linguatwist.domain.vocabulary
 
-import org.dmitriigliuz.linguatwist.domain.model.WordPair
+import org.dmitriigliuz.linguatwist.domain.model.LexicalEntry
 
 data class WordPairProcessingResult(
-    val wordPairs: List<WordPair>,
-    val duplicates: List<WordPair>,
+    val lexicalEntries: List<LexicalEntry>,
+    val duplicates: List<LexicalEntry>,
 //    TODO Find the better name for this:
-    val pairsWithSameWords: List<WordPair>,
+    val pairsWithSameWords: List<LexicalEntry>,
     val invalidRows: Int
 
 )

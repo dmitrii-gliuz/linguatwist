@@ -5,8 +5,7 @@ import org.dhatim.fastexcel.reader.ReadableWorkbook
 import org.dhatim.fastexcel.reader.Row
 import org.dmitriigliuz.linguatwist.application.context.AppContext
 import org.dmitriigliuz.linguatwist.domain.vocabulary.Vocabulary
-import org.dmitriigliuz.linguatwist.domain.model.WordPair
-import org.dmitriigliuz.linguatwist.domain.model.alreadyContains
+import org.dmitriigliuz.linguatwist.domain.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.domain.model.alreadyContainsOneOfWords
 import org.dmitriigliuz.linguatwist.infrastructure.storage.StorageException
 import org.slf4j.LoggerFactory
@@ -38,7 +37,7 @@ class Spreadsheet(private val context: AppContext) {
         .orElse(defaultValue.toBigDecimal())
         .toInt()
 
-    private fun readWordPairs(): List<WordPair> = buildList {
+    private fun readWordPairs(): List<LexicalEntry> = buildList {
         logger.debug("Reading word pairs from spreadsheet at: $path")
         if (!file.exists()) {
             logger.error("Spreadsheet file not found at: $path")
@@ -56,13 +55,13 @@ class Spreadsheet(private val context: AppContext) {
                                 logger.debug("Original word: '$originalWord'")
                                 val translation = getTextCellValue(row, 1)
                                 logger.debug("Translation: '$translation'")
+                                // TODO Use another method to extract score
+                                val score = getTextCellValue(row, 2).toIntOrNull() ?: 0
+                                val entry = LexicalEntry(originalWord, translation, score)
 
-                                if (!alreadyContains(originalWord, translation)) {
-//                                    TODO Use another method to extract score
-                                    val score = getTextCellValue(row, 2).toIntOrNull() ?: 0
-                                    val pair = WordPair(originalWord, translation, score)
-                                    if (alreadyContainsOneOfWords(pair)) pairsWithSameWords += 2
-                                    add(pair)
+                                if (!this.any { it.sameAs(entry) }) {
+                                    if (this.any {it.overlaps(entry) }) pairsWithSameWords += 2
+                                    add(entry)
                                 } else {
                                     duplicates++
                                 }
@@ -91,7 +90,7 @@ class Spreadsheet(private val context: AppContext) {
                 worksheet.value(0, 2, "Score")
 
                 // Write data
-                vocabulary.wordPairs.forEachIndexed { index, pair ->
+                vocabulary.entries.forEachIndexed { index, pair ->
                     val row = index + 1
                     worksheet.value(row, 0, pair.originalWord)
                     worksheet.value(row, 1, pair.translation)

@@ -1,40 +1,45 @@
 package org.dmitriigliuz.linguatwist.domain.vocabulary
 
-import org.dmitriigliuz.linguatwist.application.context.AppContext
-import org.dmitriigliuz.linguatwist.domain.model.WordPair
-import org.dmitriigliuz.linguatwist.domain.model.alreadyContainsOneOfWords
+import org.dmitriigliuz.linguatwist.domain.model.LexicalEntry
 
-class Vocabulary(val wordPairs: List<WordPair>) {
-    val size = wordPairs.size
-    private val unusedPairs = getShuffledPairsSortedByScore()
+data class Vocabulary(
+    val entries: Set<LexicalEntry>,
+    private val entriesPerRound: Int,
+    private val remainingPool: List<LexicalEntry> = entries.shuffled().sortedBy { it.score }
+) {
+    val size = entries.size
 
+    init {
+//      TODO Fix the access to locale and use a string value from there
+        require(hasEnoughDistinctEntries()) { "NotAllWordsAreUnique" }
+    }
 
+    private fun refillPool(seen: Set<LexicalEntry>, newGroup: List<LexicalEntry>) = entries
+        .shuffled()
+        .sortedBy { it.score }
+        .filter { !seen.contains(it) && !newGroup.contains(it) }
+        .map { it.withoutGuessed() }
 
-    private fun getShuffledPairsSortedByScore() = wordPairs.shuffled().sortedBy { it.score }.toMutableList()
-
-    fun takeGroupOfPairs(context: AppContext): List<WordPair> {
-        val pairsPerRound = context.config.pairsPerRound
-        val seen = mutableListOf<WordPair>()
-        val newGroup = mutableListOf<WordPair>()
-        while (newGroup.size < pairsPerRound) {
-//            Just in case to prevent infinite loop
-            if (seen.size + newGroup.size == wordPairs.size) {
-                throw IllegalStateException(context.getString("AllWordsAreUsed"))
-            }
-            if (unusedPairs.size < pairsPerRound) with (unusedPairs) {
-                clear()
-                addAll(getShuffledPairsSortedByScore().filter { !seen.contains(it) && !newGroup.contains(it) })
-                forEach { it.guessed = false }
-            }
-            val wordPair = unusedPairs.removeFirst()
-            if (seen.contains(wordPair) || newGroup.contains(wordPair)) continue
-            if (newGroup.alreadyContainsOneOfWords(wordPair)) {
-                seen.add(wordPair)
-                continue
-            }
-            newGroup.add(wordPair)
+    private fun hasEnoughDistinctEntries(): Boolean {
+        val uniqueEntries = mutableSetOf<LexicalEntry>()
+        for (entry in entries) {
+            if (!uniqueEntries.any { it.overlaps(entry) }) uniqueEntries.add(entry)
+            if (uniqueEntries.size >= entriesPerRound) return true
         }
-        unusedPairs.removeAll(newGroup)
-        return newGroup
+        return false
+    }
+
+    fun takeNextGroup(): Pair<List<LexicalEntry>, Vocabulary> {
+        var currentPool = remainingPool.toMutableList()
+        val newGroup: List<LexicalEntry> = buildList {
+            val seen = mutableSetOf<LexicalEntry>()
+
+            while (this.size < entriesPerRound) {
+                if (currentPool.size < entriesPerRound) currentPool = refillPool(seen, this).toMutableList()
+                val entry = currentPool.removeFirst()
+                if (this.any { it.overlaps(entry) }) seen.add(entry) else this.add(entry)
+            }
+        }
+        return Pair(newGroup, copy(remainingPool = currentPool.toList()))
     }
 }

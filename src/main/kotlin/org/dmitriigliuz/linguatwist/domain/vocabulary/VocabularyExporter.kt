@@ -9,7 +9,7 @@ class VocabularyExporter(private val context: AppContext) {
         val writer = DataWriterFactory.Companion.createWriter(filePath)
         val headers = listOf("Original", "Translation", "Score")
 
-        val rows = vocabulary.wordPairs.map { pair ->
+        val rows = vocabulary.entries.map { pair ->
             listOf<Any>(pair.originalWord, pair.translation, pair.score)
         }
 

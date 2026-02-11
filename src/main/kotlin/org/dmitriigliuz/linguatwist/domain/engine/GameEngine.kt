@@ -80,6 +80,6 @@ class GameEngine(
     fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound.isFinished())
 
     private fun createRound() = Round(
-        vocabulary.takeGroupOfPairs(context), currentRoundNumber
+        vocabulary.takeNextGroup(context), currentRoundNumber
     )
 }

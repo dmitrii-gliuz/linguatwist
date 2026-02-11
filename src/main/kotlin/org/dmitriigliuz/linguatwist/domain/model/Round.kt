@@ -2,7 +2,7 @@ package org.dmitriigliuz.linguatwist.domain.model
 
 import org.dmitriigliuz.linguatwist.application.context.AppContext
 
-class Round(val pairs: List<WordPair>, val number: Int) {
+class Round(val pairs: List<LexicalEntry>, val number: Int) {
     val index = number - 1
     val shuffledIndexes = (0 until pairs.size).shuffled()
     var guessedPairs = 0
@@ -37,10 +37,12 @@ class Round(val pairs: List<WordPair>, val number: Int) {
     private fun areIndexesBelongToOnePair(indexes: List<Int>) = indexes.first() == realIndexFromShuffled(indexes)
 
     fun choosePair(indexes: List<Int>, context: AppContext): Pair<Boolean, List<String>> {
+//        TODO Update logic according to immutable WordPair
         validateIndexes(indexes, context)
         turns.add(indexes)
         val pairInFirstColumn = pairInFirstColumn(indexes)
         return Pair(if (areIndexesBelongToOnePair(indexes)) {
+            //        TODO Update logic according to immutable WordPair
             pairInFirstColumn.markAsGuessedAndIncreaseScore()
             guessedPairs++
             true
