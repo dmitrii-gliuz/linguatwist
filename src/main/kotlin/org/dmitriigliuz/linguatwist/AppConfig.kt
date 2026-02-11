@@ -1,6 +1,6 @@
 package org.dmitriigliuz.linguatwist
 
-import org.dmitriigliuz.linguatwist.infrastructure.storage.FileUtils
+import org.dmitriigliuz.linguatwist.storage.FileUtils
 
 /**
  * Configuration class for the application. Provides various settings and parameters
@@ -93,7 +93,7 @@ data class AppConfig(
      * @return true if the file format is supported, false otherwise
      */
     fun isSupportedFormat(filePath: String): Boolean {
-        val extension = FileUtils.getFileExtension(filePath)
+        val extension = _root_ide_package_.org.dmitriigliuz.linguatwist.storage.FileUtils.getFileExtension(filePath)
         return SUPPORTED_FORMATS.contains(extension)
     }
 

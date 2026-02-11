@@ -1,10 +1,10 @@
 package org.dmitriigliuz.linguatwist
 
 import kotlin.system.exitProcess
-import org.dmitriigliuz.linguatwist.presentation.cli.GameSession
-import org.dmitriigliuz.linguatwist.application.context.AppContextFactory
+import org.dmitriigliuz.linguatwist.legacy.presentation.cli.GameSession
+import org.dmitriigliuz.linguatwist.legacy.application.context.AppContextFactory
 import kotlinx.cli.*
-import org.dmitriigliuz.linguatwist.infrastructure.config.ConfigLoader
+import org.dmitriigliuz.linguatwist.legacy.infrastructure.config.ConfigLoader
 
 
 fun main(args: Array<String>) {
