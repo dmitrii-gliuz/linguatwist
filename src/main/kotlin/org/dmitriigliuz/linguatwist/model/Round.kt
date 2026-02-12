@@ -1,56 +1,70 @@
 package org.dmitriigliuz.linguatwist.model
 
-import org.dmitriigliuz.linguatwist.legacy.application.context.AppContext
+enum class ValidationError {
+    INDEX_OUT_OF_RANGE,
+    PAIR_HAS_ALREADY_BEEN_GUESSED
+}
 
-class Round(val pairs: List<LexicalEntry>, val number: Int) {
+sealed class RoundResult {
+    data class Correct(val words: Pair<String, String>, val updatedRound: Round) : RoundResult()
+    data class Wrong(val words: Pair<String, String>, val updatedRound: Round) : RoundResult()
+    data class Invalid(val error: ValidationError) : RoundResult()
+}
+
+data class Round(
+    val pairs: List<LexicalEntry>,
+    val number: Int,
+    val guessedIndexes: Set<Int> = emptySet(),
+    val mistakes: Int = 0,
+    val rightColumnPermutation: List<Int> = (0 until pairs.size).shuffled()
+) {
     val index = number - 1
-    val shuffledIndexes = (0 until pairs.size).shuffled()
-    var guessedPairs = 0
-    var mistakes = 0
-    private val turns = mutableListOf<List<Int>>()
 
-    fun isFinished() = guessedPairs == pairs.size
+    val isFinished: Boolean
+        get() = guessedIndexes.size == pairs.size
 
-    private fun realIndexFromShuffled(indexes: List<Int>) = shuffledIndexes[indexes[1]]
+    private fun originalPairIndex(rightColumnIndex: Int) = rightColumnPermutation[rightColumnIndex]
 
-    private fun pairInFirstColumn(indexes: List<Int>) = pairs[indexes.first()]
+    private fun pairAtLeftColumn(leftIndex: Int) = pairs[leftIndex]
 
-    private fun pairInSecondColumn(indexes: List<Int>) = pairs[realIndexFromShuffled(indexes)]
+    private fun pairAtRightColumn(rightIndex: Int) = pairs[originalPairIndex(rightIndex)]
 
-    private fun getTwoWordsByIndexes(indexes: List<Int>) = listOf(
-        pairInFirstColumn(indexes).originalWord,
-        pairInSecondColumn(indexes).translation
-        )
+    private fun getSelectedWords(selection: Pair<Int, Int>) = Pair(
+        pairAtLeftColumn(selection.first).originalWord,
+        pairAtRightColumn(selection.second).translation
+    )
 
-    private fun validateIndexes(indexes: List<Int>, context: AppContext) = with(indexes) {
-        if (size != 2) {
-            throw IllegalArgumentException(context.getString("YouShouldEnterTwoIndexes"))
-        } else if (any { it !in 0 until pairs.size}) {
-            throw IllegalArgumentException("${context.getString("IndexesShouldBeInTheRange")} $pairs.size")
-        }else if (turns.contains(this)) {
-            throw IllegalArgumentException(context.getString("ThisPairOfIndexesHasAlreadyBeenUsed"))
-        } else if (pairInFirstColumn(this).guessed || pairInSecondColumn(this).guessed) {
-            throw IllegalArgumentException(context.getString("ThisPairHasAlreadyBeenGuessed"))
+    private fun isCorrectMatch(selection: Pair<Int, Int>) =
+        selection.first == originalPairIndex(selection.second)
+
+    fun choosePair(selection: Pair<Int, Int>): RoundResult {
+        val (leftIndex, rightIndex) = selection
+
+        if (leftIndex !in 0 until pairs.size || rightIndex !in 0 until pairs.size) {
+            return RoundResult.Invalid(ValidationError.INDEX_OUT_OF_RANGE)
         }
-    }
+        if (pairAtLeftColumn(leftIndex).isGuessed || pairAtRightColumn(rightIndex).isGuessed) {
+            return RoundResult.Invalid(ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED)
+        }
 
-    private fun areIndexesBelongToOnePair(indexes: List<Int>) = indexes.first() == realIndexFromShuffled(indexes)
-
-    fun choosePair(indexes: List<Int>, context: AppContext): Pair<Boolean, List<String>> {
-//        TODO Update logic according to immutable WordPair
-        validateIndexes(indexes, context)
-        turns.add(indexes)
-        val pairInFirstColumn = pairInFirstColumn(indexes)
-        return Pair(if (areIndexesBelongToOnePair(indexes)) {
-            //        TODO Update logic according to immutable WordPair
-            pairInFirstColumn.markAsGuessedAndIncreaseScore()
-            guessedPairs++
-            true
+        val selectedWords = getSelectedWords(selection)
+        return if (isCorrectMatch(selection)) {
+            val updatedPairs = pairs.mapIndexed { i, pair -> if (i == leftIndex) pair.withGuessed() else pair }
+            val updatedGuessedIndexes = guessedIndexes + leftIndex
+            val updatedRound = copy(pairs = updatedPairs, guessedIndexes = updatedGuessedIndexes)
+            RoundResult.Correct(selectedWords,  updatedRound)
         } else {
-            pairInFirstColumn.decreaseScore()
-            pairInSecondColumn(indexes).decreaseScore()
-            mistakes++
-            false
-        }, getTwoWordsByIndexes(indexes))
+            val rightPairOriginalIndex = originalPairIndex(rightIndex)
+            val updatedPairs = pairs.mapIndexed { i, pair ->
+                when (i) {
+                    leftIndex -> pair.withPenalty()
+                    rightPairOriginalIndex -> pair.withPenalty()
+                    else -> pair
+                }
+            }
+            val updatedMistakes = mistakes + 1
+            val updatedRound = copy(pairs = updatedPairs, mistakes = updatedMistakes)
+            RoundResult.Wrong(selectedWords, updatedRound)
+        }
     }
 }

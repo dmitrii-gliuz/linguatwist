@@ -43,7 +43,7 @@ class GameEngine(
         String.format("%02d:%02d:%02d", toHours(), toMinutes() % 60, seconds % 60)
     }
 
-    fun guessedPairsAmount() = rounds.sumOf { it.guessedPairs }
+    fun guessedPairsAmount() = rounds.sumOf { it.guessedCount }
 
     fun completionPercentage() = guessedPairsAmount() * 100 / totalWords
 
@@ -73,8 +73,8 @@ class GameEngine(
         else if (currentRound.isFinished() && currentRoundNumber < numberOfRounds) changeRound()
     }
 
-    fun choosePair(indexes: List<Int>) = currentRound
-        .choosePair(indexes, context)
+    fun choosePair(indexes: Pair<Int, Int>) = currentRound
+        .choosePair(indexes)
         .also { processRoundOutcome(it.first) }
 
     fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound.isFinished())

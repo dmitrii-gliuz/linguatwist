@@ -152,10 +152,12 @@ class GameSession(private val context: AppContext) {
         return userInput
     }
 
-    fun inputIndexes() = input("EnterIndexesForMatchingWords")
-                .trim()
-                .split("""\s+""".toRegex())
-                .map { it.toInt() - 1 }
+    fun inputIndexes(): Pair<Int, Int> {
+        val indexes = input("EnterIndexesForMatchingWords")
+            .split("""\s+""".toRegex())
+            .map { it.toInt() - 1 }
+        return indexes[0] to indexes[1]
+    }
 
     fun addMaxLengthOfRound(game: GameEngine) {
         if (maxStringLengthsInRounds.size < game.currentRound.number) {
@@ -168,7 +170,7 @@ class GameSession(private val context: AppContext) {
         for (numberOfItem in 1..context.config.pairsPerRound) {
             val index = numberOfItem - 1
             val leftPair = round.pairs[index]
-            val rightPair = round.pairs[round.shuffledIndexes[index]]
+            val rightPair = round.pairs[round.rightColumnPermutation[index]]
             val firstWordOutput = leftPair.run { applyStrikethroughIfGuessed(originalWord) }
             val secondWordOutput = rightPair.run { applyStrikethroughIfGuessed(translation) }
             val spaces = " ".repeat(maxLength - leftPair.originalWord.length)
