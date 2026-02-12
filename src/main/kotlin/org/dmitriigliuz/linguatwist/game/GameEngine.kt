@@ -1,7 +1,5 @@
 package org.dmitriigliuz.linguatwist.game
 
-import org.dmitriigliuz.linguatwist.legacy.Spreadsheet
-import org.dmitriigliuz.linguatwist.legacy.application.context.AppContext
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.model.VerbalScore
 import org.dmitriigliuz.linguatwist.model.Vocabulary
@@ -10,10 +8,9 @@ import java.time.Instant
 
 class GameEngine(
     private val numberOfRounds: Int,
-    private val context: AppContext,
+    private val vocabulary: Vocabulary
 ) {
-    private val spreadsheet = Spreadsheet(context)
-    private val vocabulary: Vocabulary = spreadsheet.loadVocabulary()
+
 
     init {
         if (numberOfRounds !in 1..context.config.maxRoundsNumber) {
