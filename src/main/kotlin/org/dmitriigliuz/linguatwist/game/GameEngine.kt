@@ -8,17 +8,16 @@ import java.time.Instant
 
 class GameEngine(
     private val numberOfRounds: Int,
-    private val vocabulary: Vocabulary
+    private val vocabulary: Vocabulary,
+    private val config: GameConfig
 ) {
 
 
     init {
-        if (numberOfRounds !in 1..context.config.maxRoundsNumber) {
-            throw IllegalArgumentException(context.getString("NumberOfRoundsShouldBeInRange"))
-        }
+        require(numberOfRounds in 1..config.maxRounds) { "NumberOfRoundsShouldBeInRange" }
     }
 
-    val totalWords = numberOfRounds * context.config.pairsPerRound
+    val totalWords = numberOfRounds * config.pairsPerRound
     private var currentRoundNumber = 1
     private val rounds = mutableListOf(createRound())
     var mistakes = 0
