@@ -180,7 +180,7 @@ class GameSession(private val context: AppContext) {
     }
 
     fun getRoundCard(round: Round): String {
-        val bottomCaption = if (round.mistakes > 0) "${ui.text("MistakesInRound")}: ${round.mistakes}" else ""
+        val bottomCaption = if (round.mistakesCount > 0) "${ui.text("MistakesInRound")}: ${round.mistakesCount}" else ""
         val caption = "${ui.text("Round")} ${round.number}"
         val maxLengthOfString = if (maxStringLengthsInRounds.size >= round.number) {
             maxStringLengthsInRounds[round.index]
@@ -238,7 +238,7 @@ class GameSession(private val context: AppContext) {
                 continue
             }
             val (result, words) = try {
-                game.choosePair(indexes)
+                game.processAnswer(indexes)
             } catch (e: IllegalArgumentException) {
                 printErrorAndTryAgain(e)
                 continue

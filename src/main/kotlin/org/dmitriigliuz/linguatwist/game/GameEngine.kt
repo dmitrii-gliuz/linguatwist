@@ -1,81 +1,96 @@
 package org.dmitriigliuz.linguatwist.game
 
+import org.dmitriigliuz.linguatwist.model.GameResult
+import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Round
-import org.dmitriigliuz.linguatwist.model.VerbalScore
+import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.Vocabulary
-import java.time.Duration
-import java.time.Instant
 
 class GameEngine(
-    private val numberOfRounds: Int,
-    private val vocabulary: Vocabulary,
+    private val totalRounds: Int,
     private val config: GameConfig
 ) {
+    companion object {
+        fun numberOfRoundsToCoverVocabulary(vocabulary: Vocabulary, config: GameConfig): Int {
+            val leftoverPairs = vocabulary.size % config.pairsPerRound
+            return vocabulary.size / config.pairsPerRound + if (leftoverPairs > 0) 1 else 0
+        }
 
+        fun defaultNumberOfRounds(vocabulary: Vocabulary, config: GameConfig) =
+            if (vocabulary.size < config.maxRounds * config.pairsPerRound) {
+                numberOfRoundsToCoverVocabulary(vocabulary, config)
+            } else config.defaultRounds
+    }
 
     init {
-        require(numberOfRounds in 1..config.maxRounds) { "NumberOfRoundsShouldBeInRange" }
+//        TODO Use error messages from locale when it will be implemented
+        require(totalRounds in 1..config.maxRounds) { "NumberOfRoundsShouldBeInRange" }
     }
 
-    val totalWords = numberOfRounds * config.pairsPerRound
-    private var currentRoundNumber = 1
-    private val rounds = mutableListOf(createRound())
-    var mistakes = 0
-    var score = 0
-    var isFailed = false
-    private var answersAmount = 0
-    private var rightAnswersAmount = 0
-    private val startedAt = Instant.now()
-
-    val currentRound: Round
-        get() = rounds[currentRoundNumber - 1]
-
-    private fun getDuration(): Duration {
-        val finishedAt = Instant.now()
-        return Duration.between(startedAt, finishedAt)
-    }
-
-    fun spentTime() = getDuration().run {
-        String.format("%02d:%02d:%02d", toHours(), toMinutes() % 60, seconds % 60)
-    }
-
-    fun guessedPairsAmount() = rounds.sumOf { it.guessedCount }
-
-    fun completionPercentage() = guessedPairsAmount() * 100 / totalWords
-
-    private fun rightAnswersPercentage() = rightAnswersAmount * 100 / answersAmount
-
-    private fun verbalScore(percentage: Int) = VerbalScore.entries.first { it.percentage <= percentage }
-
-    fun percentageAndVerbalScore() = rightAnswersPercentage().run {
-        Pair(this, verbalScore(this))
-    }
-
-    private fun changeRound() {
-        currentRoundNumber++
-        rounds.add(createRound())
-    }
-
-    private fun processRoundOutcome(result: Boolean) {
-        answersAmount++
-        if (result) {
-            rightAnswersAmount++
-            score++
-        } else {
-            score--
-            mistakes++
+    private fun advanceToNewRound(state: GameState) = when (state) {
+        is GameState.Initial -> {
+            val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup()
+            val newRound = Round(newGroup, 1)
+            GameState.InProgress(newRound, 0, 0, updatedVocabulary)
         }
-        if (mistakes > context.config.maxMistakes) isFailed = true
-        else if (currentRound.isFinished() && currentRoundNumber < numberOfRounds) changeRound()
+        is GameState.InProgress -> {
+            val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup()
+            val newRound = Round(newGroup, state.round.number + 1)
+            state.copy(round = newRound, vocabulary = updatedVocabulary)
+        }
+        else -> throw IllegalStateException("Unexpected state: $state")
     }
 
-    fun choosePair(indexes: Pair<Int, Int>) = currentRound
-        .choosePair(indexes)
-        .also { processRoundOutcome(it.first) }
+    fun startNewGame(vocabulary: Vocabulary): GameState.InProgress {
+        require(vocabulary.size >= config.pairsPerRound) { "NotEnoughWordsToPlayTheGame" }
+        return advanceToNewRound(GameState.Initial(vocabulary))
+    }
 
-    fun isFinished() = isFailed || (currentRoundNumber == numberOfRounds && currentRound.isFinished())
+    fun completionPercentage(state: GameState.InProgress) =
+        state.totalGuessedAmount() * 100 / (totalRounds * config.pairsPerRound)
 
-    private fun createRound() = Round(
-        vocabulary.takeNextGroup(context), currentRoundNumber
-    )
+    private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult {
+        val totalGuessedAmount = state.totalGuessedAmount()
+        val totalAnswersAmount = totalGuessedAmount + state.mistakesCount
+        val percentage = totalAnswersAmount * 100 / totalGuessedAmount
+        return GameResult(failed, state.score, percentage)
+    }
+
+    private fun processRightAnswer(result: RoundResult.Correct, state: GameState.InProgress): GameState {
+        val round = result.updatedRound
+        val score = state.score + 1
+        val updatedState = state.copy(
+            round = round,
+            score = score,
+            error = null
+        )
+        return if (round.isFinished && round.number == totalRounds) {
+            val result = createResult(false, updatedState)
+            GameState.Finished(result)
+        } else if (round.isFinished) {
+            advanceToNewRound(updatedState)
+        } else updatedState
+    }
+
+    private fun processWrongAnswer(result: RoundResult.Wrong, state: GameState.InProgress): GameState {
+        val score = state.score - 1
+        val mistakesCount = state.mistakesCount + 1
+        val updatedState = state.copy(
+            round = result.updatedRound,
+            score = score, mistakesCount = mistakesCount,
+            error = null
+        )
+        return if (mistakesCount >= config.maxMistakes) {
+            val result = createResult(true, updatedState)
+            GameState.Failed(result)
+        } else updatedState
+    }
+
+    fun processAnswer(indexes: Pair<Int, Int>, state: GameState.InProgress): GameState {
+        return when (val roundResult = state.round.choosePair(indexes)) {
+            is RoundResult.Correct -> processRightAnswer(roundResult, state)
+            is RoundResult.Wrong -> processWrongAnswer(roundResult, state)
+            is RoundResult.Invalid -> state.copy(error = roundResult.error)
+        }
+    }
 }

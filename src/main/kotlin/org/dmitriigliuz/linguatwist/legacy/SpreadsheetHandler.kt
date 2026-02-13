@@ -56,10 +56,10 @@ class Spreadsheet(private val context: AppContext) {
                                 logger.debug("Translation: '$translation'")
                                 // TODO Use another method to extract score
                                 val score = getTextCellValue(row, 2).toIntOrNull() ?: 0
-                                val entry = LexicalEntry(originalWord, translation, score)
+                                val entry = LexicalEntry(originalWord, translation, false, score)
 
                                 if (!this.any { it.sameAs(entry) }) {
-                                    if (this.any {it.overlaps(entry) }) pairsWithSameWords += 2
+                                    if (this.any { it.overlaps(entry) }) pairsWithSameWords += 2
                                     add(entry)
                                 } else {
                                     duplicates++
@@ -75,7 +75,7 @@ class Spreadsheet(private val context: AppContext) {
         }
     }
 
-//    TODO Nove it to  vocabulary class
+    //    TODO Nove it to  vocabulary class
     fun writeScores(vocabulary: Vocabulary) {
         val tempFile = File(file.parent, "${file.nameWithoutExtension}_temp.xlsx")
 
@@ -104,30 +104,10 @@ class Spreadsheet(private val context: AppContext) {
         }
     }
 
-//    TODO Use vocabulary factory to create vocabulary from word pairs
+    //    TODO Use vocabulary factory to create vocabulary from word pairs
     private val wordPairs by lazy { readWordPairs() }
 
-//    TODO Use vocabulary factory to create vocabulary from word pairs
-    fun loadVocabulary(): Vocabulary = Vocabulary(wordPairs)
-
-//    TODO Move it to game initializer
-    val numberOfRoundsToCoverAllWords: Int
-        get() {
-            if (wordPairs.size < context.config.pairsPerRound) {
-                throw StorageException(context.getString("NotEnoughWordsToPlayTheGame"))
-            }
-            val leftoverPairs = wordPairs.size % context.config.pairsPerRound
-            val fullRoundsNeeded = wordPairs.size / context.config.pairsPerRound + if (leftoverPairs > 0) 1 else 0
-            var result = fullRoundsNeeded
-            if (pairsWithSameWords > fullRoundsNeeded) {
-                result += pairsWithSameWords - fullRoundsNeeded
-            }
-            return result
-        }
-
-//    TODO Move it to game initializer
-    val defaultNumberOfRounds =
-        if (wordPairs.size < context.config.recommendedVocabularySize) {
-            numberOfRoundsToCoverAllWords
-        } else context.config.defaultRoundsNumber
+    //    TODO Use vocabulary factory to create vocabulary from word pairs
+    fun loadVocabulary(): Vocabulary = Vocabulary(wordPairs.toSet())
 }
+
