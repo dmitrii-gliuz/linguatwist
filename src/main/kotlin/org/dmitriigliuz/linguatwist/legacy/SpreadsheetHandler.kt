@@ -6,7 +6,7 @@ import org.dhatim.fastexcel.reader.Row
 import org.dmitriigliuz.linguatwist.legacy.application.context.AppContext
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
-import org.dmitriigliuz.linguatwist.storage.StorageException
+import org.dmitriigliuz.linguatwist.legacy.storage.StorageException
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
@@ -40,7 +40,9 @@ class Spreadsheet(private val context: AppContext) {
         logger.debug("Reading word pairs from spreadsheet at: $path")
         if (!file.exists()) {
             logger.error("Spreadsheet file not found at: $path")
-            throw StorageException(context.getString("FileNotFound").format(path))
+            throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException(
+                context.getString("FileNotFound").format(path)
+            )
         }
 
         FileInputStream(file).use { inputStream ->
@@ -100,7 +102,7 @@ class Spreadsheet(private val context: AppContext) {
 
         // Replace original file
         if (!file.delete() || !tempFile.renameTo(file)) {
-            throw StorageException("Failed to update spreadsheet file")
+            throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException("Failed to update spreadsheet file")
         }
     }
 

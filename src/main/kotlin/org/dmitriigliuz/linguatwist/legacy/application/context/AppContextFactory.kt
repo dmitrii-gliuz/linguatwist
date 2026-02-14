@@ -1,6 +1,6 @@
 package org.dmitriigliuz.linguatwist.legacy.application.context
 
-import org.dmitriigliuz.linguatwist.AppConfig
+import org.dmitriigliuz.linguatwist.legacy.AppConfig
 import org.dmitriigliuz.linguatwist.legacy.infrastructure.localization.ResourceBundleLocalizationProvider
 import org.dmitriigliuz.linguatwist.legacy.presentation.ui.MessageBuilder
 import org.dmitriigliuz.linguatwist.legacy.presentation.ui.emoji.StandardEmojiProvider

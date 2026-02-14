@@ -2,18 +2,18 @@ package org.dmitriigliuz.linguatwist.legacy.domain.vocabulary
 
 import org.dmitriigliuz.linguatwist.legacy.application.context.AppContext
 import org.dmitriigliuz.linguatwist.model.Vocabulary
-import org.dmitriigliuz.linguatwist.storage.DataWriterFactory
+import org.dmitriigliuz.linguatwist.legacy.storage.DataWriterFactory
 
 class VocabularyExporter(private val context: AppContext) {
     fun export(vocabulary: Vocabulary, filePath: String) {
-        val writer = DataWriterFactory.Companion.createWriter(filePath)
+        val writer = _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.DataWriterFactory.Companion.createWriter(filePath)
         val headers = listOf("Original", "Translation", "Score")
 
         val rows = vocabulary.entries.map { pair ->
             listOf<Any>(pair.originalWord, pair.translation, pair.score)
         }
 
-        val options = _root_ide_package_.org.dmitriigliuz.linguatwist.storage.model.WriteOptions(
+        val options = _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.model.WriteOptions(
             sheetName = "Vocabulary",
             appName = context.config.appName,
             appVersion = context.config.appVersion

@@ -1,4 +1,4 @@
-package org.dmitriigliuz.linguatwist.storage.model
+package org.dmitriigliuz.linguatwist.legacy.storage.model
 
 data class RawDataCell(
     val row: Int,

@@ -1,4 +1,4 @@
-package org.dmitriigliuz.linguatwist.storage.validation
+package org.dmitriigliuz.linguatwist.legacy.storage.validation
 
 data class FileValidationResult(
     val isValid: Boolean,

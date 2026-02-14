@@ -1,7 +1,7 @@
-package org.dmitriigliuz.linguatwist.storage.model
+package org.dmitriigliuz.linguatwist.legacy.storage.model
 
 data class RawDataResult(
-    val rows: List<RawDataRow>,
+    val rows: List<org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataRow>,
     val totalRows: Int,
     val maxColumns: Int,
     val sourceFormat: String

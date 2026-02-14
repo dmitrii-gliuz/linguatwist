@@ -1,4 +1,4 @@
-package org.dmitriigliuz.linguatwist.storage.validation
+package org.dmitriigliuz.linguatwist.legacy.storage.validation
 
 import org.dmitriigliuz.linguatwist.legacy.application.context.AppContext
 import org.dmitriigliuz.linguatwist.infrastructure.storage.DataLoaderFactory
@@ -6,7 +6,7 @@ import org.dmitriigliuz.linguatwist.infrastructure.storage.FileUtils
 
 class FileValidator(context: AppContext) {
     val maxFileSize = context.config.maxFileSize
-    fun validateVocableFile(filePath: String): FileValidationResult {
+    fun validateVocableFile(filePath: String): org.dmitriigliuz.linguatwist.legacy.storage.validation.FileValidationResult {
         val issues = mutableListOf<String>()
 
         try {
@@ -26,6 +26,9 @@ class FileValidator(context: AppContext) {
             issues.add(e.message ?: "Unknown file validation error")
         }
 
-        return FileValidationResult(issues.isEmpty(), issues)
+        return _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.validation.FileValidationResult(
+            issues.isEmpty(),
+            issues
+        )
     }
 }

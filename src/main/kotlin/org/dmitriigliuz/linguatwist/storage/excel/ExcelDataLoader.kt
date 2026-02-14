@@ -3,15 +3,15 @@ package org.dmitriigliuz.linguatwist.storage.excel
 import org.dhatim.fastexcel.reader.ReadableWorkbook
 import org.dhatim.fastexcel.reader.Row
 import org.dhatim.fastexcel.reader.Sheet
-import org.dmitriigliuz.linguatwist.storage.AbstractDataLoader
-import org.dmitriigliuz.linguatwist.storage.FileUtils
-import org.dmitriigliuz.linguatwist.storage.excel.model.ExcelRowData
-import org.dmitriigliuz.linguatwist.storage.excel.model.ExcelSheetData
-import org.dmitriigliuz.linguatwist.storage.model.RawDataCell
-import org.dmitriigliuz.linguatwist.storage.model.RawDataResult
-import org.dmitriigliuz.linguatwist.storage.model.RawDataRow
+import org.dmitriigliuz.linguatwist.legacy.storage.AbstractDataLoader
+import org.dmitriigliuz.linguatwist.legacy.storage.FileUtils
+import org.dmitriigliuz.linguatwist.legacy.storage.excel.model.ExcelRowData
+import org.dmitriigliuz.linguatwist.legacy.storage.excel.model.ExcelSheetData
+import org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataCell
+import org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataResult
+import org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataRow
 
-class ExcelDataLoader : org.dmitriigliuz.linguatwist.storage.AbstractDataLoader() {
+class ExcelDataLoader : AbstractDataLoader() {
     override val supportedExttensions: Set<String> = setOf("xlsx", "xls")
 
     companion object {
@@ -19,11 +19,11 @@ class ExcelDataLoader : org.dmitriigliuz.linguatwist.storage.AbstractDataLoader(
         const val EMPTY_CELLS_THRESHOLD = 5
     }
 
-    private fun readExcelCell(excelRow: Row, columnIndex: Int): org.dmitriigliuz.linguatwist.storage.model.RawDataCell? = try {
+    private fun readExcelCell(excelRow: Row, columnIndex: Int): RawDataCell? = try {
         val stringValue = excelRow.getCellAsString(columnIndex).orElse(null)
         val numericValue = excelRow.getCellAsNumber(columnIndex).orElse(null)?.toDouble()
         val isEmpty = stringValue.isNullOrBlank() && numericValue == null
-        _root_ide_package_.org.dmitriigliuz.linguatwist.storage.model.RawDataCell(
+        _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataCell(
             row = excelRow.rowNum,
             column = columnIndex,
             isEmpty = isEmpty,
@@ -34,8 +34,8 @@ class ExcelDataLoader : org.dmitriigliuz.linguatwist.storage.AbstractDataLoader(
         null
     }
 
-    private fun readExcelRowData(excelRow: Row, currentMaxColumns: Int): org.dmitriigliuz.linguatwist.storage.excel.model.ExcelRowData {
-        val cells = mutableListOf<org.dmitriigliuz.linguatwist.storage.model.RawDataCell>()
+    private fun readExcelRowData(excelRow: Row, currentMaxColumns: Int): ExcelRowData {
+        val cells = mutableListOf<RawDataCell>()
         var maxColumns = currentMaxColumns
         for (columnIndex in 0 until MAX_COLUMNS_TO_READ) {
             val cellData = readExcelCell(excelRow, columnIndex) ?: break
@@ -46,12 +46,13 @@ class ExcelDataLoader : org.dmitriigliuz.linguatwist.storage.AbstractDataLoader(
                 break
             }
         }
-        val row = _root_ide_package_.org.dmitriigliuz.linguatwist.storage.model.RawDataRow(excelRow.rowNum, cells)
-        return _root_ide_package_.org.dmitriigliuz.linguatwist.storage.excel.model.ExcelRowData(row, maxColumns)
+        val row =
+            _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataRow(excelRow.rowNum, cells)
+        return _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.excel.model.ExcelRowData(row, maxColumns)
     }
 
-    private fun readAllRowsFromSheet(sheet: Sheet): org.dmitriigliuz.linguatwist.storage.excel.model.ExcelSheetData {
-        val rows = mutableListOf<org.dmitriigliuz.linguatwist.storage.model.RawDataRow>()
+    private fun readAllRowsFromSheet(sheet: Sheet): ExcelSheetData {
+        val rows = mutableListOf<RawDataRow>()
         var maxColumns = 0
         sheet.openStream().use { stream ->
             stream.forEach { row ->
@@ -60,12 +61,15 @@ class ExcelDataLoader : org.dmitriigliuz.linguatwist.storage.AbstractDataLoader(
                 maxColumns = maxOf(maxColumns, rowData.maxColumns)
             }
         }
-        return _root_ide_package_.org.dmitriigliuz.linguatwist.storage.excel.model.ExcelSheetData(rows, maxColumns)
+        return _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.excel.model.ExcelSheetData(
+            rows,
+            maxColumns
+        )
     }
 
-    override fun loadRawData(filePath: String): org.dmitriigliuz.linguatwist.storage.model.RawDataResult {
-        val file = _root_ide_package_.org.dmitriigliuz.linguatwist.storage.FileUtils.requireFileReadable(filePath)
-        val rows = mutableListOf<org.dmitriigliuz.linguatwist.storage.model.RawDataRow>()
+    override fun loadRawData(filePath: String): RawDataResult {
+        val file = FileUtils.requireFileReadable(filePath)
+        val rows = mutableListOf<RawDataRow>()
         var maxColumns = 0
 
         file.inputStream().use { inputStream ->
@@ -77,7 +81,7 @@ class ExcelDataLoader : org.dmitriigliuz.linguatwist.storage.AbstractDataLoader(
 
             }
         }
-        return _root_ide_package_.org.dmitriigliuz.linguatwist.storage.model.RawDataResult(
+        return _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataResult(
             rows,
             rows.size,
             maxColumns,

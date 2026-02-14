@@ -6,7 +6,7 @@ import org.dmitriigliuz.linguatwist.game.GameEngine
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.legacy.presentation.ui.emoji.Emoji
-import org.dmitriigliuz.linguatwist.storage.StorageException
+import org.dmitriigliuz.linguatwist.legacy.storage.StorageException
 import org.dmitriigliuz.linguatwist.legacy.Spreadsheet
 import kotlin.system.exitProcess
 
@@ -82,7 +82,7 @@ class GameSession(private val context: AppContext) {
             } catch (e: IllegalArgumentException) {
                 printErrorAndTryAgain(e)
                 continue
-            } catch (e: StorageException) {
+            } catch (e: org.dmitriigliuz.linguatwist.legacy.storage.StorageException) {
                 exitGame(e.message ?: ui.text("UnexpectedError"))
                 throw e
             } catch (e: Exception) {

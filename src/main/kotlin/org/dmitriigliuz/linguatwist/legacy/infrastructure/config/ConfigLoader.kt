@@ -3,7 +3,7 @@ package org.dmitriigliuz.linguatwist.legacy.infrastructure.config
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
-import org.dmitriigliuz.linguatwist.storage.FileUtils
+import org.dmitriigliuz.linguatwist.legacy.storage.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -29,7 +29,7 @@ class ConfigLoader {
     val logger: Logger = LoggerFactory.getLogger(ConfigLoader::class.java)
 
     private fun findConfigFile(explicitPath: String?): File? =
-        explicitPath?.let { FileUtils.requireFileReadable(it) }
+        explicitPath?.let { _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.FileUtils.requireFileReadable(it) }
             .also { if (it == null) logger.warn("Configuration file not found: $it") }
 
     fun parseCommandLineArgs(args: Array<String>) {

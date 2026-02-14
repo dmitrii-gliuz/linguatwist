@@ -1,8 +1,8 @@
-package org.dmitriigliuz.linguatwist.storage.model
+package org.dmitriigliuz.linguatwist.legacy.storage.model
 
 data class RawDataRow(
     val index: Int,
-    val cells: List<RawDataCell>
+    val cells: List<org.dmitriigliuz.linguatwist.legacy.storage.model.RawDataCell>
 ) {
     fun getCell(columnIndex: Int) = cells.find { it.column == columnIndex }
 
