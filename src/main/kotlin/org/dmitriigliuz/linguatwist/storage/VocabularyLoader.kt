@@ -1,0 +1,14 @@
+package org.dmitriigliuz.linguatwist.storage
+
+import org.dmitriigliuz.linguatwist.model.Vocabulary
+
+interface VocabularyLoader {
+    fun load(path: String): Result<VocabularyLoadResult>
+}
+
+data class VocabularyLoadResult(
+    val vocabulary: Vocabulary,
+    val duplicates: Int,
+    val pairsWithSameWords: Int,
+    val invalidRows: Int
+)

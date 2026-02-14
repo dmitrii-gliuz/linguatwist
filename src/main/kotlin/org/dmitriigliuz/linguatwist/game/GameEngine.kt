@@ -29,12 +29,12 @@ class GameEngine(
 
     private fun advanceToNewRound(state: GameState) = when (state) {
         is GameState.Initial -> {
-            val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup()
+            val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup(config.pairsPerRound)
             val newRound = Round(newGroup, 1)
             GameState.InProgress(newRound, 0, 0, updatedVocabulary)
         }
         is GameState.InProgress -> {
-            val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup()
+            val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup(config.pairsPerRound)
             val newRound = Round(newGroup, state.round.number + 1)
             state.copy(round = newRound, vocabulary = updatedVocabulary)
         }
@@ -42,7 +42,9 @@ class GameEngine(
     }
 
     fun startNewGame(vocabulary: Vocabulary): GameState.InProgress {
+        // TODO Fix the access to locale and use a string value from there
         require(vocabulary.size >= config.pairsPerRound) { "NotEnoughWordsToPlayTheGame" }
+        require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) { "NotAllWordsAreUnique" }
         return advanceToNewRound(GameState.Initial(vocabulary))
     }
 
