@@ -35,7 +35,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.dmitriigliuz.linguatwist.MainKt")
+    mainClass.set("org. dmitriigliuz.linguatwist.MainKt")
     applicationDefaultJvmArgs = listOf("-Xmx2g", "-Xms512m")
 }
 
