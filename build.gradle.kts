@@ -20,17 +20,15 @@ repositories {
 }
 
 dependencies {
+    constraints {
+        implementation("org.apache.commons:commons-lang3:3.20.0")
+    }
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
     implementation("org.dhatim:fastexcel:0.19.0")
     implementation("org.dhatim:fastexcel-reader:0.19.0")
-    implementation("org.slf4j:slf4j-api:2.0.9")
-    implementation("ch.qos.logback:logback-classic:1.5.13")
-//    implementation("org.apache.poi:poi:5.2.5")
-//    implementation("org.apache.poi:poi-ooxml:5.4.0")
-//    implementation(platform("org.apache.logging.log4j:log4j-bom:2.24.3"))
-//    implementation("org.apache.logging.log4j:log4j-api")
-//    implementation("org.apache.logging.log4j:log4j-core")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.14")
+    implementation("ch.qos.logback:logback-classic:1.5.29")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
