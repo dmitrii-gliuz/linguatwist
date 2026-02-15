@@ -1,7 +1,5 @@
 package org.dmitriigliuz.linguatwist.legacy.storage
 
-import org.dmitriigliuz.linguatwist.storage.excel.ExcelDataLoader
-
 class DataLoaderFactory {
     companion object {
         private val loaders = listOf(ExcelDataLoader())

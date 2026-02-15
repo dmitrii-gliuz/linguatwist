@@ -9,6 +9,6 @@ interface VocabularyLoader {
 data class VocabularyLoadResult(
     val vocabulary: Vocabulary,
     val duplicates: Int,
-    val pairsWithSameWords: Int,
+    val overlappedPairs: Int,
     val invalidRows: Int
 )

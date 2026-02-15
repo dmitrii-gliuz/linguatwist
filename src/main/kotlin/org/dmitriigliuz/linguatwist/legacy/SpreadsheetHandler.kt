@@ -6,7 +6,6 @@ import org.dhatim.fastexcel.reader.Row
 import org.dmitriigliuz.linguatwist.legacy.application.context.AppContext
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
-import org.dmitriigliuz.linguatwist.legacy.storage.StorageException
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
@@ -93,7 +92,7 @@ class Spreadsheet(private val context: AppContext) {
                 // Write data
                 vocabulary.entries.forEachIndexed { index, pair ->
                     val row = index + 1
-                    worksheet.value(row, 0, pair.originalWord)
+                    worksheet.value(row, 0, pair.sourceText)
                     worksheet.value(row, 1, pair.translation)
                     worksheet.value(row, 2, pair.score)
                 }

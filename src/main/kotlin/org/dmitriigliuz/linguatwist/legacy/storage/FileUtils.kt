@@ -3,44 +3,6 @@ package org.dmitriigliuz.linguatwist.legacy.storage
 import java.io.File
 
 object FileUtils {
-    fun requireFileExists(filePath: String): File {
-        val file = File(filePath)
-        if (!file.exists()) throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException("File or directory not found: $filePath")
-        return file
-    }
-
-    fun requireFileReadable(filePath: String): File = requireFileExists(filePath).apply {
-        if (!_root_ide_package_.java.io.File.canRead()) throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException(
-            "File is not readable: $filePath"
-        )
-    }
-
-    fun getWithConditionOrNull(filePath: String, condition: (File) -> Boolean): File? {
-        val file = File(filePath)
-        return if (file.exists() && condition(file)) file else null
-    }
-
-    fun getReadableFileOrNull(filePath: String): File? = getWithConditionOrNull(filePath) { it.canRead() }
-
-    fun getWriteableFileOrNull(filePath: String): File? = getWithConditionOrNull(filePath) { it.canWrite() }
-
-    fun requireDirectoryWriteable(directoryPath: String): File = requireFileExists(directoryPath).apply {
-        if (!_root_ide_package_.java.io.File.isDirectory) throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException(
-            "Path is not a directory: $directoryPath"
-        )
-        if (!_root_ide_package_.java.io.File.canWrite()) throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException(
-            "Directory is not writeable: $directoryPath"
-        )
-    }
-
-    fun fileExists(filePath: String): Boolean = File(filePath).exists()
-
-    fun isFileReadable(filePath: String): Boolean {
-        val file = File(filePath)
-        return file.exists() && file.canRead()
-    }
-
-    fun getFileExtension(filePath: String): String = File(filePath).extension.lowercase()
 
     fun generateTempFileName(originalFilename: String, suffix: String = "_temp"): String {
         val file = File(originalFilename)
@@ -65,9 +27,5 @@ object FileUtils {
         if (!tempFile.renameTo(originalFile)) {
             throw _root_ide_package_.org.dmitriigliuz.linguatwist.legacy.storage.StorageException("Failed to replace file: ${originalFile.path}")
         }
-    }
-
-    fun isSupportedExtension(filePath: String, supportedExtensions: Set<String>): Boolean {
-        return getFileExtension(filePath) in supportedExtensions
     }
 }

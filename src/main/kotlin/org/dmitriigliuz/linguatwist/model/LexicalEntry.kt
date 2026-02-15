@@ -1,23 +1,32 @@
 package org.dmitriigliuz.linguatwist.model
 
-import org.dmitriigliuz.linguatwist.legacy.presentation.cli.strikethrough
-import org.dmitriigliuz.linguatwist.model.extensions.isSame
-
-
 data class LexicalEntry(
-    val originalWord: String,
+    val sourceText: String,
     val translation: String,
     val isGuessed: Boolean = false,
     val score: Int = 0
 ) {
+    val normalizedSourceText: String
+        get() = sourceText.trim().lowercase()
+
+    val normalizedTranslation: String
+        get() = translation.trim().lowercase()
+
     fun withGuessed() = copy(isGuessed = true, score = score + 1)
     fun withoutGuessed() = copy(isGuessed = false)
     fun withPenalty() = copy(score = score - 1)
-    fun sameAs(other: LexicalEntry) = originalWord.isSame(other.originalWord) && translation.isSame(other.translation)
+    fun isSourceTextSame(other: LexicalEntry) = normalizedSourceText == other.normalizedSourceText
+    fun isTranslationSame(other: LexicalEntry) = normalizedTranslation == other.normalizedTranslation
 
-    fun overlaps(other: LexicalEntry): Boolean {
-        return originalWord.isSame(other.originalWord) || translation.isSame(other.translation)
+    fun overlaps(other: LexicalEntry) = isSourceTextSame(other) || isTranslationSame(other)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is LexicalEntry) return false
+        return isSourceTextSame(other) && isTranslationSame(other)
     }
+
+    override fun hashCode() = 31 * normalizedSourceText.hashCode() + normalizedTranslation.hashCode()
 }
 
-fun LexicalEntry.applyStrikethroughIfGuessed(text: String) = if (isGuessed) text.strikethrough() else text
+//fun LexicalEntry.applyStrikethroughIfGuessed(text: String) = if (isGuessed) text.strikethrough() else text

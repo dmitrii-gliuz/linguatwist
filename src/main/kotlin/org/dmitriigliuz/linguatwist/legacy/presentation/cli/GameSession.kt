@@ -6,7 +6,6 @@ import org.dmitriigliuz.linguatwist.game.GameEngine
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.legacy.presentation.ui.emoji.Emoji
-import org.dmitriigliuz.linguatwist.legacy.storage.StorageException
 import org.dmitriigliuz.linguatwist.legacy.Spreadsheet
 import kotlin.system.exitProcess
 
@@ -166,14 +165,14 @@ class GameSession(private val context: AppContext) {
     }
 
     fun getRoundOutputLines(round: Round): List<String> = buildList {
-        val maxLength = round.pairs.maxOf { it.originalWord.length } + 3
+        val maxLength = round.pairs.maxOf { it.sourceText.length } + 3
         for (numberOfItem in 1..context.config.pairsPerRound) {
             val index = numberOfItem - 1
             val leftPair = round.pairs[index]
             val rightPair = round.pairs[round.rightColumnPermutation[index]]
-            val firstWordOutput = leftPair.run { applyStrikethroughIfGuessed(originalWord) }
+            val firstWordOutput = leftPair.run { applyStrikethroughIfGuessed(sourceText) }
             val secondWordOutput = rightPair.run { applyStrikethroughIfGuessed(translation) }
-            val spaces = " ".repeat(maxLength - leftPair.originalWord.length)
+            val spaces = " ".repeat(maxLength - leftPair.sourceText.length)
 
             add("$numberOfItem. $firstWordOutput$spaces$numberOfItem. $secondWordOutput")
         }

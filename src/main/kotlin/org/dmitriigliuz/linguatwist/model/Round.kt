@@ -32,7 +32,7 @@ data class Round(
     private fun pairAtRightColumn(rightIndex: Int) = pairs[originalPairIndex(rightIndex)]
 
     private fun getSelectedWords(selection: Pair<Int, Int>) = Pair(
-        pairAtLeftColumn(selection.first).originalWord,
+        pairAtLeftColumn(selection.first).sourceText,
         pairAtRightColumn(selection.second).translation
     )
 
