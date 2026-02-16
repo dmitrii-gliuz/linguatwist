@@ -9,6 +9,7 @@ import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.DeduplicationStats
 import org.dmitriigliuz.linguatwist.storage.filterDuplicates
+import org.dmitriigliuz.linguatwist.storage.requireValidExcel
 import java.io.File
 import java.io.FileInputStream
 import kotlin.use
@@ -22,13 +23,7 @@ private data class ParsingStats(
 class ExcelVocabularyLoader: VocabularyLoader {
     override fun load(path: String): Result<VocabularyLoadResult> = runCatching {
         logger.debug { "Starting vocabulary load from path: $path" }
-        val file = File(path). also {
-            require(it.exists()) { "File does not exist: $path" }
-            require(it.canRead()) { "File is not readable: $path" }
-            require(it.extension == "xlsx") {
-                "File extension is not supported: ${it.extension}, it should be 'xlsx'"
-            }
-        }
+        val file = File(path).requireValidExcel()
         val parsingStats = ParsingStats()
         val deduplicationStats = DeduplicationStats()
 
