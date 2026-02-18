@@ -13,3 +13,12 @@ fun File.requireValidExcel() = requireReadable(). also {
     }
 }
 
+fun File.generateTempFileName(suffix: String = "_temp") = buildString {
+    append(nameWithoutExtension)
+    if (extension.isNotEmpty()) append(".${extension}")
+}
+
+fun File.createTempFile(suffix: String = "_temp"): File {
+    return File(parent, generateTempFileName(suffix))
+}
+
