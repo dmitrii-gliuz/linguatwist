@@ -29,6 +29,7 @@ dependencies {
     implementation("org.dhatim:fastexcel-reader:0.19.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.14")
     implementation("ch.qos.logback:logback-classic:1.5.29")
+    implementation("com.github.ajalt.mordant:mordant:3.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
