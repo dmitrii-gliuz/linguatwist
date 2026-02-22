@@ -1,7 +1,6 @@
 package org.dmitriigliuz.linguatwist.storage.excel
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.dhatim.fastexcel.reader.ReadableWorkbook
 import org.dhatim.fastexcel.reader.Row
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.model.Vocabulary
@@ -11,8 +10,6 @@ import org.dmitriigliuz.linguatwist.storage.DeduplicationStats
 import org.dmitriigliuz.linguatwist.storage.filterDuplicates
 import org.dmitriigliuz.linguatwist.storage.requireValidExcel
 import java.io.File
-import java.io.FileInputStream
-import kotlin.use
 
 private val logger = KotlinLogging.logger { }
 
@@ -29,6 +26,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
 
 
         val uniqueEntries = readRowsFromExcel(file)
+            .drop(1)
             .parseWithStats(parsingStats)
             .filterDuplicates(deduplicationStats)
             .toSet()
@@ -52,28 +50,6 @@ class ExcelVocabularyLoader: VocabularyLoader {
         )
     }.onFailure { logger.error(it) { "Failed to load vocabulary from path: $path. Error: ${it.message}" } }
 
-    private fun readRowsFromExcel(file: File) = sequence {
-        logger.trace { "Starting to read rows from Excel file: ${file.absolutePath}" }
-        FileInputStream(file).use { inputStream ->
-            ReadableWorkbook(inputStream).use { workbook ->
-                logger.trace { "Workbook opened successfully" }
-                val sheet = workbook.firstSheet
-                logger.trace { "Accessing first sheet" }
-                sheet.openStream().use { rowStream ->
-                    val iterator = rowStream.iterator()
-                    require(iterator.hasNext()) { "Excel file is empty" }
-                    val header = iterator.next()
-                    require(header.cellCount >= 2) { "Excel file header must contain at least two columns" }
-                    logger.trace { "Header validated, processing data rows" }
-                    while (iterator.hasNext()) {
-                        val row = iterator.next()
-                        logger.trace { "Yielding row ${row.rowNum}" }
-                        yield(row)
-                    }
-                }
-            }
-        }
-    }
 
     private fun Sequence<Row>.parseWithStats(state: ParsingStats): Sequence<LexicalEntry> = sequence {
         for (row in this@parseWithStats) {
@@ -95,7 +71,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
     }
 
     private fun extractCellText(row: Row, columnIndex: Int): String  {
-        val value = row.getCellAsString(columnIndex).orElse("").trim()
+        val value = row.getCellTrimmedText(columnIndex)
         require(value.isNotEmpty()) { "Cell value is empty at row ${row.rowNum}, column $columnIndex" }
         require(value.any { it.isLetter() }) {
             "Cell value must contain at least one letter at row ${row.rowNum}, column $columnIndex"
@@ -103,6 +79,5 @@ class ExcelVocabularyLoader: VocabularyLoader {
         return value
     }
 
-    private fun extractScore(row: Row) =
-        row.getCellAsString(2).orElse("").trim().toIntOrNull() ?: 0
+    private fun extractScore(row: Row) = row.getCellTrimmedText(2).toIntOrNull() ?: 0
 }

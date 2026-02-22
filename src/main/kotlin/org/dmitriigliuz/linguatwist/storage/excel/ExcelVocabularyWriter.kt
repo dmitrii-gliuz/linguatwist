@@ -1,81 +1,69 @@
 package org.dmitriigliuz.linguatwist.storage.excel
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.dhatim.fastexcel.Workbook
-import org.dhatim.fastexcel.Worksheet
-import org.dhatim.fastexcel.reader.ReadableWorkbook
 import org.dhatim.fastexcel.reader.Row
-import org.dhatim.fastexcel.reader.Sheet
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyWriter
 import org.dmitriigliuz.linguatwist.storage.createTempFile
 import org.dmitriigliuz.linguatwist.storage.requireValidExcel
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import kotlin.io.use
-import kotlin.use
+
+
+private const val SCORE_COLUMN_INDEX = 2
+
+private val logger = KotlinLogging.logger { }
+
 
 class ExcelVocabularyWriter : VocabularyWriter {
-    override fun save(path: String, vocabulary: Vocabulary): = runCatching {
-        val oldFile = File(path).requireValidExcel()
+    override fun save(path: String, vocabulary: Vocabulary): Result<Unit> {
+        logger.debug { "Starting vocabulary save to path: $path" }
+        val oldFile = File(path)
         val tempFile = oldFile.createTempFile()
-        val vocabularyMap = vocabulary.entries.associateBy { it.normalizedSourceText to it.normalizedTranslation }
-        FileOutputStream(tempFile).use { outputStream ->
-            Workbook(outputStream, "LinguaTwist", "1.0").use { workbook ->
-                val worksheet = workbook.newWorksheet("Sheet1")
-                for (pair in readPairsFromExcelRows(oldFile)) {
-                    val entry = vocabularyMap[pair] ?: continue
-
-                }
-
-                // Write header
-                worksheet.value(0, 0, "Original")
-                worksheet.value(0, 1, "Translation")
-                worksheet.value(0, 2, "Score")
-
-                // Write data
-                vocabulary.entries.forEachIndexed { index, pair ->
-                    val row = index + 1
-                    worksheet.value(row, 0, pair.sourceText)
-                    worksheet.value(row, 1, pair.translation)
-                    worksheet.value(row, 2, pair.score)
-                }
-            }
-        }
-
-
-    }
-
-    fun writeEntry(entry: LexicalEntry, workSheet: Worksheet, rowIndex: Int) {
-        workSheet.value(rowIndex, 0, entry.sourceText)
-        workSheet.value(rowIndex, 1, entry.translation)
-        workSheet.value(rowIndex, 2, entry.score)
-    }
-
-    fun extractNormalizedPair(row: Row): Pair<String, String> {
-        val normalizedSourceText = row.getCellAsString(0).orElse("").trim().lowercase()
-        val normalizedTranslation = row.getCellAsString(1).orElse("").trim().lowercase()
-        return normalizedSourceText to normalizedTranslation
-    }
-
-    fun readPairsFromExcelRows(file: File): Sequence<Pair<String, String>> = sequence {
-        FileInputStream(file).use { inputStream ->
-            ReadableWorkbook(inputStream).use { workbook ->
-                val sheet = workbook.firstSheet
-                sheet.openStream().use { rowStream ->
-                    val iterator = rowStream.iterator()
-                    require(iterator.hasNext()) { "Excel file is empty" }
-                    val header = iterator.next()
-                    require(header.cellCount >= 2) { "Excel file header must contain at least two columns" }
-                    while (iterator.hasNext()) {
-                        val row = iterator.next()
-                        if (row.cellCount < 2) continue
-                        val pair = extractNormalizedPair(row)
-                        yield(pair)
+        return runCatching {
+            oldFile.requireValidExcel()
+            val vocabularyMap = vocabulary.entries.associateBy { it.normalizedSourceText to it.normalizedTranslation }
+            FileOutputStream(tempFile).use { outputStream ->
+                Workbook(outputStream, "LinguaTwist", "1.0").use { workbook ->
+                    val worksheet = workbook.newWorksheet("Sheet1")
+                    readRowsFromExcel(oldFile).forEachIndexed { rowIndex, row ->
+                        for (columnIndex in 0 until row.cellCount) {
+                            var cellValue = row.getCellText(columnIndex)
+                            if (rowIndex > 0 && columnIndex == SCORE_COLUMN_INDEX) cellValue =
+                                findScore(row, vocabularyMap)
+                            worksheet.value(rowIndex, columnIndex, cellValue)
+                        }
                     }
                 }
             }
+            Files.move(
+                tempFile.toPath(),
+                oldFile.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING
+            )
+            logger.info { "Successfully saved ${vocabulary.entries.size} entries to path: $path" }
+        }.onFailure {
+            logger.error(it) { "Failed to save vocabulary to path: $path. Error: ${it.message}" }
+            tempFile.delete()
         }
+    }
+
+    private fun findScore(row: Row, vocabularyMap: Map<Pair<String, String>, LexicalEntry>): String {
+        val pair = extractNormalizedPair(row)
+        val oldScore = row.getCellText(SCORE_COLUMN_INDEX)
+        val newScore = vocabularyMap[pair]?.score?.toString()
+        return newScore ?: oldScore
+    }
+
+    private fun extractNormalizedPair(row: Row): Pair<String, String> {
+        val sourceText = row.getCellTrimmedText(0).lowercase()
+        val translation = row.getCellTrimmedText(1).lowercase()
+        return sourceText to translation
     }
 }
