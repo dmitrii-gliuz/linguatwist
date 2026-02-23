@@ -16,7 +16,7 @@ class ConsoleRenderer(
     ▌ ▌▛▌▛▌▌▌▀▌▐ ▌▌▌▌▛▘▜
     ▙▖▌▌▌▙▌▙▌█▌▐ ▚▚▘▌▄▌▐▖
          ▄▌         ── v0.2 ──
-⟐  L E A R N · S U R V I V E  ⟐""".trimMargin()
+⟐  L E A R N  · S U R V I V E  ⟐""".trimMargin()
         val colors = listOf(Theme.neonCyan, Theme.neonMagenta, Theme.neonGreen)
         val coloredArt = buildString {
             art.lines().forEachIndexed { i, line ->
