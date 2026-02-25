@@ -27,6 +27,24 @@ class GameEngine(
         require(totalRounds in 1..config.maxRounds) { "NumberOfRoundsShouldBeInRange" }
     }
 
+    fun startNewGame(vocabulary: Vocabulary): GameState.InProgress {
+        // TODO Fix the access to locale and use a string value from there
+        require(vocabulary.size >= config.pairsPerRound) { "NotEnoughWordsToPlayTheGame" }
+        require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) { "NotAllWordsAreUnique" }
+        return advanceToNewRound(GameState.Initial(vocabulary))
+    }
+
+    fun completionPercentage(state: GameState.InProgress) =
+        state.totalGuessedAmount() * 100 / (totalRounds * config.pairsPerRound)
+
+    fun processAnswer(indexes: Pair<Int, Int>, state: GameState.InProgress): GameState {
+        return when (val roundResult = state.round.choosePair(indexes)) {
+            is RoundResult.Correct -> processRightAnswer(roundResult, state)
+            is RoundResult.Wrong -> processWrongAnswer(roundResult, state)
+            is RoundResult.Invalid -> state.copy(error = roundResult.error)
+        }
+    }
+
     private fun advanceToNewRound(state: GameState) = when (state) {
         is GameState.Initial -> {
             val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup(config.pairsPerRound)
@@ -40,16 +58,6 @@ class GameEngine(
         }
         else -> throw IllegalStateException("Unexpected state: $state")
     }
-
-    fun startNewGame(vocabulary: Vocabulary): GameState.InProgress {
-        // TODO Fix the access to locale and use a string value from there
-        require(vocabulary.size >= config.pairsPerRound) { "NotEnoughWordsToPlayTheGame" }
-        require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) { "NotAllWordsAreUnique" }
-        return advanceToNewRound(GameState.Initial(vocabulary))
-    }
-
-    fun completionPercentage(state: GameState.InProgress) =
-        state.totalGuessedAmount() * 100 / (totalRounds * config.pairsPerRound)
 
     private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult {
         val totalGuessedAmount = state.totalGuessedAmount()
@@ -86,13 +94,5 @@ class GameEngine(
             val result = createResult(true, updatedState)
             GameState.Failed(result)
         } else updatedState
-    }
-
-    fun processAnswer(indexes: Pair<Int, Int>, state: GameState.InProgress): GameState {
-        return when (val roundResult = state.round.choosePair(indexes)) {
-            is RoundResult.Correct -> processRightAnswer(roundResult, state)
-            is RoundResult.Wrong -> processWrongAnswer(roundResult, state)
-            is RoundResult.Invalid -> state.copy(error = roundResult.error)
-        }
     }
 }

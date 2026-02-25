@@ -13,6 +13,7 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.GameResult
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
+import com.github.ajalt.mordant.rendering.TextColors.Companion.rgb
 
 
 class ConsoleRenderer(
@@ -21,21 +22,21 @@ class ConsoleRenderer(
 ) {
     fun printLogo() {
         val art = """
-    ▖ ▘        ▄▖   ▘  ▗
-    ▌ ▌▛▌▛▌▌▌▀▌▐ ▌▌▌▌▛▘▜
-    ▙▖▌▌▌▙▌▙▌█▌▐ ▚▚▘▌▄▌▐▖
-         ▄▌         ── v0.2 ──
-⟐  L E A R N  · S U R V I V E  ⟐""".trimMargin()
-        val colors = listOf(Theme.neonCyan, Theme.neonMagenta, Theme.neonGreen)
-        val coloredArt = buildString {
-            art.lines().forEachIndexed { i, line ->
-                if (i < art.lines().size - 1) appendLine(colors[i % colors.size](line))
-                else append(colors[i % colors.size](line))
-            }
-        }
-        terminal.println(Panel(Text(coloredArt), padding = Padding(top = 0, right = 1, bottom = 0, left = 1)))
+█   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
+█   █ █ ▀█ █ ▀ █ █ █▀█  █  █ █ █ █  ▀▄  █ 
+▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trim()
+        terminal.println(
+            Panel(Text(art),
+                padding = Padding(top = 0, right = 1, bottom = 0, left = 1)
+            )
+        )
     }
-    
+
+    fun printGreetings() {
+        terminal.println(Text("""
+            🚀 Welcome to LinguaTwist! Match words with their translations.
+            🔢 Enter two numbers separated by a space to pair them. Type 'exit' to quit.""".trimIndent()))
+    }
 
     fun printRoundCard(round: Round) {
         fun styleIfGuessed(text: String, index: Int) = if (index in round.guessedIndexes) Theme.guessedWord(text) else text
