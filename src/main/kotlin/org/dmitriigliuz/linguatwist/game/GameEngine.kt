@@ -4,11 +4,19 @@ import org.dmitriigliuz.linguatwist.model.GameResult
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.model.RoundResult
+import org.dmitriigliuz.linguatwist.model.VerbalScore
 import org.dmitriigliuz.linguatwist.model.Vocabulary
+
+
+data class TurnOutcome(
+    val roundResult: RoundResult,
+    val newState: GameState
+)
+
 
 class GameEngine(
     private val totalRounds: Int,
-    private val config: GameConfig
+    private val config: GameConfig,
 ) {
     companion object {
         fun numberOfRoundsToCoverVocabulary(vocabulary: Vocabulary, config: GameConfig): Int {
@@ -16,11 +24,16 @@ class GameEngine(
             return vocabulary.size / config.pairsPerRound + if (leftoverPairs > 0) 1 else 0
         }
 
+
         fun defaultNumberOfRounds(vocabulary: Vocabulary, config: GameConfig) =
             if (vocabulary.size < config.maxRounds * config.pairsPerRound) {
                 numberOfRoundsToCoverVocabulary(vocabulary, config)
             } else config.defaultRounds
     }
+
+    val maxMistakes = totalRounds / 3
+    val totalPairs = totalRounds * config.pairsPerRound
+
 
     init {
 //        TODO Use error messages from locale when it will be implemented
@@ -34,15 +47,17 @@ class GameEngine(
         return advanceToNewRound(GameState.Initial(vocabulary))
     }
 
-    fun completionPercentage(state: GameState.InProgress) =
-        state.totalGuessedAmount() * 100 / (totalRounds * config.pairsPerRound)
 
-    fun processAnswer(indexes: Pair<Int, Int>, state: GameState.InProgress): GameState {
-        return when (val roundResult = state.round.choosePair(indexes)) {
-            is RoundResult.Correct -> processRightAnswer(roundResult, state)
-            is RoundResult.Wrong -> processWrongAnswer(roundResult, state)
+    fun completionPercentage(state: GameState.InProgress) = state.totalGuessedAmount() * 100 / totalPairs
+
+    fun processAnswer(indexes: Pair<Int, Int>, state: GameState.InProgress): TurnOutcome {
+        val roundResult = state.round.choosePair(indexes)
+        val newState = when (roundResult) {
+            is RoundResult.Correct -> processRightAnswer(roundResult, state, indexes.first)
+            is RoundResult.Wrong -> processWrongAnswer(roundResult, state, indexes)
             is RoundResult.Invalid -> state.copy(error = roundResult.error)
         }
+        return TurnOutcome(roundResult, newState)
     }
 
     private fun advanceToNewRound(state: GameState) = when (state) {
@@ -60,39 +75,63 @@ class GameEngine(
     }
 
     private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult {
-        val totalGuessedAmount = state.totalGuessedAmount()
-        val totalAnswersAmount = totalGuessedAmount + state.mistakesCount
-        val percentage = totalAnswersAmount * 100 / totalGuessedAmount
-        return GameResult(failed, state.score, percentage)
+        val performancePercentage = if (failed) 50 * state.totalGuessedAmount() / totalPairs
+        else 100 - 50 * state.mistakesCount / (if (maxMistakes > 0) maxMistakes else 1)
+
+        val verbalScore = VerbalScore.entries.first { it.percentage <= performancePercentage }
+
+        return GameResult(
+            completionPercentage = completionPercentage(state),
+            lastRound = state.round,
+            isFailed = failed,
+            score = state.score,
+            totalGuessedAmount = state.totalGuessedAmount(),
+            totalPairsAmount = totalPairs,
+            mistakesCount = state.mistakesCount,
+            maxMistakes = maxMistakes,
+            verbalScore = verbalScore
+        )
     }
 
-    private fun processRightAnswer(result: RoundResult.Correct, state: GameState.InProgress): GameState {
+    private fun processRightAnswer(result: RoundResult.Correct, state: GameState.InProgress, leftIndex: Int): GameState {
         val round = result.updatedRound
         val score = state.score + 1
+        val updatedEntry = round.pairs[leftIndex]
+        val updatedScores = state.updatedScores + (updatedEntry to updatedEntry.score)
         val updatedState = state.copy(
             round = round,
             score = score,
-            error = null
+            error = null,
+            updatedScores = updatedScores
         )
+        val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         return if (round.isFinished && round.number == totalRounds) {
             val result = createResult(false, updatedState)
-            GameState.Finished(result)
+            GameState.Finished(result, updatedVocabulary)
         } else if (round.isFinished) {
             advanceToNewRound(updatedState)
         } else updatedState
     }
 
-    private fun processWrongAnswer(result: RoundResult.Wrong, state: GameState.InProgress): GameState {
+    private fun processWrongAnswer(result: RoundResult.Wrong, state: GameState.InProgress, indexes: Pair<Int, Int>): GameState {
+        val round = result.updatedRound
+        val updatedLeftEntry = round.pairs[indexes.first]
+        val updatedRightEntry = round.pairs[indexes.second]
         val score = state.score - 1
         val mistakesCount = state.mistakesCount + 1
+        val updatedScores = state.updatedScores +
+                (updatedLeftEntry to updatedLeftEntry.score) + (updatedRightEntry to updatedRightEntry.score)
         val updatedState = state.copy(
-            round = result.updatedRound,
-            score = score, mistakesCount = mistakesCount,
-            error = null
+            round = round,
+            score = score,
+            mistakesCount = mistakesCount,
+            error = null,
+            updatedScores = updatedScores
         )
-        return if (mistakesCount >= config.maxMistakes) {
+        val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
+        return if (mistakesCount >= maxMistakes) {
             val result = createResult(true, updatedState)
-            GameState.Failed(result)
+            GameState.Failed(result, updatedVocabulary)
         } else updatedState
     }
 }

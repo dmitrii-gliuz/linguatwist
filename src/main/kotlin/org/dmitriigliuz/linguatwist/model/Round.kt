@@ -15,7 +15,7 @@ data class Round(
     val pairs: List<LexicalEntry>,
     val number: Int,
     val guessedIndexes: Set<Int> = emptySet(),
-    val mistakesCount: Int = 0,
+    val mistakesInRound: Int = 0,
     val rightColumnPermutation: List<Int> = (0 until pairs.size).shuffled()
 ) {
     val index = number - 1
@@ -64,8 +64,8 @@ data class Round(
                     else -> pair
                 }
             }
-            val updatedMistakes = mistakesCount + 1
-            val updatedRound = copy(pairs = updatedPairs, mistakesCount = updatedMistakes)
+            val updatedMistakes = mistakesInRound + 1
+            val updatedRound = copy(pairs = updatedPairs, mistakesInRound = updatedMistakes)
             RoundResult.Wrong(selectedWords, updatedRound)
         }
     }

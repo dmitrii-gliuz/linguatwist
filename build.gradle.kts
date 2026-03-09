@@ -35,6 +35,14 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
 }
 
+sourceSets {
+    main {
+        kotlin {
+            exclude("**/legacy/**")
+        }
+    }
+}
+
 application {
     mainClass.set("org.dmitriigliuz.linguatwist.MainKt")
     applicationDefaultJvmArgs = listOf("-Xmx2g", "-Xms512m")

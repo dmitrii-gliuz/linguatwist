@@ -34,4 +34,10 @@ data class Vocabulary(
         }
         return Pair(newGroup, copy(remainingPool = currentPool.toList()))
     }
+
+    fun withUpdatedScores(updatedScores: Map<LexicalEntry, Int>) = copy(
+        entries = entries.mapTo(HashSet(entries.size)) { entry ->
+            updatedScores[entry]?.let { entry.copy(score = it) } ?: entry
+        }
+    )
 }

@@ -8,7 +8,9 @@ object Theme {
     // Cyberpunk palette
     val neonCyan = rgb("#00ffff")
     val neonMagenta = rgb("#ff00ff")
+    val neonIndigo = rgb("#7B68EE")
     val neonGreen = rgb("#00ff41")
+    val neonRed = rgb("#ff0000")
     val neonYellow = rgb("#ffff00")
     val dimGray = rgb("#666699")
     val darkPurple = rgb("#1a1a2e")
@@ -16,7 +18,7 @@ object Theme {
     // Semantic styles
     val title = (bold + neonCyan)
     val success = (bold + neonGreen)
-    val error = (bold + neonMagenta)
+    val error = (bold + neonRed)
     val warning = (bold + neonYellow)
     val muted = dimGray
     val accent = neonCyan

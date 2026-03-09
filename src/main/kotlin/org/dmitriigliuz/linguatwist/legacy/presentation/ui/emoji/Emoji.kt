@@ -13,7 +13,7 @@ enum class Emoji(val unicode: String, val fallback: String) {
     MISTAKES("❌", "[-]"),
     RIGHT("✅", "[+]"),
     WRONG("❌", "[-]"),
-    POINT_UP("🔼", "[+]"),
+    POINT_UP("✅", "[+]"),
     POINT_DOWN("🔽", "[-]"),
 
     // Progress emojis

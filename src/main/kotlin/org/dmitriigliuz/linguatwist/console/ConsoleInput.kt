@@ -6,29 +6,62 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.github.ajalt.mordant.terminal.prompt
 import org.dmitriigliuz.linguatwist.i18n.Messages
+import com.github.ajalt.mordant.input.InputReceiver
+import com.github.ajalt.mordant.input.isCtrlC
+import com.github.ajalt.mordant.input.receiveKeyEvents
 
 class ConsoleInput(
     private val terminal: Terminal,
     private val messages: Messages
 ) {
-    fun promptIndexes(): Result<Pair<Int, Int>> = runCatching {
-//        TODO Figure out how this function works
-         val input = terminal.prompt(Theme.promptStyle("Enter indexes for matching words: "))
-             ?: throw IllegalStateException("exit")
-        if (input == "exit") throw IllegalStateException("exit")
+
+    fun readLineRaw(): String? {
+        val buffer = StringBuilder()
+        return terminal.receiveKeyEvents { event ->
+            if (event.isCtrlC) return@receiveKeyEvents InputReceiver.Status.Finished(null)
+            when (event.key) {
+                "Enter" -> InputReceiver.Status.Finished(buffer.toString())
+                "Backspace" -> {
+                    if (buffer.isNotEmpty()) {
+                        buffer.deleteAt(buffer.length - 1)
+                        print("\b \b")
+                    }
+                    InputReceiver.Status.Continue
+                }
+                else -> {
+                    if (event.key.length  == 1 && event.key[0].isDigit() || event.key == " ") {
+                        buffer.append(event.key)
+                        print(event.key)
+                    }
+                    InputReceiver.Status.Continue
+                }
+            }
+        }
+    }
+
+    fun promptIndexes(): IndexInput {
+        val input = readLineRaw() ?: return IndexInput.Exit
+        terminal.cursor.move {
+            startOfLine()
+            clearLine()
+        }
+        val correctRegex = """^\d+\s+\d+$""".toRegex()
+        if (!correctRegex.matches(input)) return IndexInput.Invalid
         val parts = input.split("\\s+".toRegex()). map { it.toInt() }
-        parts[0] to parts[1]
+        val pair = parts[0] to parts[1]
+
+        return IndexInput.Indexes(pair)
     }
 
     fun promptNumberOfRounds(default: Int, max: Int): Int {
 //        TODO Figure out how this function works
         return terminal.prompt(
-            prompt = Theme.promptStyle("Enter the number of rounds (default: $default, max: $max): "),
+            prompt = Theme.promptStyle("🎯 Enter the number of rounds (default: $default, max: $max): "),
             default = default,
             convert = { input ->
                 val n = input.toIntOrNull()
-                if (n == null && n in 1..max) ConversionResult.Valid(n)
-                else ConversionResult.Invalid("1-$max")
+                if (n != null && n in 1..max) ConversionResult.Valid(n)
+                else ConversionResult.Invalid("1-$max: Your value is $n")
             }
         ) ?: default
     }
@@ -47,4 +80,10 @@ class ConsoleInput(
         }
         return items.indexOf(selected)
     }
+}
+
+sealed class IndexInput {
+    data class Indexes(val pair: Pair<Int, Int>): IndexInput()
+    object Exit: IndexInput()
+    object Invalid: IndexInput()
 }

@@ -1,5 +1,7 @@
 package org.dmitriigliuz.linguatwist.console
 
+import com.github.ajalt.mordant.animation.animation
+import com.github.ajalt.mordant.rendering.BorderType
 import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.danger
@@ -13,13 +15,21 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.GameResult
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
-import com.github.ajalt.mordant.rendering.TextColors.Companion.rgb
+import com.github.ajalt.mordant.rendering.Widget
+import com.github.ajalt.mordant.table.Borders
+import com.github.ajalt.mordant.table.verticalLayout
+import org.dmitriigliuz.linguatwist.model.RoundResult
+import org.dmitriigliuz.linguatwist.model.ValidationError
 
 
 class ConsoleRenderer(
     private val terminal: Terminal,
     private val messages: Messages
 ) {
+    fun emptyLine() = terminal.println()
+
+    val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
+    
     fun printLogo() {
         val art = """
 █   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
@@ -27,91 +37,133 @@ class ConsoleRenderer(
 ▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trim()
         terminal.println(
             Panel(Text(art),
-                padding = Padding(top = 0, right = 1, bottom = 0, left = 1)
+                padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
+                borderStyle = Theme.neonIndigo
             )
         )
     }
 
-    fun printGreetings() {
-        terminal.println(Text("""
-            🚀 Welcome to LinguaTwist! Match words with their translations.
-            🔢 Enter two numbers separated by a space to pair them. Type 'exit' to quit.""".trimIndent()))
-    }
-
-    fun printRoundCard(round: Round) {
-        fun styleIfGuessed(text: String, index: Int) = if (index in round.guessedIndexes) Theme.guessedWord(text) else text
-        terminal.println(
-            table {
-                captionTop(Theme.roundTitle("⟐ Round ${round.number} ⟐"))
-                header { row(
-                    Theme.accent("N"),
-                    Theme.accent("Original"),
-                    Theme.accent("#"),
-                    Theme.accent("Translation"
-                    ))
-                }
-                body {
-                    for (i in round.pairs.indices) {
-                        val leftPair = round.pairs[i]
-                        val rightPair = round.pairs[round.rightColumnPermutation[i]]
-                        val leftText = styleIfGuessed(leftPair.sourceText, i)
-                        val rightText = styleIfGuessed(rightPair.translation, round.rightColumnPermutation[i])
-                        val printedIndex = i + 1
-                        row(printedIndex, leftText, rightText)
-                    }
-                }
-                captionBottom(
-                    if (round.mistakesCount > 0) Theme.mistakeStyle("Mistakes: ${round.mistakesCount}")
-                    else ""
-                )
-            }
+    fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
+        val roundTable = buildRoundTable(state.round)
+        val gameStats = Text(
+            Theme.scoreStyle("🌟 Score: ${state.score}   ") +
+                    Theme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
         )
-    }
 
-    fun printGameStatus(score: Int, mistakes: Int, completionPercentage: Int) {
-        terminal.println(
-            Theme.scoreStyle("★ Score: $score") + "   " +
-            Theme.mistakeStyle("Mistakes: $mistakes")
+        val feedback = Panel(
+            content = state.feedbackMessage,
+            borderStyle = Theme.dimGray,
+            padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
+            borderType = BorderType.ASCII
         )
-        terminal.println(ProgressBar(
-            completed = completionPercentage.toLong(),
+        val progressBar = ProgressBar(
+            completed = state.completionPercentage.toLong(),
             total = 100,
             completeStyle = Theme.neonGreen,
-            pendingStyle = Theme.dimGray
-        ))
+            pendingStyle = Theme.darkPurple
+        )
+        val inputIndexesPrompt = "✍️ Input indexes for matching words: "
+        cell(roundTable)
+        cell(gameStats)
+        cell(feedback)
+        cell(progressBar)
+        cell(inputIndexesPrompt)
     }
 
-    fun printCorrect() {
-        terminal.success("✓ Right!")
-        terminal.println("  +1 point")
+    fun buildRoundResultFeedback(roundResult: RoundResult) : String {
+        return when (roundResult) {
+            is RoundResult.Correct -> Theme.success("✅ Right! +1 point 🔼\n") +
+                    "${roundResult.words.first} ⟷ ${roundResult.words.second}"
+            is RoundResult.Wrong -> Theme.warning("❌ Wrong! -1 point 🔽\n") +
+                    "${roundResult.words.first} ↮ ${roundResult.words.second}"
+            is RoundResult.Invalid -> buildErrorFeedback(roundResult.error)
+        }
     }
 
-    fun printWrong() {
-        terminal.danger("✗ Wrong!")
-        terminal.println("  -1 point")
+    fun buildErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
+        val message = errorMessage ?: if (error != null) when (error) {
+            ValidationError.INDEX_OUT_OF_RANGE -> "Indexes are out of range"
+            ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> "Pair has already been guessed"
+        }
+        else "The input must contain two numbers separated by space"
+        return Theme.error("🚫 Input error\n") + message
     }
 
-    fun printGameResult(result: GameResult) {
-        val panel = Panel(
-            title = Text(Theme.title("⟐ Result ⟐")),
-            content = Text(buildString {
-                appendLine(
-                    if (result.isFailed)
-                        "😢 Sorry, you failed."
-                    else "🎉 Congratulations, you finished!"
-                )
-                appendLine("Your result: ${result.percentage}%")
-                appendLine(result.verbalScore.description)
-            })
+    fun <T> withProgressMessage(message: String, action: () -> T): T? {
+        terminal.print(Text("⏳ $message "))
+        return try {
+            val result = action()
+            terminal.success("Done!")
+            result
+        } catch (e: Exception) {
+            printError(e.toString())
+            null
+        }
+    }
+
+    fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(
+        "🚨 Maximal number of possible mistakes: $maxMistakes"
+    )
+
+    fun printGreetings() {
+        terminal.println(Text("""
+            👋 Welcome to LinguaTwist! Match words with their translations.
+            💡 Enter two numbers separated by a space to pair them. Type 'exit' to quit.""".trimIndent()
+        )
         )
     }
+
+    fun printLetsGo() = terminal.println(Theme.neonCyan ("🚀 Let's go!"))
+
+    fun buildRoundTable(round: Round): Widget {
+        fun styleIfGuessed(text: String, index: Int) =
+            if (index in round.guessedIndexes) Theme.guessedWord(text) else text
+
+        val roundTable = table {
+            column(1) { padding = Padding { right = 1 } }
+            column(2) { padding = Padding { left = 1 } }
+            borderType = BorderType.BLANK
+            body {
+                cellBorders = Borders.NONE
+                for (i in round.pairs.indices) {
+                    val leftPair = round.pairs[i]
+                    val rightPair = round.pairs[round.rightColumnPermutation[i]]
+                    val leftText = styleIfGuessed(leftPair.sourceText, i)
+                    val rightText = styleIfGuessed(rightPair.translation, round.rightColumnPermutation[i])
+                    val printedIndex = i + 1
+                    row(printedIndex, leftText, printedIndex, rightText)
+                }
+            }
+        }
+
+        val mistakesInRound = if (round.mistakesInRound > 0) Theme.mistakeStyle("Mistakes in round: ${round.mistakesInRound}")
+        else ""
+        return Panel(
+            content = roundTable,
+            title = Text("Round ${round.number}"),
+            bottomTitle = Text(mistakesInRound),
+            borderStyle = Theme.neonIndigo
+        )
+    }
+
+    fun buildGameResult(result: GameResult) = buildString {
+        appendLine(
+            if (result.isFailed)
+                "😢 Sorry, you failed."
+            else "🎉 Congratulations, you finished!"
+        )
+        appendLine("✅ Guessed pairs: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
+        appendLine("❌ Mistakes: ${result.mistakesCount} / ${result.maxMistakes}")
+        append("${result.verbalScore.emoji} ${result.verbalScore.description}")
+    }
+
     fun printWarning(message: String) = terminal.warning(message)
-    fun printError(message: String) = terminal.danger(message)
+    fun printError(message: String) = terminal.danger("❌ $message")
 
     fun printVocabularyInfo(vocabularySize: Int, vocabularyResult: VocabularyLoadResult) {
-        terminal.success("The number of loaded words: $vocabularySize")
-        if (vocabularyResult.duplicates > 0) terminal.warning("${vocabularyResult.duplicates} duplicates found")
-        if (vocabularyResult.overlappedPairs > 0) terminal.warning("${vocabularyResult.overlappedPairs} overlapping pairs found")
-        if (vocabularyResult.invalidRows > 0) terminal.danger("${vocabularyResult.invalidRows} invalid rows found")
+        terminal.success("📚 The number of loaded words: $vocabularySize")
+        if (vocabularyResult.duplicates > 0) terminal.warning("⚠️ ${vocabularyResult.duplicates} duplicates found")
+        if (vocabularyResult.overlappedPairs > 0) terminal.warning("⚠️ ${vocabularyResult.overlappedPairs} overlapping pairs found")
+        if (vocabularyResult.invalidRows > 0) terminal.danger("❌ ${vocabularyResult.invalidRows} invalid rows found")
     }
 }

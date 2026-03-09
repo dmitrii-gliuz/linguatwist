@@ -28,5 +28,3 @@ data class LexicalEntry(
 
     override fun hashCode() = 31 * normalizedSourceText.hashCode() + normalizedTranslation.hashCode()
 }
-
-//fun LexicalEntry.applyStrikethroughIfGuessed(text: String) = if (isGuessed) text.strikethrough() else text

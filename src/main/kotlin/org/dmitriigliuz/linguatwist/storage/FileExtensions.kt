@@ -15,6 +15,7 @@ fun File.requireValidExcel() = requireReadable(). also {
 
 fun File.generateTempFileName(suffix: String = "_temp") = buildString {
     append(nameWithoutExtension)
+    append(suffix)
     if (extension.isNotEmpty()) append(".${extension}")
 }
 

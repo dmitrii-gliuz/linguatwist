@@ -179,7 +179,7 @@ class GameSession(private val context: AppContext) {
     }
 
     fun getRoundCard(round: Round): String {
-        val bottomCaption = if (round.mistakesCount > 0) "${ui.text("MistakesInRound")}: ${round.mistakesCount}" else ""
+        val bottomCaption = if (round.mistakesInRound > 0) "${ui.text("MistakesInRound")}: ${round.mistakesInRound}" else ""
         val caption = "${ui.text("Round")} ${round.number}"
         val maxLengthOfString = if (maxStringLengthsInRounds.size >= round.number) {
             maxStringLengthsInRounds[round.index]
@@ -272,7 +272,7 @@ class GameSession(private val context: AppContext) {
         return input(
             "EnterTheNumberOfRounds",
             "(${ui.text("Default")}: $defaultValue)"
-        ).toIntOrNull() ?: defaultValue
+        ).toIntOrNull() ?: d22222222222222222222222efaultValue
     }
 
     fun printNumberOfLoadedWords(vocabulary: Vocabulary, spreadsheet: Spreadsheet) = printbs {

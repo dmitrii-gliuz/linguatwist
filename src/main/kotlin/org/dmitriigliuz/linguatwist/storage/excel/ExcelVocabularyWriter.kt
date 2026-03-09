@@ -27,20 +27,33 @@ class ExcelVocabularyWriter : VocabularyWriter {
         val tempFile = oldFile.createTempFile()
         return runCatching {
             oldFile.requireValidExcel()
+            logger.debug { "Excel file validated successfully: $path" }
             val vocabularyMap = vocabulary.entries.associateBy { it.normalizedSourceText to it.normalizedTranslation }
+            logger.debug { "Created vocabulary map with ${vocabularyMap.size} entries" }
             FileOutputStream(tempFile).use { outputStream ->
                 Workbook(outputStream, "LinguaTwist", "1.0").use { workbook ->
+                    logger.debug { "Created workbook, starting to process rows" }
                     val worksheet = workbook.newWorksheet("Sheet1")
-                    readRowsFromExcel(oldFile).forEachIndexed { rowIndex, row ->
+                    val rows = readRowsFromExcel(oldFile)
+                    logger.debug { "Read rows from Excel file" }
+                    rows.forEachIndexed { rowIndex, row ->
+                        logger.debug { "Processing row $rowIndex with ${row.cellCount} cells" }
                         for (columnIndex in 0 until row.cellCount) {
                             var cellValue = row.getCellText(columnIndex)
-                            if (rowIndex > 0 && columnIndex == SCORE_COLUMN_INDEX) cellValue =
-                                findScore(row, vocabularyMap)
+                            if (rowIndex > 0 && columnIndex == SCORE_COLUMN_INDEX) {
+                                cellValue = findScore(row, vocabularyMap)
+                                logger.debug { "Row $rowIndex: Updated score to '$cellValue' for entry" }
+                            }
                             worksheet.value(rowIndex, columnIndex, cellValue)
-                        }
+                            }
+                            if (rowIndex > 0 && rowIndex % 100 == 0) {
+                                logger.debug { "Processed $rowIndex rows" }
+                            }
                     }
+                    logger.debug { "Finished writing all rows to workbook" }
                 }
             }
+            logger.debug { "Moving temp file to replace original file" }
             Files.move(
                 tempFile.toPath(),
                 oldFile.toPath(),

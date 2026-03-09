@@ -10,7 +10,6 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyWriter
 
-
 fun main(args: Array<String>) {
     val terminal = Terminal(ansiLevel = AnsiLevel.TRUECOLOR)
     val messages = Messages("en")
