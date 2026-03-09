@@ -19,7 +19,7 @@ fun GameState.InProgress.toRoundDisplayState(
     feedbackMessage: String
 ) = RoundDisplayState(
     round = round,
-    score = score,
+    score = gameScore,
     completionPercentage = completionPercentage,
     totalMistakesMade = mistakesCount,
     feedbackMessage = feedbackMessage,

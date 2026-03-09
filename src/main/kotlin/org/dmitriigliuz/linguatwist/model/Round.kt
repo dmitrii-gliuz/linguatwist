@@ -27,9 +27,9 @@ data class Round(
 
     private fun originalPairIndex(rightColumnIndex: Int) = rightColumnPermutation[rightColumnIndex]
 
-    private fun pairAtLeftColumn(leftIndex: Int) = pairs[leftIndex]
+    fun pairAtLeftColumn(leftIndex: Int) = pairs[leftIndex]
 
-    private fun pairAtRightColumn(rightIndex: Int) = pairs[originalPairIndex(rightIndex)]
+    fun pairAtRightColumn(rightIndex: Int) = pairs[originalPairIndex(rightIndex)]
 
     private fun getSelectedWords(selection: Pair<Int, Int>) = Pair(
         pairAtLeftColumn(selection.first).sourceText,

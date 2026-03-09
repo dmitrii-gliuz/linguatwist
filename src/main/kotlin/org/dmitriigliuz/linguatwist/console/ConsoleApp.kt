@@ -31,14 +31,16 @@ class ConsoleApp(
         }
     }
     
-    fun exitGame() {
+    private fun exitGame() {
         renderer.printWarning("👋 Bye!")
         exitProcess(0)
     }
 
-    fun startGame() {
+    private fun startGame() {
         renderer.emptyLine()
-        val vocabularyLoadResult = renderer.withProgressMessage("Loading vocabulary...") { loader.load(config.spreadsheetPath).getOrThrow() }
+        val vocabularyLoadResult = renderer.withProgressMessage("Loading vocabulary...") {
+            loader.load(config.spreadsheetPath).getOrThrow()
+        }
         renderer.emptyLine()
         if (vocabularyLoadResult == null) {
             renderer.printError("Failed to load vocabulary")
@@ -49,24 +51,24 @@ class ConsoleApp(
         renderer.emptyLine()
         renderer.printVocabularyInfo(vocabulary.size, vocabularyLoadResult)
         renderer.emptyLine()
-        var play = true
-        while (play) {
+        do {
             val finalState = gameSession(vocabulary)
             val result = finalState.getResultOrNull()
             if (result == null) {
                 renderer.printError("Failed to get result")
             }
             finalState.getUpdatedVocabularyOrNull()?.let { vocabulary = it }
-            play = input.promptPlayAgain()
-        }
+        } while (input.promptPlayAgain())
 
-        renderer.withProgressMessage("Saving scores to spreadsheet...") {
+        val saveResult = renderer.withProgressMessage("Saving scores to spreadsheet...") {
             writer.save(config.spreadsheetPath, vocabulary).getOrThrow()
         }
+        if (saveResult == null) {
+            renderer.printError("Failed to save scores")
+        }
+   }
 
-    }
-
-    fun gameSession(vocabulary: Vocabulary): GameState {
+    private fun gameSession(vocabulary: Vocabulary): GameState {
         val defaultNumberOfRounds = GameEngine.defaultNumberOfRounds(vocabulary, config)
         val totalRounds = input.promptNumberOfRounds(defaultNumberOfRounds, config.maxRounds)
         val engine = GameEngine(totalRounds, config)
@@ -75,14 +77,13 @@ class ConsoleApp(
         renderer.printLetsGo()
         renderer.emptyLine()
         var gameState: GameState = engine.startNewGame(vocabulary)
-        var feedbackMessage = "🎮 Ready to play? Match words with their translations! 🎯\n" +
-                "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
+        var feedbackMessage = renderer.initialFeedback
         while (gameState is GameState.InProgress) {
             val displayState = gameState.toRoundDisplayState(
                 engine.completionPercentage(gameState),
                 feedbackMessage
             )
-            renderer.roundDisplay.update(displayState)
+            renderer.updateRoundDisplay(displayState)
             when (val inputIndexesResult = input.promptIndexes()) {
                 is IndexInput.Exit -> exitGame()
                 is IndexInput.Invalid -> feedbackMessage = renderer.buildErrorFeedback()
@@ -99,9 +100,9 @@ class ConsoleApp(
         result?.let {
             feedbackMessage = renderer.buildGameResult(it)
             val displayState = it.toDisplayState(feedbackMessage)
-            renderer.roundDisplay.update(displayState)
+            renderer.updateRoundDisplay(displayState)
         }
-        renderer.roundDisplay.stop()
+        renderer.stopRoundDisplay()
         return gameState
     }
 }

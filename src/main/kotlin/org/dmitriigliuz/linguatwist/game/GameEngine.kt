@@ -84,7 +84,7 @@ class GameEngine(
             completionPercentage = completionPercentage(state),
             lastRound = state.round,
             isFailed = failed,
-            score = state.score,
+            score = state.gameScore,
             totalGuessedAmount = state.totalGuessedAmount(),
             totalPairsAmount = totalPairs,
             mistakesCount = state.mistakesCount,
@@ -95,18 +95,18 @@ class GameEngine(
 
     private fun processRightAnswer(result: RoundResult.Correct, state: GameState.InProgress, leftIndex: Int): GameState {
         val round = result.updatedRound
-        val score = state.score + 1
-        val updatedEntry = round.pairs[leftIndex]
-        val updatedScores = state.updatedScores + (updatedEntry to updatedEntry.score)
+        val gameScore = state.gameScore + 1
+        val updatedEntry = round.pairAtLeftColumn(leftIndex)
+        val updatedScores = state.updatedScores + (updatedEntry to updatedEntry.entryScore)
         val updatedState = state.copy(
             round = round,
-            score = score,
+            gameScore = gameScore,
             error = null,
             updatedScores = updatedScores
         )
-        val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         return if (round.isFinished && round.number == totalRounds) {
             val result = createResult(false, updatedState)
+            val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
             GameState.Finished(result, updatedVocabulary)
         } else if (round.isFinished) {
             advanceToNewRound(updatedState)
@@ -115,22 +115,22 @@ class GameEngine(
 
     private fun processWrongAnswer(result: RoundResult.Wrong, state: GameState.InProgress, indexes: Pair<Int, Int>): GameState {
         val round = result.updatedRound
-        val updatedLeftEntry = round.pairs[indexes.first]
-        val updatedRightEntry = round.pairs[indexes.second]
-        val score = state.score - 1
+        val updatedLeftEntry = round.pairAtLeftColumn(indexes.first)
+        val updatedRightEntry = round.pairAtRightColumn(indexes.second)
+        val gameScore = state.gameScore - 1
         val mistakesCount = state.mistakesCount + 1
         val updatedScores = state.updatedScores +
-                (updatedLeftEntry to updatedLeftEntry.score) + (updatedRightEntry to updatedRightEntry.score)
+                (updatedLeftEntry to updatedLeftEntry.entryScore) + (updatedRightEntry to updatedRightEntry.entryScore)
         val updatedState = state.copy(
             round = round,
-            score = score,
+            gameScore = gameScore,
             mistakesCount = mistakesCount,
             error = null,
             updatedScores = updatedScores
         )
-        val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         return if (mistakesCount >= maxMistakes) {
             val result = createResult(true, updatedState)
+            val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
             GameState.Failed(result, updatedVocabulary)
         } else updatedState
     }

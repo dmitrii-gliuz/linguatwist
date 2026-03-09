@@ -4,7 +4,7 @@ data class LexicalEntry(
     val sourceText: String,
     val translation: String,
     val isGuessed: Boolean = false,
-    val score: Int = 0
+    val entryScore: Int = 0
 ) {
     val normalizedSourceText: String
         get() = sourceText.trim().lowercase()
@@ -12,9 +12,9 @@ data class LexicalEntry(
     val normalizedTranslation: String
         get() = translation.trim().lowercase()
 
-    fun withGuessed() = copy(isGuessed = true, score = score + 1)
+    fun withGuessed() = copy(isGuessed = true, entryScore = entryScore + 1)
     fun withoutGuessed() = copy(isGuessed = false)
-    fun withPenalty() = copy(score = score - 1)
+    fun withPenalty() = copy(entryScore = entryScore - 1)
     fun isSourceTextSame(other: LexicalEntry) = normalizedSourceText == other.normalizedSourceText
     fun isTranslationSame(other: LexicalEntry) = normalizedTranslation == other.normalizedTranslation
 

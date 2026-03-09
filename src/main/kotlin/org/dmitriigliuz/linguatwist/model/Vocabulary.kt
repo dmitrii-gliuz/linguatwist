@@ -2,13 +2,13 @@ package org.dmitriigliuz.linguatwist.model
 
 data class Vocabulary(
     val entries: Set<LexicalEntry>,
-    private val remainingPool: List<LexicalEntry> = entries.shuffled().sortedBy { it.score }
+    private val remainingPool: List<LexicalEntry> = entries.shuffled().sortedBy { it.entryScore }
 ) {
     val size = entries.size
 
     private fun refillPool(seen: Set<LexicalEntry>, newGroup: List<LexicalEntry>) = entries
         .shuffled()
-        .sortedBy { it.score }
+        .sortedBy { it.entryScore }
         .filter { !seen.contains(it) && !newGroup.contains(it) }
         .map { it.withoutGuessed() }
 
@@ -37,7 +37,7 @@ data class Vocabulary(
 
     fun withUpdatedScores(updatedScores: Map<LexicalEntry, Int>) = copy(
         entries = entries.mapTo(HashSet(entries.size)) { entry ->
-            updatedScores[entry]?.let { entry.copy(score = it) } ?: entry
+            updatedScores[entry]?.let { entry.copy(entryScore = it) } ?: entry
         }
     )
 }

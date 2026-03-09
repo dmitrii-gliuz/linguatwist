@@ -70,7 +70,7 @@ class ExcelVocabularyWriter : VocabularyWriter {
     private fun findScore(row: Row, vocabularyMap: Map<Pair<String, String>, LexicalEntry>): String {
         val pair = extractNormalizedPair(row)
         val oldScore = row.getCellText(SCORE_COLUMN_INDEX)
-        val newScore = vocabularyMap[pair]?.score?.toString()
+        val newScore = vocabularyMap[pair]?.entryScore?.toString()
         return newScore ?: oldScore
     }
 

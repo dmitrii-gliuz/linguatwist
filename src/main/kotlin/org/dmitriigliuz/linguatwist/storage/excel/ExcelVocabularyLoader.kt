@@ -67,7 +67,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
         val sourceText = extractCellText(row, 0)
         val translation = extractCellText(row, 1)
         val score = if (row.cellCount > 2) extractScore(row) else 0
-        LexicalEntry(sourceText, translation, score = score)
+        LexicalEntry(sourceText, translation, entryScore = score)
     }
 
     private fun extractCellText(row: Row, columnIndex: Int): String  {

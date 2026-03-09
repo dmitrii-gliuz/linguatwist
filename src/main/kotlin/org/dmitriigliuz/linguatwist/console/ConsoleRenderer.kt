@@ -26,9 +26,16 @@ class ConsoleRenderer(
     private val terminal: Terminal,
     private val messages: Messages
 ) {
+    val initialFeedback = "🎮 Ready to play? Match words with their translations! 🎯\n" +
+            "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
+
     fun emptyLine() = terminal.println()
 
-    val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
+    private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
+
+    fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
+
+    fun stopRoundDisplay() = roundDisplay.stop()
     
     fun printLogo() {
         val art = """
@@ -43,7 +50,7 @@ class ConsoleRenderer(
         )
     }
 
-    fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
+    private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
         val roundTable = buildRoundTable(state.round)
         val gameStats = Text(
             Theme.scoreStyle("🌟 Score: ${state.score}   ") +
@@ -115,7 +122,7 @@ class ConsoleRenderer(
 
     fun printLetsGo() = terminal.println(Theme.neonCyan ("🚀 Let's go!"))
 
-    fun buildRoundTable(round: Round): Widget {
+    private fun buildRoundTable(round: Round): Widget {
         fun styleIfGuessed(text: String, index: Int) =
             if (index in round.guessedIndexes) Theme.guessedWord(text) else text
 
