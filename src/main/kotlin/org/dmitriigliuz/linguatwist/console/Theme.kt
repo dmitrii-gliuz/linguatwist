@@ -4,7 +4,7 @@ import com.github.ajalt.mordant.rendering.TextColors.Companion.rgb
 import com.github.ajalt.mordant.rendering.TextStyles.*
 
 
-object Theme {
+internal object Theme {
     // Cyberpunk palette
     val neonCyan = rgb("#00ffff")
     val neonMagenta = rgb("#ff00ff")
@@ -20,13 +20,10 @@ object Theme {
     val success = (bold + neonGreen)
     val error = (bold + neonRed)
     val warning = (bold + neonYellow)
-    val muted = dimGray
-    val accent = neonCyan
 
     // Game-specific
     val scoreStyle = neonGreen
     val mistakeStyle = neonMagenta
-    val roundTitle = (bold + neonCyan)
     val guessedWord = (strikethrough + dimGray)
     val promptStyle = neonCyan
 }

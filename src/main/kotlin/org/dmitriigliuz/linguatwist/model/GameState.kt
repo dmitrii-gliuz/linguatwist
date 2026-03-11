@@ -10,7 +10,7 @@ sealed class GameState {
         val error: ValidationError? = null,
         val updatedScores: Map<LexicalEntry, Int> = emptyMap()
     ) : GameState() {
-        fun totalGuessedAmount() = round.guessedCount + (round.number - 1) * round.pairs.size
+        fun totalGuessedAmount() = round.guessedCount + (round.previousNumber) * round.size
     }
     data class Finished(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
     data class Failed(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()

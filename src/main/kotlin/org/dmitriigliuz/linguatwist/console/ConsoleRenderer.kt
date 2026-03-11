@@ -26,18 +26,18 @@ class ConsoleRenderer(
     private val terminal: Terminal,
     private val messages: Messages
 ) {
-    val initialFeedback = "🎮 Ready to play? Match words with their translations! 🎯\n" +
+    internal val initialFeedback = "🎮 Ready to play? Match words with their translations! 🎯\n" +
             "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
 
-    fun emptyLine() = terminal.println()
+    internal fun emptyLine() = terminal.println()
 
     private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
 
-    fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
+    internal fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
 
-    fun stopRoundDisplay() = roundDisplay.stop()
+    internal fun stopRoundDisplay() = roundDisplay.stop()
     
-    fun printLogo() {
+    internal fun printLogo() {
         val art = """
 █   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
 █   █ █ ▀█ █ ▀ █ █ █▀█  █  █ █ █ █  ▀▄  █ 
@@ -50,11 +50,77 @@ class ConsoleRenderer(
         )
     }
 
+    internal fun buildRoundResultFeedback(roundResult: RoundResult) : String {
+        return when (roundResult) {
+            is RoundResult.Correct -> Theme.success("✅ Right! +1 point 🔼\n") +
+                    "${roundResult.words.first} ⟷ ${roundResult.words.second}"
+            is RoundResult.Wrong -> Theme.warning("❌ Wrong! -1 point 🔽\n") +
+                    "${roundResult.words.first} ↮ ${roundResult.words.second}"
+            is RoundResult.Invalid -> buildErrorFeedback(roundResult.error)
+        }
+    }
+
+    internal fun buildErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
+        val message = errorMessage ?: if (error != null) when (error) {
+            ValidationError.INDEX_OUT_OF_RANGE -> "Indexes are out of range"
+            ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> "Pair has already been guessed"
+        }
+        else "The input must contain two numbers separated by space"
+        return Theme.error("🚫 Input error\n") + message
+    }
+
+    internal fun <T> withProgressMessage(message: String, action: () -> T): T? {
+        terminal.print(Text("⏳ $message "))
+        return try {
+            val result = action()
+            terminal.success("Done!")
+            result
+        } catch (e: Exception) {
+            printError(e.toString())
+            null
+        }
+    }
+
+    internal fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(
+        "🚨 Maximal number of possible mistakes: $maxMistakes"
+    )
+
+    internal fun printGreetings() {
+        terminal.println(Text("""
+            👋 Welcome to LinguaTwist! Match words with their translations.
+            💡 Enter two numbers separated by a space to pair them. Type 'exit' to quit.""".trimIndent()
+        )
+        )
+    }
+
+    internal fun printLetsGo() = terminal.println(Theme.neonCyan ("🚀 Let's go!"))
+
+    internal fun buildGameResult(result: GameResult) = buildString {
+        appendLine(
+            if (result.isFailed)
+                "😢 Sorry, you failed."
+            else "🎉 Congratulations, you finished!"
+        )
+        appendLine("✅ Guessed pairs: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
+        appendLine("❌ Mistakes: ${result.mistakesCount} / ${result.maxMistakes}")
+        append("${result.verbalScore.emoji} ${result.verbalScore.description}")
+    }
+
+    internal fun printWarning(message: String) = terminal.warning(message)
+
+    internal fun printError(message: String) = terminal.danger("❌ $message")
+
+    internal fun printVocabularyInfo(vocabularySize: Int, vocabularyResult: VocabularyLoadResult) {
+        terminal.success("📚 The number of loaded words: $vocabularySize")
+        if (vocabularyResult.duplicates > 0) terminal.warning("⚠️ ${vocabularyResult.duplicates} duplicates found")
+        if (vocabularyResult.overlappedPairs > 0) terminal.warning("⚠️ ${vocabularyResult.overlappedPairs} overlapping pairs found")
+        if (vocabularyResult.invalidRows > 0) terminal.danger("❌ ${vocabularyResult.invalidRows} invalid rows found")
+    }
+
     private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
         val roundTable = buildRoundTable(state.round)
         val gameStats = Text(
-            Theme.scoreStyle("🌟 Score: ${state.score}   ") +
-                    Theme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
+            Theme.scoreStyle("🌟 Score: ${state.score}   ") + Theme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
         )
 
         val feedback = Panel(
@@ -77,51 +143,6 @@ class ConsoleRenderer(
         cell(inputIndexesPrompt)
     }
 
-    fun buildRoundResultFeedback(roundResult: RoundResult) : String {
-        return when (roundResult) {
-            is RoundResult.Correct -> Theme.success("✅ Right! +1 point 🔼\n") +
-                    "${roundResult.words.first} ⟷ ${roundResult.words.second}"
-            is RoundResult.Wrong -> Theme.warning("❌ Wrong! -1 point 🔽\n") +
-                    "${roundResult.words.first} ↮ ${roundResult.words.second}"
-            is RoundResult.Invalid -> buildErrorFeedback(roundResult.error)
-        }
-    }
-
-    fun buildErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
-        val message = errorMessage ?: if (error != null) when (error) {
-            ValidationError.INDEX_OUT_OF_RANGE -> "Indexes are out of range"
-            ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> "Pair has already been guessed"
-        }
-        else "The input must contain two numbers separated by space"
-        return Theme.error("🚫 Input error\n") + message
-    }
-
-    fun <T> withProgressMessage(message: String, action: () -> T): T? {
-        terminal.print(Text("⏳ $message "))
-        return try {
-            val result = action()
-            terminal.success("Done!")
-            result
-        } catch (e: Exception) {
-            printError(e.toString())
-            null
-        }
-    }
-
-    fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(
-        "🚨 Maximal number of possible mistakes: $maxMistakes"
-    )
-
-    fun printGreetings() {
-        terminal.println(Text("""
-            👋 Welcome to LinguaTwist! Match words with their translations.
-            💡 Enter two numbers separated by a space to pair them. Type 'exit' to quit.""".trimIndent()
-        )
-        )
-    }
-
-    fun printLetsGo() = terminal.println(Theme.neonCyan ("🚀 Let's go!"))
-
     private fun buildRoundTable(round: Round): Widget {
         fun styleIfGuessed(text: String, index: Int) =
             if (index in round.guessedIndexes) Theme.guessedWord(text) else text
@@ -132,45 +153,25 @@ class ConsoleRenderer(
             borderType = BorderType.BLANK
             body {
                 cellBorders = Borders.NONE
-                for (i in round.pairs.indices) {
-                    val leftPair = round.pairs[i]
-                    val rightPair = round.pairs[round.rightColumnPermutation[i]]
+                for (i in 0 until round.size) {
+                    val leftPair = round.pairAtLeftColumn(i)
+                    val rightPair = round.pairAtRightColumn(i)
                     val leftText = styleIfGuessed(leftPair.sourceText, i)
-                    val rightText = styleIfGuessed(rightPair.translation, round.rightColumnPermutation[i])
+                    val rightText = styleIfGuessed(rightPair.translation, round.originalPairIndex(i))
                     val printedIndex = i + 1
                     row(printedIndex, leftText, printedIndex, rightText)
                 }
             }
         }
 
-        val mistakesInRound = if (round.mistakesInRound > 0) Theme.mistakeStyle("Mistakes in round: ${round.mistakesInRound}")
-        else ""
+        val mistakesInRound = if (round.mistakesInRound > 0) {
+            Theme.mistakeStyle("Mistakes in round: ${round.mistakesInRound}")
+        } else ""
         return Panel(
             content = roundTable,
-            title = Text("Round ${round.number}"),
+            title = Text(Theme.title("Round ${round.number}")),
             bottomTitle = Text(mistakesInRound),
             borderStyle = Theme.neonIndigo
         )
-    }
-
-    fun buildGameResult(result: GameResult) = buildString {
-        appendLine(
-            if (result.isFailed)
-                "😢 Sorry, you failed."
-            else "🎉 Congratulations, you finished!"
-        )
-        appendLine("✅ Guessed pairs: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
-        appendLine("❌ Mistakes: ${result.mistakesCount} / ${result.maxMistakes}")
-        append("${result.verbalScore.emoji} ${result.verbalScore.description}")
-    }
-
-    fun printWarning(message: String) = terminal.warning(message)
-    fun printError(message: String) = terminal.danger("❌ $message")
-
-    fun printVocabularyInfo(vocabularySize: Int, vocabularyResult: VocabularyLoadResult) {
-        terminal.success("📚 The number of loaded words: $vocabularySize")
-        if (vocabularyResult.duplicates > 0) terminal.warning("⚠️ ${vocabularyResult.duplicates} duplicates found")
-        if (vocabularyResult.overlappedPairs > 0) terminal.warning("⚠️ ${vocabularyResult.overlappedPairs} overlapping pairs found")
-        if (vocabularyResult.invalidRows > 0) terminal.danger("❌ ${vocabularyResult.invalidRows} invalid rows found")
     }
 }

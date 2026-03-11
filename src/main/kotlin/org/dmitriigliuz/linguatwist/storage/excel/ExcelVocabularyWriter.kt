@@ -37,15 +37,13 @@ class ExcelVocabularyWriter : VocabularyWriter {
                     val rows = readRowsFromExcel(oldFile)
                     logger.debug { "Read rows from Excel file" }
                     rows.forEachIndexed { rowIndex, row ->
-                        logger.debug { "Processing row $rowIndex with ${row.cellCount} cells" }
                         for (columnIndex in 0 until row.cellCount) {
                             var cellValue = row.getCellText(columnIndex)
                             if (rowIndex > 0 && columnIndex == SCORE_COLUMN_INDEX) {
                                 cellValue = findScore(row, vocabularyMap)
-                                logger.debug { "Row $rowIndex: Updated score to '$cellValue' for entry" }
                             }
                             worksheet.value(rowIndex, columnIndex, cellValue)
-                            }
+                        }
                             if (rowIndex > 0 && rowIndex % 100 == 0) {
                                 logger.debug { "Processed $rowIndex rows" }
                             }

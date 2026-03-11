@@ -9,9 +9,10 @@ import kotlin.use
 
 private val logger = KotlinLogging.logger {}
 
-fun Row.getCellText(columnIndex: Int) = getCellAsString(columnIndex).orElse("")
+private const val EMPTY_CELL_TEXT = ""
 
-fun Row.getCellTrimmedText(columnIndex: Int) = getCellText(columnIndex).trim()
+fun Row.getCellTrimmedText(columnIndex: Int) =
+    getCellAsString(columnIndex).orElse(EMPTY_CELL_TEXT).trim()
 
 fun readRowsFromExcel(file: File) = sequence {
     logger.info { "Starting to read Excel file: ${file.absolutePath}" }
@@ -24,9 +25,7 @@ fun readRowsFromExcel(file: File) = sequence {
                 require(iterator.hasNext()) { "Excel file is empty" }
                 val header = iterator.next()
                 require(header.cellCount >= 2) { "Excel file header must contain at least two columns" }
-                logger.info { "Header row validated with ${header.cellCount} columns" }
                 yield(header)
-                logger.debug { "Yielded header row" }
                 logger.info { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {
                     val row = iterator.next()

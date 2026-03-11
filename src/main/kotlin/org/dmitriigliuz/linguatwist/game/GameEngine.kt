@@ -32,7 +32,7 @@ class GameEngine(
     }
 
     val maxMistakes = totalRounds / 3
-    val totalPairs = totalRounds * config.pairsPerRound
+    private val totalPairs = totalRounds * config.pairsPerRound
 
 
     init {

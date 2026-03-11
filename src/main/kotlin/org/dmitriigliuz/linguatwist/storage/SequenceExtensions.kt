@@ -5,12 +5,12 @@ import org.dmitriigliuz.linguatwist.model.LexicalEntry
 
 private val logger = KotlinLogging.logger { }
 
-data class DeduplicationStats(
+internal data class DeduplicationStats(
     var duplicates: Int = 0,
     var overlappedPairs: Int = 0
 )
 
-fun Sequence<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) = sequence {
+internal fun Sequence<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) = sequence {
     val seenEntries = mutableSetOf<LexicalEntry>()
     val seenSourceTexts = mutableSetOf<String>()
     val seenTranslations = mutableSetOf<String>()

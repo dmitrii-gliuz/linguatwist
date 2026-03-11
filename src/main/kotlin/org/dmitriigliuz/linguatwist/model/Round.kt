@@ -12,22 +12,25 @@ sealed class RoundResult {
 }
 
 data class Round(
-    val pairs: List<LexicalEntry>,
+    private val pairs: List<LexicalEntry>,
     val number: Int,
     val guessedIndexes: Set<Int> = emptySet(),
     val mistakesInRound: Int = 0,
     val rightColumnPermutation: List<Int> = (0 until pairs.size).shuffled()
 ) {
-    val index = number - 1
+    val previousNumber = number - 1
     val guessedCount: Int
-    get() = guessedIndexes.size
+        get() = guessedIndexes.size
 
     val isFinished: Boolean
         get() = guessedIndexes.size == pairs.size
 
-    private fun originalPairIndex(rightColumnIndex: Int) = rightColumnPermutation[rightColumnIndex]
+    val size: Int
+        get() = pairs.size
 
-    fun pairAtLeftColumn(leftIndex: Int) = pairs[leftIndex]
+    fun originalPairIndex(rightColumnIndex: Int) = rightColumnPermutation[rightColumnIndex]
+
+    fun pairAtLeftColumn(leftIndex: Int): LexicalEntry = pairs[leftIndex]
 
     fun pairAtRightColumn(rightIndex: Int) = pairs[originalPairIndex(rightIndex)]
 

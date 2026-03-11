@@ -15,30 +15,6 @@ class ConsoleInput(
     private val messages: Messages
 ) {
 
-    fun readLineRaw(): String? {
-        val buffer = StringBuilder()
-        return terminal.receiveKeyEvents { event ->
-            if (event.isCtrlC) return@receiveKeyEvents InputReceiver.Status.Finished(null)
-            when (event.key) {
-                "Enter" -> InputReceiver.Status.Finished(buffer.toString())
-                "Backspace" -> {
-                    if (buffer.isNotEmpty()) {
-                        buffer.deleteAt(buffer.length - 1)
-                        print("\b \b")
-                    }
-                    InputReceiver.Status.Continue
-                }
-                else -> {
-                    if (event.key.length  == 1 && event.key[0].isDigit() || event.key == " ") {
-                        buffer.append(event.key)
-                        print(event.key)
-                    }
-                    InputReceiver.Status.Continue
-                }
-            }
-        }
-    }
-
     fun promptIndexes(): IndexInput {
         val input = readLineRaw() ?: return IndexInput.Exit
         terminal.cursor.move {
@@ -79,6 +55,30 @@ class ConsoleInput(
             title(title)
         }
         return items.indexOf(selected)
+    }
+
+    private fun readLineRaw(): String? {
+        val buffer = StringBuilder()
+        return terminal.receiveKeyEvents { event ->
+            if (event.isCtrlC) return@receiveKeyEvents InputReceiver.Status.Finished(null)
+            when (event.key) {
+                "Enter" -> InputReceiver.Status.Finished(buffer.toString())
+                "Backspace" -> {
+                    if (buffer.isNotEmpty()) {
+                        buffer.deleteAt(buffer.length - 1)
+                        print("\b \b")
+                    }
+                    InputReceiver.Status.Continue
+                }
+                else -> {
+                    if (event.key.length  == 1 && event.key[0].isDigit() || event.key == " ") {
+                        buffer.append(event.key)
+                        print(event.key)
+                    }
+                    InputReceiver.Status.Continue
+                }
+            }
+        }
     }
 }
 

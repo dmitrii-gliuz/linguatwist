@@ -5,7 +5,7 @@ import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Round
 
 
-data class RoundDisplayState(
+internal data class RoundDisplayState(
     val round: Round,
     val score: Int,
     val completionPercentage: Int,
@@ -14,7 +14,7 @@ data class RoundDisplayState(
     val showPrompt: Boolean = true,
 )
 
-fun GameState.InProgress.toRoundDisplayState(
+internal fun GameState.InProgress.toRoundDisplayState(
     completionPercentage: Int,
     feedbackMessage: String
 ) = RoundDisplayState(
@@ -25,7 +25,7 @@ fun GameState.InProgress.toRoundDisplayState(
     feedbackMessage = feedbackMessage,
 )
 
-fun GameResult.toDisplayState(
+internal fun GameResult.toDisplayState(
     feedbackMessage: String
 ) = RoundDisplayState(
     round = lastRound,
