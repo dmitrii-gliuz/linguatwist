@@ -88,7 +88,7 @@ class ConsoleRenderer(
     internal fun printGreetings() {
         terminal.println(Text("""
             👋 Welcome to LinguaTwist! Match words with their translations.
-            💡 Enter two numbers separated by a space to pair them. Type 'exit' to quit.""".trimIndent()
+            💡 Enter two numbers separated by a space to pair them. Press Ctrl-C to quit.""".trimIndent()
         )
         )
     }
