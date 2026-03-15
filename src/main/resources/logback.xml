@@ -11,7 +11,7 @@
         </encoder>
     </appender>
     <logger name="org.dmitriigliuz.linguatwist.storage" level="DEBUG"/>
-    <root level="INFO">
-        <appender-ref ref="FILE" />
+    <root level="DEBUG">
+    <appender-ref ref="FILE" />
     </root>
 </configuration>

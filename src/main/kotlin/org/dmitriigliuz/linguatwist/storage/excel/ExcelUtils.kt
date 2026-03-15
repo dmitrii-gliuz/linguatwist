@@ -28,8 +28,10 @@ fun readRowsFromExcel(file: File) = sequence {
                 yield(header)
                 logger.info { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {
+                    logger.debug { "Entering loop iteration: hasNext=${iterator.hasNext()}" }
                     val row = iterator.next()
                     yield(row)
+                    logger.debug { "Exiting loop iteration for row ${row.rowNum}" }
                 }
                 logger.info { "Finished reading all rows from Excel file" }
             }
