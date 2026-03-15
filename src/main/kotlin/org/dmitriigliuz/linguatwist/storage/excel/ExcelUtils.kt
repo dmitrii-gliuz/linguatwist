@@ -11,8 +11,7 @@ private val logger = KotlinLogging.logger {}
 
 private const val EMPTY_CELL_TEXT = ""
 
-fun Row.getCellTrimmedText(columnIndex: Int) =
-    getCellAsString(columnIndex).orElse(EMPTY_CELL_TEXT).trim()
+fun Row.getCellTrimmedText(columnIndex: Int) = getCellText(columnIndex).trim()
 
 fun readRowsFromExcel(file: File) = sequence {
     logger.info { "Starting to read Excel file: ${file.absolutePath}" }
@@ -28,10 +27,8 @@ fun readRowsFromExcel(file: File) = sequence {
                 yield(header)
                 logger.info { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {
-                    logger.debug { "Entering loop iteration: hasNext=${iterator.hasNext()}" }
                     val row = iterator.next()
                     yield(row)
-                    logger.debug { "Exiting loop iteration for row ${row.rowNum}" }
                 }
                 logger.info { "Finished reading all rows from Excel file" }
             }
