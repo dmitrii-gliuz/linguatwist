@@ -31,7 +31,6 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.14")
     implementation("ch.qos.logback:logback-classic:1.5.29")
     implementation("com.github.ajalt.clikt:clikt:5.1.0")
-    implementation("com.github.ajalt.mordant:mordant:3.0.2")
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
 }

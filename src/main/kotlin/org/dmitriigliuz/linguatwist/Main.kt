@@ -1,5 +1,11 @@
 package org.dmitriigliuz.linguatwist
 
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.context
+import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.Terminal
 import org.dmitriigliuz.linguatwist.console.ConsoleApp
 import org.dmitriigliuz.linguatwist.console.ConsoleInput
@@ -9,16 +15,30 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyWriter
 
-fun main() {
-    val terminal = Terminal()
-    val messages = Messages("en")
-    val consoleApp = ConsoleApp(
-        config = GameConfig(),
-        loader = ExcelVocabularyLoader(),
-        writer = ExcelVocabularyWriter(),
-        renderer = ConsoleRenderer(terminal, messages),
-        input = ConsoleInput(terminal, messages),
-        messages = messages
-    )
-    consoleApp.run()
+
+class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
+    init {
+        context { terminal = Terminal()}
+    }
+    val file by option("-f", "--file", help = "Path to the vocabulary file")
+        .default("vocabulary.xlsx")
+    val lang by option("-l", "--lang", help = "Localization language tag (e.g. en, ru, de, etc.)")
+        .default("en")
+
+    override fun run() {
+        val terminal = currentContext.terminal
+        val config = GameConfig(spreadsheetPath = file, languageTag = lang)
+        val messages = Messages(lang)
+        val consoleApp = ConsoleApp(
+            config = config,
+            loader = ExcelVocabularyLoader(),
+            writer = ExcelVocabularyWriter(),
+            renderer = ConsoleRenderer(terminal, messages),
+            input = ConsoleInput(terminal, messages),
+            messages = messages
+        )
+        consoleApp.run()
+    }
 }
+
+fun main(args: Array<String>) = LinguaTwistCommand().main(args)
