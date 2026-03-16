@@ -9,7 +9,6 @@ import kotlin.use
 
 private val logger = KotlinLogging.logger {}
 
-private const val EMPTY_CELL_TEXT = ""
 
 fun Row.getCellTrimmedText(columnIndex: Int) = getCellText(columnIndex).trim()
 

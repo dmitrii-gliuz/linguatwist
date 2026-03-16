@@ -22,10 +22,7 @@ import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
 
 
-class ConsoleRenderer(
-    private val terminal: Terminal,
-    private val messages: Messages
-) {
+class ConsoleRenderer(private val terminal: Terminal) {
     internal val initialFeedback = "🎮 Ready to play? Match words with their translations! 🎯\n" +
             "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
 
@@ -95,7 +92,7 @@ class ConsoleRenderer(
 
     internal fun printLetsGo() = terminal.println(Theme.neonCyan ("🚀 Let's go!"))
 
-    internal fun buildGameResult(result: GameResult) = buildString {
+    internal fun buildGameResultOutput(result: GameResult) = buildString {
         appendLine(
             if (result.isFailed)
                 "😢 Sorry, you failed."
@@ -103,7 +100,9 @@ class ConsoleRenderer(
         )
         appendLine("✅ Guessed pairs: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
         appendLine("❌ Mistakes: ${result.mistakesCount} / ${result.maxMistakes}")
-        append("${result.verbalScore.emoji} ${result.verbalScore.description}")
+        appendLine("${result.verbalScore.emoji} ${result.verbalScore.description}")
+        val duration = result.duration.toComponents { minutes, seconds, _ ->  "$minutes:$seconds"}
+        append("⏳ Duration: $duration")
     }
 
     internal fun printWarning(message: String) = terminal.warning(message)

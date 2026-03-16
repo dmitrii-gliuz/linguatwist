@@ -1,8 +1,8 @@
 package org.dmitriigliuz.linguatwist.console
 
+import kotlin.time.TimeSource
 import org.dmitriigliuz.linguatwist.game.GameConfig
 import org.dmitriigliuz.linguatwist.game.GameEngine
-import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.VocabularyWriter
 import kotlin.system.exitProcess
@@ -15,7 +15,6 @@ class ConsoleApp(
     private val writer: VocabularyWriter,
     private val renderer: ConsoleRenderer,
     private val input: ConsoleInput,
-    private val messages: Messages
 ) {
     fun run() {
         renderer.printLogo()
@@ -66,7 +65,7 @@ class ConsoleApp(
         if (saveResult == null) {
             renderer.printError("Failed to save scores")
         }
-   }
+   } 
 
     private fun gameSession(vocabulary: Vocabulary): GameState {
         val defaultNumberOfRounds = GameEngine.defaultNumberOfRounds(vocabulary, config)
@@ -77,6 +76,7 @@ class ConsoleApp(
         renderer.printLetsGo()
         renderer.emptyLine()
         var gameState: GameState = engine.startNewGame(vocabulary)
+        val startTime = TimeSource.Monotonic.markNow()
         var feedbackMessage = renderer.initialFeedback
         while (gameState is GameState.InProgress) {
             val displayState = gameState.toRoundDisplayState(
@@ -96,9 +96,9 @@ class ConsoleApp(
                 }
             }
         }
-        val result = gameState.getResultOrNull()
+        val result = gameState.getResultOrNull()?.copy(duration = startTime.elapsedNow())
         result?.let {
-            feedbackMessage = renderer.buildGameResult(it)
+            feedbackMessage = renderer.buildGameResultOutput(it)
             val displayState = it.toDisplayState(feedbackMessage)
             renderer.updateRoundDisplay(displayState)
         }

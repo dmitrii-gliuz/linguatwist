@@ -5,16 +5,11 @@ import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.github.ajalt.mordant.terminal.prompt
-import org.dmitriigliuz.linguatwist.i18n.Messages
 import com.github.ajalt.mordant.input.InputReceiver
 import com.github.ajalt.mordant.input.isCtrlC
 import com.github.ajalt.mordant.input.receiveKeyEvents
 
-class ConsoleInput(
-    private val terminal: Terminal,
-    private val messages: Messages
-) {
-
+class ConsoleInput(private val terminal: Terminal) {
     fun promptIndexes(): IndexInput {
         val input = readLineRaw() ?: return IndexInput.Exit
         terminal.cursor.move {

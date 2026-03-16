@@ -1,5 +1,7 @@
 package org.dmitriigliuz.linguatwist.model
 
+import kotlin.time.Duration
+
 data class GameResult(
     val completionPercentage: Int,
     val lastRound: Round,
@@ -10,4 +12,5 @@ data class GameResult(
     val mistakesCount: Int,
     val maxMistakes: Int,
     val verbalScore: VerbalScore,
+    val duration: Duration = Duration.ZERO
 )
