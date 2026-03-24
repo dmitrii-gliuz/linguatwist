@@ -8,9 +8,14 @@ sealed class GameState {
         val mistakesCount: Int,
         val vocabulary: Vocabulary,
         val error: ValidationError? = null,
-        val updatedScores: Map<LexicalEntry, Int> = emptyMap()
+        val updatedScores: Map<LexicalEntry, Int> = emptyMap(),
+        val totalPairs: Int
     ) : GameState() {
-        fun totalGuessedAmount() = round.guessedCount + (round.previousNumber) * round.size
+        val completionPercentage: Int
+            get() = totalGuessedAmount * 100 / totalPairs
+
+        val totalGuessedAmount
+            get() = round.guessedCount + (round.previousNumber) * round.size
     }
     data class Finished(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
     data class Failed(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
@@ -26,6 +31,4 @@ sealed class GameState {
         is Failed -> updatedVocabulary
         else -> null
     }
-
-
 }

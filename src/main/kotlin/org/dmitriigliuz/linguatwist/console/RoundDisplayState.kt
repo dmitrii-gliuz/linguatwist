@@ -14,10 +14,7 @@ internal data class RoundDisplayState(
     val showPrompt: Boolean = true,
 )
 
-internal fun GameState.InProgress.toRoundDisplayState(
-    completionPercentage: Int,
-    feedbackMessage: String
-) = RoundDisplayState(
+internal fun GameState.InProgress.toRoundDisplayState(feedbackMessage: String) = RoundDisplayState(
     round = round,
     score = gameScore,
     completionPercentage = completionPercentage,
@@ -25,9 +22,7 @@ internal fun GameState.InProgress.toRoundDisplayState(
     feedbackMessage = feedbackMessage,
 )
 
-internal fun GameResult.toDisplayState(
-    feedbackMessage: String
-) = RoundDisplayState(
+internal fun GameResult.toDisplayState(feedbackMessage: String) = RoundDisplayState(
     round = lastRound,
     score = score,
     completionPercentage = completionPercentage,

@@ -11,7 +11,6 @@ import com.github.ajalt.mordant.widgets.Padding
 import com.github.ajalt.mordant.widgets.Panel
 import com.github.ajalt.mordant.widgets.ProgressBar
 import com.github.ajalt.mordant.widgets.Text
-import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.GameResult
 import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
@@ -21,14 +20,26 @@ import com.github.ajalt.mordant.table.verticalLayout
 import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
 
+object Messages {
+    const val INITIAL_FEEDBACK = "🎮 Ready to play? Match words with their translations! 🎯\n" +
+            "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
+    const val LOADING_VOCABULARY = "Loading vocabulary..."
+    const val SAVING_SCORES = "Saving scores to spreadsheet..."
+    const val FAILED_TO_LOAD_VOCABULARY = "Failed to load vocabulary"
+    const val FAILED_TO_SAVE_SCORES = "Failed to save scores"
+}
+
 
 class ConsoleRenderer(private val terminal: Terminal) {
-    internal val initialFeedback = "🎮 Ready to play? Match words with their translations! 🎯\n" +
-            "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
-
-    internal fun emptyLine() = terminal.println()
+    internal val noResultFeedback = buildErrorFeedback(
+        "Unexpected error",
+        "Game result could not be calculated"
+    )
 
     private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
+
+
+    internal fun emptyLine() = terminal.println()
 
     internal fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
 
@@ -53,29 +64,39 @@ class ConsoleRenderer(private val terminal: Terminal) {
                     "${roundResult.words.first} ⟷ ${roundResult.words.second}"
             is RoundResult.Wrong -> Theme.warning("❌ Wrong! -1 point 🔽\n") +
                     "${roundResult.words.first} ↮ ${roundResult.words.second}"
-            is RoundResult.Invalid -> buildErrorFeedback(roundResult.error)
+            is RoundResult.Invalid -> buildInputErrorFeedback(roundResult.error)
         }
     }
 
-    internal fun buildErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
-        val message = errorMessage ?: if (error != null) when (error) {
+    internal fun buildInputErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
+        val message = errorMessage ?: when (error) {
+            null -> "The input must contain two numbers separated by space"
             ValidationError.INDEX_OUT_OF_RANGE -> "Indexes are out of range"
             ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> "Pair has already been guessed"
         }
-        else "The input must contain two numbers separated by space"
-        return Theme.error("🚫 Input error\n") + message
+        return buildErrorFeedback("Input error", message)
     }
 
-    internal fun <T> withProgressMessage(message: String, action: () -> T): T? {
+    internal fun buildErrorFeedback(caption: String = "Error", message: String) = buildString {
+        append("🚫 ")
+        appendLine(Theme.error(caption))
+        appendLine(message)
+    }
+
+    internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): T? {
         terminal.print(Text("⏳ $message "))
-        return try {
-            val result = action()
-            terminal.success("Done!")
-            result
-        } catch (e: Exception) {
-            printError(e.toString())
-            null
-        }
+        return action()
+            .onSuccess { terminal.success("Done!") }
+            .onFailure { e -> printError(e.message ?: e.toString()) }
+            .getOrNull()
+//        return try {
+//            val result = action()
+//            terminal.success("Done!")
+//            result
+//        } catch (e: Exception) {
+//            printError(e.toString())
+//            null
+//        }
     }
 
     internal fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(
@@ -85,8 +106,7 @@ class ConsoleRenderer(private val terminal: Terminal) {
     internal fun printGreetings() {
         terminal.println(Text("""
             👋 Welcome to LinguaTwist! Match words with their translations.
-            💡 Enter two numbers separated by a space to pair them. Press Ctrl-C to quit.""".trimIndent()
-        )
+            💡 Enter two numbers separated by a space to pair them. Press Ctrl-C to quit.""".trimIndent())
         )
     }
 
@@ -109,17 +129,24 @@ class ConsoleRenderer(private val terminal: Terminal) {
 
     internal fun printError(message: String) = terminal.danger("❌ $message")
 
-    internal fun printVocabularyInfo(vocabularySize: Int, vocabularyResult: VocabularyLoadResult) {
-        terminal.success("📚 The number of loaded words: $vocabularySize")
-        if (vocabularyResult.duplicates > 0) terminal.warning("⚠️ ${vocabularyResult.duplicates} duplicates found")
-        if (vocabularyResult.overlappedPairs > 0) terminal.warning("⚠️ ${vocabularyResult.overlappedPairs} overlapping pairs found")
-        if (vocabularyResult.invalidRows > 0) terminal.danger("❌ ${vocabularyResult.invalidRows} invalid rows found")
+    internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
+        terminal.success("📚 The number of loaded words: ${vocabularyResult.vocabulary.size}")
+        if (vocabularyResult.duplicates > 0) {
+            terminal.warning("⚠️ ${vocabularyResult.duplicates} duplicates found")
+        }
+        if (vocabularyResult.overlappedPairs > 0) {
+            terminal.warning("⚠️ ${vocabularyResult.overlappedPairs} overlapping pairs found")
+        }
+        if (vocabularyResult.invalidRows > 0) {
+            terminal.danger("❌ ${vocabularyResult.invalidRows} invalid rows found")
+        }
     }
 
     private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
         val roundTable = buildRoundTable(state.round)
         val gameStats = Text(
-            Theme.scoreStyle("🌟 Score: ${state.score}   ") + Theme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
+            Theme.scoreStyle("🌟 Score: ${state.score}   ") +
+                    Theme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
         )
 
         val feedback = Panel(

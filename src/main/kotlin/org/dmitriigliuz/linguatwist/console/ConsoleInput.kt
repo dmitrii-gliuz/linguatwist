@@ -11,7 +11,7 @@ import com.github.ajalt.mordant.input.receiveKeyEvents
 
 class ConsoleInput(private val terminal: Terminal) {
     fun promptIndexes(): IndexInput {
-        val input = readLineRaw() ?: return IndexInput.Exit
+        val input = readLineRaw() ?: run { return IndexInput.Exit }
         terminal.cursor.move {
             startOfLine()
             clearLine()
@@ -79,6 +79,6 @@ class ConsoleInput(private val terminal: Terminal) {
 
 sealed class IndexInput {
     data class Indexes(val pair: Pair<Int, Int>): IndexInput()
-    object Exit: IndexInput()
     object Invalid: IndexInput()
+    object Exit: IndexInput()
 }

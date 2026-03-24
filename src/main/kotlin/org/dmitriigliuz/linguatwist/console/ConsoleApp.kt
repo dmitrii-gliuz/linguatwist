@@ -1,24 +1,22 @@
 package org.dmitriigliuz.linguatwist.console
 
-import kotlin.time.TimeSource
-import org.dmitriigliuz.linguatwist.game.GameConfig
-import org.dmitriigliuz.linguatwist.game.GameEngine
-import org.dmitriigliuz.linguatwist.storage.VocabularyLoader
-import org.dmitriigliuz.linguatwist.storage.VocabularyWriter
+import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import kotlin.system.exitProcess
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 
 class ConsoleApp(
-    private val config: GameConfig,
-    private val loader: VocabularyLoader,
-    private val writer: VocabularyWriter,
+    private val coordinator: GameCoordinator,
     private val renderer: ConsoleRenderer,
     private val input: ConsoleInput,
 ) {
     fun run() {
         renderer.printLogo()
         renderer.printGreetings()
+        mainMenu()
+    }
+
+    private fun mainMenu() {
         while (true) {
             when (input.selectMenuItem(
                 listOf("🎮 Start game", "🚪 Exit"),
@@ -37,56 +35,39 @@ class ConsoleApp(
 
     private fun startGame() {
         renderer.emptyLine()
-        val vocabularyLoadResult = renderer.withProgressMessage("Loading vocabulary...") {
-            loader.load(config.spreadsheetPath).getOrThrow()
-        }
-        renderer.emptyLine()
-        if (vocabularyLoadResult == null) {
-            renderer.printError("Failed to load vocabulary")
+        var vocabulary: Vocabulary
+        renderer.withProgressMessage(Messages.LOADING_VOCABULARY) { coordinator.loadVocabulary() }?.let {
+            vocabulary = it.vocabulary
+            renderer.emptyLine()
+            renderer.printVocabularyInfo(it)
+            renderer.emptyLine()
+        } ?: run {
             exitGame()
             return
         }
-        var vocabulary = vocabularyLoadResult.vocabulary
-        renderer.emptyLine()
-        renderer.printVocabularyInfo(vocabulary.size, vocabularyLoadResult)
-        renderer.emptyLine()
         do {
-            val finalState = gameSession(vocabulary)
-            val result = finalState.getResultOrNull()
-            if (result == null) {
-                renderer.printError("Failed to get result")
-            }
-            finalState.getUpdatedVocabularyOrNull()?.let { vocabulary = it }
+            gameSession(vocabulary).getUpdatedVocabularyOrNull()?.let { vocabulary = it }
         } while (input.promptPlayAgain())
-
-        val saveResult = renderer.withProgressMessage("Saving scores to spreadsheet...") {
-            writer.save(config.spreadsheetPath, vocabulary).getOrThrow()
-        }
-        if (saveResult == null) {
-            renderer.printError("Failed to save scores")
-        }
+        renderer.withProgressMessage(Messages.SAVING_SCORES) { coordinator.saveVocabulary(vocabulary) }
    } 
 
     private fun gameSession(vocabulary: Vocabulary): GameState {
-        val defaultNumberOfRounds = GameEngine.defaultNumberOfRounds(vocabulary, config)
-        val totalRounds = input.promptNumberOfRounds(defaultNumberOfRounds, config.maxRounds)
-        val engine = GameEngine(totalRounds, config)
+        val defaultNumberOfRounds = coordinator.defaultNumberOfRounds(vocabulary)
+        val totalRounds = input.promptNumberOfRounds(defaultNumberOfRounds, coordinator.maxRounds)
+        val (engine, startTime) = coordinator.startSession(totalRounds)
         renderer.printMaxMistakesNumber(engine.maxMistakes)
         renderer.emptyLine()
         renderer.printLetsGo()
         renderer.emptyLine()
         var gameState: GameState = engine.startNewGame(vocabulary)
-        val startTime = TimeSource.Monotonic.markNow()
-        var feedbackMessage = renderer.initialFeedback
+        var feedbackMessage = Messages.INITIAL_FEEDBACK
+        var displayState: RoundDisplayState? = null
         while (gameState is GameState.InProgress) {
-            val displayState = gameState.toRoundDisplayState(
-                engine.completionPercentage(gameState),
-                feedbackMessage
-            )
+            displayState = gameState.toRoundDisplayState(feedbackMessage)
             renderer.updateRoundDisplay(displayState)
             when (val inputIndexesResult = input.promptIndexes()) {
+                is IndexInput.Invalid -> feedbackMessage = renderer.buildInputErrorFeedback()
                 is IndexInput.Exit -> exitGame()
-                is IndexInput.Invalid -> feedbackMessage = renderer.buildErrorFeedback()
                 is IndexInput.Indexes -> {
                     val (leftIndex, rightIndex) = inputIndexesResult.pair
                     val indexes = Pair(leftIndex - 1, rightIndex - 1)
@@ -96,12 +77,11 @@ class ConsoleApp(
                 }
             }
         }
-        val result = gameState.getResultOrNull()?.copy(duration = startTime.elapsedNow())
-        result?.let {
-            feedbackMessage = renderer.buildGameResultOutput(it)
-            val displayState = it.toDisplayState(feedbackMessage)
-            renderer.updateRoundDisplay(displayState)
-        }
+
+        val result = coordinator.finishSession(gameState, startTime)
+        feedbackMessage = if (result == null) renderer.noResultFeedback else renderer.buildGameResultOutput(result)
+        displayState = result?.toDisplayState(feedbackMessage) ?: displayState!!.copy(feedbackMessage = feedbackMessage)
+        renderer.updateRoundDisplay(displayState)
         renderer.stopRoundDisplay()
         return gameState
     }

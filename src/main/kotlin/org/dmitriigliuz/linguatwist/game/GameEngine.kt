@@ -18,37 +18,9 @@ class GameEngine(
     private val totalRounds: Int,
     private val config: GameConfig,
 ) {
-    companion object {
-        fun numberOfRoundsToCoverVocabulary(vocabulary: Vocabulary, config: GameConfig): Int {
-            val leftoverPairs = vocabulary.size % config.pairsPerRound
-            return vocabulary.size / config.pairsPerRound + if (leftoverPairs > 0) 1 else 0
-        }
-
-
-        fun defaultNumberOfRounds(vocabulary: Vocabulary, config: GameConfig) =
-            if (vocabulary.size < config.maxRounds * config.pairsPerRound) {
-                numberOfRoundsToCoverVocabulary(vocabulary, config)
-            } else config.defaultRounds
-    }
-
     val maxMistakes = totalRounds / 3
-    private val totalPairs = totalRounds * config.pairsPerRound
 
-
-    init {
-//        TODO Use error messages from locale when it will be implemented
-        require(totalRounds in 1..config.maxRounds) { "NumberOfRoundsShouldBeInRange" }
-    }
-
-    fun startNewGame(vocabulary: Vocabulary): GameState.InProgress {
-        // TODO Fix the access to locale and use a string value from there
-        require(vocabulary.size >= config.pairsPerRound) { "NotEnoughWordsToPlayTheGame" }
-        require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) { "NotAllWordsAreUnique" }
-        return advanceToNewRound(GameState.Initial(vocabulary))
-    }
-
-
-    fun completionPercentage(state: GameState.InProgress) = state.totalGuessedAmount() * 100 / totalPairs
+    fun startNewGame(vocabulary: Vocabulary)= advanceToNewRound(GameState.Initial(vocabulary))
 
     fun processAnswer(indexes: Pair<Int, Int>, state: GameState.InProgress): TurnOutcome {
         val roundResult = state.round.choosePair(indexes)
@@ -64,33 +36,22 @@ class GameEngine(
         is GameState.Initial -> {
             val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup(config.pairsPerRound)
             val newRound = Round(newGroup, 1)
-            GameState.InProgress(newRound, 0, 0, updatedVocabulary)
+            GameState.InProgress(
+                round = newRound,
+                gameScore = 0,
+                mistakesCount = 0,
+                vocabulary =  updatedVocabulary,
+                totalPairs = totalRounds * config.pairsPerRound)
         }
         is GameState.InProgress -> {
             val (newGroup, updatedVocabulary) = state.vocabulary.takeNextGroup(config.pairsPerRound)
             val newRound = Round(newGroup, state.round.number + 1)
-            state.copy(round = newRound, vocabulary = updatedVocabulary)
+            state.copy(
+                round = newRound,
+                vocabulary = updatedVocabulary,
+            )
         }
         else -> throw IllegalStateException("Unexpected state: $state")
-    }
-
-    private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult {
-        val performancePercentage = if (failed) 50 * state.totalGuessedAmount() / totalPairs
-        else 100 - 50 * state.mistakesCount / (if (maxMistakes > 0) maxMistakes else 1)
-
-        val verbalScore = VerbalScore.entries.first { it.percentage <= performancePercentage }
-
-        return GameResult(
-            completionPercentage = completionPercentage(state),
-            lastRound = state.round,
-            isFailed = failed,
-            score = state.gameScore,
-            totalGuessedAmount = state.totalGuessedAmount(),
-            totalPairsAmount = totalPairs,
-            mistakesCount = state.mistakesCount,
-            maxMistakes = maxMistakes,
-            verbalScore = verbalScore
-        )
     }
 
     private fun processRightAnswer(result: RoundResult.Correct, state: GameState.InProgress, leftIndex: Int): GameState {
@@ -102,7 +63,7 @@ class GameEngine(
             round = round,
             gameScore = gameScore,
             error = null,
-            updatedScores = updatedScores
+            updatedScores = updatedScores,
         )
         return if (round.isFinished && round.number == totalRounds) {
             val result = createResult(false, updatedState)
@@ -133,5 +94,24 @@ class GameEngine(
             val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
             GameState.Failed(result, updatedVocabulary)
         } else updatedState
+    }
+
+    private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult = with(state) {
+        val performancePercentage = if (failed) 50 * state.totalGuessedAmount / totalPairs
+        else 100 - 50 * mistakesCount / (if (maxMistakes > 0) maxMistakes else 1)
+
+        val verbalScore = VerbalScore.entries.first { it.percentage <= performancePercentage }
+
+        return GameResult(
+            completionPercentage,
+            lastRound = round,
+            isFailed = failed,
+            score = gameScore,
+            totalGuessedAmount = totalGuessedAmount,
+            totalPairsAmount = totalPairs,
+            mistakesCount = mistakesCount,
+            maxMistakes = maxMistakes,
+            verbalScore = verbalScore
+        )
     }
 }

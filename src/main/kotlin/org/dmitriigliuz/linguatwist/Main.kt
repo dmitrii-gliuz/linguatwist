@@ -11,6 +11,7 @@ import org.dmitriigliuz.linguatwist.console.ConsoleApp
 import org.dmitriigliuz.linguatwist.console.ConsoleInput
 import org.dmitriigliuz.linguatwist.console.ConsoleRenderer
 import org.dmitriigliuz.linguatwist.game.GameConfig
+import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyWriter
 
@@ -27,10 +28,13 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
     override fun run() {
         val terminal = currentContext.terminal
         val config = GameConfig(spreadsheetPath = file, languageTag = lang)
-        val consoleApp = ConsoleApp(
+        val coordinator = GameCoordinator(
             config = config,
             loader = ExcelVocabularyLoader(),
             writer = ExcelVocabularyWriter(),
+        )
+        val consoleApp = ConsoleApp(
+            coordinator = coordinator,
             renderer = ConsoleRenderer(terminal),
             input = ConsoleInput(terminal),
         )
