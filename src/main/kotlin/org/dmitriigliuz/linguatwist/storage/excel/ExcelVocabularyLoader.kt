@@ -22,8 +22,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
         val file = File(path).requireValidExcel()
         val parsingStats = ParsingStats()
         val deduplicationStats = DeduplicationStats()
-        val uniqueEntries = readRowsFromExcel(file)
-            .drop(1)
+        val uniqueEntries = readExcelRowsWithHeader(file)
             .parseWithStats(parsingStats)
             .filterDuplicates(deduplicationStats)
             .toSet()
@@ -50,9 +49,8 @@ class ExcelVocabularyLoader: VocabularyLoader {
 
     private fun Sequence<Row>.parseWithStats(state: ParsingStats): Sequence<LexicalEntry> = sequence {
         for (row in this@parseWithStats) {
-            val rowCellCount = row.cellCount
-            if (rowCellCount == 0)continue
-            if (rowCellCount < 2) {
+            if (row.cellCount == 0) continue
+            if (row.cellCount < 2) {
                 logger.warn { "Row must contain at least two columns at row ${row.rowNum}" }
                 state.invalidRows++
                 continue
@@ -66,7 +64,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
                 state.invalidRows++
                 continue
             }
-            val score = if (rowCellCount > 2) extractScore(row) else 0
+            val score = if (row.cellCount > 2) extractScore(row) else 0
             yield(LexicalEntry(sourceText, translation, entryScore = score))
         }
     }

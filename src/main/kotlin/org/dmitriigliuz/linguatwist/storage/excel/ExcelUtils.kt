@@ -12,7 +12,17 @@ private val logger = KotlinLogging.logger {}
 
 fun Row.getCellTrimmedText(columnIndex: Int) = getCellText(columnIndex).trim()
 
-fun readRowsFromExcel(file: File) = sequence {
+fun Row.getCellTrimmedTextOrDefault(columnIndex: Int, default: String) = if (cellCount > columnIndex) {
+    getCellTrimmedText(columnIndex).ifEmpty { default }
+} else {
+    default
+}
+
+
+fun readExcelRowsWithHeader(
+    file: File,
+    onHeader: (Row) -> Unit = {},
+): Sequence<Row> = sequence {
     logger.info { "Starting to read Excel file: ${file.absolutePath}" }
     FileInputStream(file).use { inputStream ->
         ReadableWorkbook(inputStream).use { workbook ->
@@ -23,7 +33,7 @@ fun readRowsFromExcel(file: File) = sequence {
                 require(iterator.hasNext()) { "Excel file is empty" }
                 val header = iterator.next()
                 require(header.cellCount >= 2) { "Excel file header must contain at least two columns" }
-                yield(header)
+                onHeader(header)
                 logger.info { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {
                     val row = iterator.next()
