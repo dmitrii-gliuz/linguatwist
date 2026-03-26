@@ -165,6 +165,8 @@ class ConsoleRenderer(private val terminal: Terminal) {
             if (index in round.guessedIndexes) Theme.guessedWord(text) else text
 
         val roundTable = table {
+//            Without these widths, Mordant in some cases draws the table without the second column with indexes
+//            Probably because of some bug in the way Mordant calculates proportions
             column(0) { width = ColumnWidth.Fixed(1) }
             column(2) { width = ColumnWidth.Fixed(1) }
             borderType = BorderType.BLANK

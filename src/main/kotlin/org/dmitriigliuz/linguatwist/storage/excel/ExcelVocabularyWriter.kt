@@ -51,13 +51,24 @@ class ExcelVocabularyWriter : VocabularyWriter {
                         worksheet.value(0, ORIGINAL_COLUMN_INDEX, headerOriginal)
                         worksheet.value(0, TRANSLATION_COLUMN_INDEX, headerTranslation)
                         worksheet.value(0, SCORE_COLUMN_INDEX, headerScore)
+                        val lastColumnIndex = maxOf(headerRow.cellCount - 1, SCORE_COLUMN_INDEX)
+                        if (headerRow.cellCount > SCORE_COLUMN_INDEX) {
+                            for (columnIndex in (SCORE_COLUMN_INDEX + 1)..lastColumnIndex) {
+                                worksheet.value(
+                                    0,
+                                    columnIndex,
+                                    headerRow.getCellTrimmedTextOrDefault(columnIndex, "")
+                                )
+                            }
+                        }
                     }
                     logger.debug { "Read rows from Excel file" }
                     rows.forEachIndexed { rowIndex, row ->
                         if (rowIndex > 0 && rowIndex % 50 == 0) {
                             logger.debug { "Processing row $rowIndex with ${row.cellCount} cells" }
                         }
-                        for (columnIndex in 0..SCORE_COLUMN_INDEX) {
+                        val lastColumnIndex = maxOf(row.cellCount - 1, SCORE_COLUMN_INDEX)
+                        for (columnIndex in 0..lastColumnIndex) {
                             val cellValueToWrite =  if (columnIndex == SCORE_COLUMN_INDEX) {
                                 resolveScore(row, vocabularyMap)
                             } else row.getCellTrimmedTextOrDefault(columnIndex, "")
