@@ -16,6 +16,7 @@ import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 import com.github.ajalt.mordant.rendering.Widget
 import com.github.ajalt.mordant.table.Borders
+import com.github.ajalt.mordant.table.ColumnWidth
 import com.github.ajalt.mordant.table.verticalLayout
 import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
@@ -77,7 +78,7 @@ class ConsoleRenderer(private val terminal: Terminal) {
     internal fun buildErrorFeedback(caption: String = "Error", message: String) = buildString {
         append("🚫 ")
         appendLine(Theme.error(caption))
-        appendLine(message)
+        append(message)
     }
 
     internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): T? {
@@ -166,8 +167,8 @@ class ConsoleRenderer(private val terminal: Terminal) {
             if (index in round.guessedIndexes) Theme.guessedWord(text) else text
 
         val roundTable = table {
-            column(1) { padding = Padding { right = 1 } }
-            column(2) { padding = Padding { left = 1 } }
+            column(0) { width = ColumnWidth.Fixed(1) }
+            column(2) { width = ColumnWidth.Fixed(1) }
             borderType = BorderType.BLANK
             body {
                 cellBorders = Borders.NONE
