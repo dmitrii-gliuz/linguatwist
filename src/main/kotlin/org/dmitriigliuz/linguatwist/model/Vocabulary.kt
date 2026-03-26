@@ -22,11 +22,12 @@ data class Vocabulary(
     }
 
     fun takeNextGroup(groupSize: Int): Pair<List<LexicalEntry>, Vocabulary> {
+        require(hasEnoughDistinctEntries(groupSize))
         var currentPool = remainingPool.toMutableList()
         val newGroup: List<LexicalEntry> = buildList {
             val seen = mutableSetOf<LexicalEntry>()
 
-            while (this.size < groupSize) {
+            while (size < groupSize) {
                 if (currentPool.size < groupSize) currentPool = refillPool(seen, this).toMutableList()
                 val entry = currentPool.removeFirst()
                 if (this.any { it.overlaps(entry) }) seen.add(entry) else this.add(entry)

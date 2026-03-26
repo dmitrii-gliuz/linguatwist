@@ -110,7 +110,10 @@ class ConsoleRenderer(private val terminal: Terminal) {
         appendLine("✅ Guessed pairs: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
         appendLine("❌ Mistakes: ${result.mistakesCount} / ${result.maxMistakes}")
         appendLine("${result.verbalScore.emoji} ${result.verbalScore.description}")
-        val duration = result.duration.toComponents { minutes, seconds, _ ->  "$minutes:$seconds"}
+        val duration = result.duration.toComponents { minutes, seconds, _ ->
+            val formattedSeconds = seconds.toString().padStart(2, '0')
+            "$minutes:$formattedSeconds"
+        }
         append("⏳ Duration: $duration")
     }
 
