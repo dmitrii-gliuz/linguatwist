@@ -118,8 +118,6 @@ class ConsoleRenderer(private val terminal: Terminal) {
         append("⏳ Duration: $duration")
     }
 
-    internal fun printWarning(message: String) = terminal.warning(message)
-
     internal fun printError(message: String) = terminal.danger("❌ $message")
 
     internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
