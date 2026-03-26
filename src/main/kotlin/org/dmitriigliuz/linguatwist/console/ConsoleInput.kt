@@ -18,8 +18,9 @@ class ConsoleInput(private val terminal: Terminal) {
         }
         val correctRegex = """^\d+\s+\d+$""".toRegex()
         if (!correctRegex.matches(input)) return IndexInput.Invalid
-        val parts = input.split("\\s+".toRegex()). map { it.toInt() }
-        val pair = parts[0] to parts[1]
+        val parts = input.split("""\s+""".toRegex()). map { it.toIntOrNull() }
+        if (parts.any { it == null }) return IndexInput.Invalid
+        val pair = parts[0]!! to parts[1]!!
 
         return IndexInput.Indexes(pair)
     }
