@@ -25,8 +25,6 @@ object Messages {
             "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
     const val LOADING_VOCABULARY = "Loading vocabulary..."
     const val SAVING_SCORES = "Saving scores to spreadsheet..."
-    const val FAILED_TO_LOAD_VOCABULARY = "Failed to load vocabulary"
-    const val FAILED_TO_SAVE_SCORES = "Failed to save scores"
 }
 
 
@@ -37,7 +35,6 @@ class ConsoleRenderer(private val terminal: Terminal) {
     )
 
     private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
-
 
     internal fun emptyLine() = terminal.println()
 
@@ -89,14 +86,6 @@ class ConsoleRenderer(private val terminal: Terminal) {
             .onSuccess { terminal.success("Done!") }
             .onFailure { e -> printError(e.message ?: e.toString()) }
             .getOrNull()
-//        return try {
-//            val result = action()
-//            terminal.success("Done!")
-//            result
-//        } catch (e: Exception) {
-//            printError(e.toString())
-//            null
-//        }
     }
 
     internal fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(

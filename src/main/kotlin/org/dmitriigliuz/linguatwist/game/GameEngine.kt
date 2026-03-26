@@ -97,8 +97,10 @@ class GameEngine(
     }
 
     private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult = with(state) {
-        val performancePercentage = if (failed) 50 * state.totalGuessedAmount / totalPairs
-        else 100 - 50 * mistakesCount / (if (maxMistakes > 0) maxMistakes else 1)
+        val performancePercentage = (
+                if (failed) 50 * state.totalGuessedAmount / totalPairs
+                else 100 - 50 * mistakesCount / (if (maxMistakes > 0) maxMistakes else 1)
+                ).coerceIn(0, 100)
 
         val verbalScore = VerbalScore.entries.first { it.percentage <= performancePercentage }
 
