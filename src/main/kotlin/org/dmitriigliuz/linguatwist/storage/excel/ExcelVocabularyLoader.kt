@@ -71,7 +71,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
 
     private fun extractScore(row: Row): Int {
         val scoreText = row.getCellTrimmedText(2)
-        val score = scoreText.toIntOrNull() ?: 0
+        val score = scoreText.toDoubleOrNull()?.toInt() ?: 0
         return score
     }
 }
