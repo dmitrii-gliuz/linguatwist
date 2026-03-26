@@ -27,6 +27,7 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
 
     override fun run() {
         val terminal = currentContext.terminal
+        Runtime.getRuntime().addShutdownHook(Thread { terminal.println("\n\n👋 Bye!") })
         val config = GameConfig(spreadsheetPath = file, languageTag = lang)
         val coordinator = GameCoordinator(
             config = config,

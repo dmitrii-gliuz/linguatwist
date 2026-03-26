@@ -28,8 +28,8 @@ class ConsoleApp(
         }
     }
     
-    private fun exitGame() {
-        renderer.printWarning("👋 Bye!")
+    private fun exitGame(): Nothing {
+        renderer.stopRoundDisplay()
         exitProcess(0)
     }
 
@@ -43,7 +43,6 @@ class ConsoleApp(
             renderer.emptyLine()
         } ?: run {
             exitGame()
-            return
         }
         do {
             gameSession(vocabulary).getUpdatedVocabularyOrNull()?.let { vocabulary = it }
