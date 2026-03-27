@@ -31,7 +31,7 @@ class ConsoleApp private constructor(
         while (true) {
             when (input.selectMenuItem(
                 listOf("🎮 Start game", "🚪 Exit"),
-                "\n📋 Main Menu 📋"
+                "\n  » Main menu «"
             )) {
                 0 -> startGame()
                 1 -> exitGame()

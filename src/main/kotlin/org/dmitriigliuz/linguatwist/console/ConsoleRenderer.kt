@@ -47,7 +47,7 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
         val art = colorTheme.logo("""
 █   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
 █   █ █ ▀█ █ ▀ █ █ █▀█  █  █ █ █ █  ▀▄  █ 
-▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trimMargin())
+▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trimIndent())
         terminal.println(
             Panel(Text(art),
                 padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
@@ -97,7 +97,8 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
     internal fun printGreetings() {
         terminal.println(Text("""
             👋 Welcome to LinguaTwist! Match words with their translations.
-            💡 Enter two numbers separated by a space to pair them. Press Ctrl-C to quit.""".trimIndent())
+            💡 Enter two numbers separated by a space to pair them. Press Ctrl-C to quit.
+            🕹️ Use ↑↓ arrows and Enter to navigate menus.""".trimIndent())
         )
     }
 
