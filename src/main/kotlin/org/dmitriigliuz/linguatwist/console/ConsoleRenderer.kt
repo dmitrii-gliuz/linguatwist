@@ -71,6 +71,7 @@ class ConsoleRenderer(private val terminal: Terminal) {
             null -> "The input must contain two numbers separated by space"
             ValidationError.INDEX_OUT_OF_RANGE -> "Indexes are out of range"
             ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> "Pair has already been guessed"
+            ValidationError.PAIR_HAS_ALREADY_BEEN_WRONG -> "Pair has already been wrong"
         }
         return buildErrorFeedback("Input error", message)
     }
