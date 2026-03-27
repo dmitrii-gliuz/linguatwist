@@ -66,14 +66,14 @@ class ConsoleInput(
                 "Backspace" -> {
                     if (buffer.isNotEmpty()) {
                         buffer.deleteAt(buffer.length - 1)
-                        terminal.print("\b \b")
+                        print("\b \b")
                     }
                     InputReceiver.Status.Continue
                 }
                 else -> {
                     if (event.key.length  == 1 && event.key[0].isDigit() || event.key == " ") {
                         buffer.append(event.key)
-                        terminal.print(event.key)
+                        print(event.key)
                     }
                     InputReceiver.Status.Continue
                 }

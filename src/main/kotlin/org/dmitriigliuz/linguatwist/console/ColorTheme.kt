@@ -73,9 +73,9 @@ object CyberpunkTheme : ColorTheme {
     override val panelBorder = neonIndigo
     override val coloredMessage = neonCyan
     override val title = (bold + neonCyan)
-    override val success = (bold + neonGreen)
+    override val success = (neonGreen)
     override val error = (bold + neonRed)
-    override val warning = (bold + neonYellow)
+    override val warning = neonYellow
     override val muted = dimGray
     override val logo = (bold + warmYellow)
     override val selectTitle = (bold + neonIndigo)
