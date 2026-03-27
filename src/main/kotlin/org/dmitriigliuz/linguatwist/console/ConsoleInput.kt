@@ -9,7 +9,10 @@ import com.github.ajalt.mordant.input.InputReceiver
 import com.github.ajalt.mordant.input.isCtrlC
 import com.github.ajalt.mordant.input.receiveKeyEvents
 
-class ConsoleInput(private val terminal: Terminal) {
+class ConsoleInput(
+    private val terminal: Terminal,
+    private val colorTheme: ColorTheme
+) {
     fun promptIndexes(): IndexInput {
         val input = readLineRaw() ?: run { return IndexInput.Exit }
         terminal.cursor.move {
@@ -28,7 +31,7 @@ class ConsoleInput(private val terminal: Terminal) {
     fun promptNumberOfRounds(default: Int, max: Int): Int {
 //        TODO Figure out how this function works
         return terminal.prompt(
-            prompt = Theme.promptStyle("🎯 Enter the number of rounds (default: $default, max: $max): "),
+            prompt = colorTheme.promptStyle("🎯 Enter the number of rounds (default: $default, max: $max): "),
             default = default,
             convert = { input ->
                 val n = input.toIntOrNull()
@@ -62,14 +65,14 @@ class ConsoleInput(private val terminal: Terminal) {
                 "Backspace" -> {
                     if (buffer.isNotEmpty()) {
                         buffer.deleteAt(buffer.length - 1)
-                        print("\b \b")
+                        terminal.print("\b \b")
                     }
                     InputReceiver.Status.Continue
                 }
                 else -> {
                     if (event.key.length  == 1 && event.key[0].isDigit() || event.key == " ") {
                         buffer.append(event.key)
-                        print(event.key)
+                        terminal.print(event.key)
                     }
                     InputReceiver.Status.Continue
                 }
