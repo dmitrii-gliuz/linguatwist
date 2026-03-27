@@ -1,15 +1,26 @@
 package org.dmitriigliuz.linguatwist.console
 
+import com.github.ajalt.mordant.terminal.Terminal
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import kotlin.system.exitProcess
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 
-class ConsoleApp(
+class ConsoleApp private constructor(
     private val coordinator: GameCoordinator,
-    private val renderer: ConsoleRenderer,
     private val input: ConsoleInput,
+    private val renderer: ConsoleRenderer,
 ) {
+    companion object {
+        fun create(coordinator: GameCoordinator, terminal: Terminal, colorTheme: ColorTheme): ConsoleApp {
+            return ConsoleApp(
+                coordinator = coordinator,
+                input = ConsoleInput(terminal, colorTheme),
+                renderer = ConsoleRenderer(terminal, colorTheme),
+            )
+        }
+    }
+
     fun run() {
         renderer.printLogo()
         renderer.printGreetings()

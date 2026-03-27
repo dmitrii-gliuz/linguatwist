@@ -8,8 +8,7 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.Terminal
 import org.dmitriigliuz.linguatwist.console.ConsoleApp
-import org.dmitriigliuz.linguatwist.console.ConsoleInput
-import org.dmitriigliuz.linguatwist.console.ConsoleRenderer
+import org.dmitriigliuz.linguatwist.console.Cyberpunk
 import org.dmitriigliuz.linguatwist.game.GameConfig
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyLoader
@@ -34,11 +33,7 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
             loader = ExcelVocabularyLoader(),
             writer = ExcelVocabularyWriter(),
         )
-        val consoleApp = ConsoleApp(
-            coordinator = coordinator,
-            renderer = ConsoleRenderer(terminal),
-            input = ConsoleInput(terminal),
-        )
+        val consoleApp = ConsoleApp.create(coordinator, terminal, Cyberpunk)
         consoleApp.run()
     }
 }

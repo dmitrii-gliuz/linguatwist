@@ -21,7 +21,7 @@ import com.github.ajalt.mordant.table.verticalLayout
 import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
 
-object Messages {
+internal object Messages {
     const val INITIAL_FEEDBACK = "🎮 Ready to play? Match words with their translations! 🎯\n" +
             "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
     const val LOADING_VOCABULARY = "Loading vocabulary..."
@@ -29,7 +29,7 @@ object Messages {
 }
 
 
-class ConsoleRenderer(private val terminal: Terminal) {
+internal class ConsoleRenderer(private val terminal: Terminal, private val colorTheme: ColorTheme) {
     internal val noResultFeedback = buildErrorFeedback(
         "Unexpected error",
         "Game result could not be calculated"
@@ -44,23 +44,23 @@ class ConsoleRenderer(private val terminal: Terminal) {
     internal fun stopRoundDisplay() = roundDisplay.stop()
     
     internal fun printLogo() {
-        val art = """
+        val art = colorTheme.logo("""
 █   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
 █   █ █ ▀█ █ ▀ █ █ █▀█  █  █ █ █ █  ▀▄  █ 
-▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trim()
+▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trimMargin())
         terminal.println(
             Panel(Text(art),
                 padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
-                borderStyle = Theme.neonIndigo
+                borderStyle = colorTheme.panelBorder
             )
         )
     }
 
     internal fun buildRoundResultFeedback(roundResult: RoundResult) : String {
         return when (roundResult) {
-            is RoundResult.Correct -> Theme.success("✅ Right! +1 point 🔼\n") +
+            is RoundResult.Correct -> colorTheme.success("✅ Right! +1 point 🔼\n") +
                     "${roundResult.words.first} ⟷ ${roundResult.words.second}"
-            is RoundResult.Wrong -> Theme.warning("❌ Wrong! -1 point 🔽\n") +
+            is RoundResult.Wrong -> colorTheme.warning("❌ Wrong! -1 point 🔽\n") +
                     "${roundResult.words.first} ↮ ${roundResult.words.second}"
             is RoundResult.Invalid -> buildInputErrorFeedback(roundResult.error)
         }
@@ -78,7 +78,7 @@ class ConsoleRenderer(private val terminal: Terminal) {
 
     internal fun buildErrorFeedback(caption: String = "Error", message: String) = buildString {
         append("🚫 ")
-        appendLine(Theme.error(caption))
+        appendLine(colorTheme.error(caption))
         append(message)
     }
 
@@ -101,7 +101,7 @@ class ConsoleRenderer(private val terminal: Terminal) {
         )
     }
 
-    internal fun printLetsGo() = terminal.println(Theme.neonCyan ("🚀 Let's go!"))
+    internal fun printLetsGo() = terminal.println(colorTheme.coloredMessage ("🚀 Let's go!"))
 
     internal fun buildGameResultOutput(result: GameResult) = buildString {
         appendLine(
@@ -137,21 +137,21 @@ class ConsoleRenderer(private val terminal: Terminal) {
     private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
         val roundTable = buildRoundTable(state.round)
         val gameStats = Text(
-            Theme.scoreStyle("🌟 Score: ${state.score}   ") +
-                    Theme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
+            colorTheme.scoreStyle("🌟 Score: ${state.score}   ") +
+                    colorTheme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
         )
 
         val feedback = Panel(
             content = state.feedbackMessage,
-            borderStyle = Theme.dimGray,
+            borderStyle = colorTheme.feedbackPanelBorder,
             padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
             borderType = BorderType.ASCII
         )
         val progressBar = ProgressBar(
             completed = state.completionPercentage.toLong(),
             total = 100,
-            completeStyle = Theme.neonGreen,
-            pendingStyle = Theme.darkPurple
+            completeStyle = colorTheme.progressBarCompleted,
+            pendingStyle = colorTheme.progressBarPending
         )
         val inputIndexesPrompt = "✍️ Input indexes for matching words: "
         cell(roundTable)
@@ -163,7 +163,7 @@ class ConsoleRenderer(private val terminal: Terminal) {
 
     private fun buildRoundTable(round: Round): Widget {
         fun styleIfGuessed(text: String, index: Int) =
-            if (index in round.guessedIndexes) Theme.guessedWord(text) else text
+            if (index in round.guessedIndexes) colorTheme.guessedWord(text) else text
 
         val roundTable = table {
 //            Without these widths, Mordant in some cases draws the table without the second column with indexes
@@ -185,13 +185,13 @@ class ConsoleRenderer(private val terminal: Terminal) {
         }
 
         val mistakesInRound = if (round.mistakesInRound > 0) {
-            Theme.mistakeStyle("Mistakes in round: ${round.mistakesInRound}")
+            colorTheme.mistakeStyle("Mistakes in round: ${round.mistakesInRound}")
         } else ""
         return Panel(
             content = roundTable,
-            title = Text(Theme.title("Round ${round.number}")),
+            title = Text(colorTheme.title("Round ${round.number}")),
             bottomTitle = Text(mistakesInRound),
-            borderStyle = Theme.neonIndigo
+            borderStyle = colorTheme.panelBorder
         )
     }
 }
