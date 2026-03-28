@@ -21,7 +21,7 @@ class GameCoordinator(
             vocabulary.size / config.pairsPerRound + if (leftoverPairs > 0) 1 else 0
         } else config.defaultRounds
 
-    fun loadVocabulary(): Result<VocabularyLoadResult> = loader.load(config.spreadsheetPath)
+    fun loadVocabulary(path: String? = null): Result<VocabularyLoadResult> = loader.load(path ?: config.spreadsheetPath)
             .mapCatching { loadResult ->
                 val vocabulary = loadResult.vocabulary
                 require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) {

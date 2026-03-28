@@ -46,20 +46,28 @@ class ConsoleApp private constructor(
 
     private fun startGame() {
         renderer.emptyLine()
-        var vocabulary: Vocabulary
-        renderer.withProgressMessage(Messages.LOADING_VOCABULARY) { coordinator.loadVocabulary() }?.let {
-            vocabulary = it.vocabulary
-            renderer.emptyLine()
-            renderer.printVocabularyInfo(it)
-            renderer.emptyLine()
-        } ?: run {
-            exitGame()
-        }
+        var vocabulary: Vocabulary = loadVocabularyWithRetry()
         do {
             gameSession(vocabulary).getUpdatedVocabularyOrNull()?.let { vocabulary = it }
         } while (input.promptPlayAgain())
         renderer.withProgressMessage(Messages.SAVING_SCORES) { coordinator.saveVocabulary(vocabulary) }
-   } 
+    }
+
+    private fun loadVocabularyWithRetry(): Vocabulary {
+        var customSpreadsheetPath: String? = null
+        while (true) {
+            renderer.withProgressMessage(Messages.LOADING_VOCABULARY) {
+                coordinator.loadVocabulary(customSpreadsheetPath)
+            }?.let {
+                renderer.emptyLine()
+                renderer.printVocabularyInfo(it)
+                renderer.emptyLine()
+                return it.vocabulary
+            } ?: run {
+                customSpreadsheetPath = input.promptVocabularyPath()?.ifBlank { null } ?: exitGame()
+            }
+        }
+    }
 
     private fun gameSession(vocabulary: Vocabulary): GameState {
         val defaultNumberOfRounds = coordinator.defaultNumberOfRounds(vocabulary)

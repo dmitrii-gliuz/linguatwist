@@ -28,6 +28,11 @@ class ConsoleInput(
         return IndexInput.Indexes(pair)
     }
 
+    fun promptVocabularyPath() = terminal.prompt(
+            prompt = colorTheme.promptStyle(
+                "📚 Input the valid path to the vocabulary spreadsheet (or press Enter to exit"),
+        )
+
     fun promptNumberOfRounds(default: Int, max: Int): Int {
 //        TODO Figure out how this function works
         return terminal.prompt(
