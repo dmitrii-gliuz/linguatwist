@@ -18,7 +18,7 @@ class GameEngine(
     private val totalRounds: Int,
     private val config: GameConfig,
 ) {
-    val maxMistakes = totalRounds / 3
+    val maxMistakes = maxOf(1, totalRounds / 3)
 
     fun startNewGame(vocabulary: Vocabulary)= advanceToNewRound(GameState.Initial(vocabulary))
 
