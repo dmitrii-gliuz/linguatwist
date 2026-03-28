@@ -70,8 +70,17 @@ class ExcelVocabularyLoader: VocabularyLoader {
     }
 
     private fun extractScore(row: Row): Int {
-        val scoreText = row.getCellTrimmedText(2)
-        val score = scoreText.toDoubleOrNull()?.toInt() ?: 0
-        return score
+        val scoreText = row.getCellTrimmedText(2).ifBlank { return 0 }
+//      FastExcel returns integer cells as doubles (e.g. "3.0"), so toIntOrNull() would fail — parse as Double first,
+//      then truncate
+        return (scoreText.toDoubleOrNull()?.let {
+            if (it % 1.0 != 0.0) {
+                logger.warn { "Fractional score truncated at row ${row.rowNum}: $scoreText" }
+            }
+            it
+        } ?: run {
+            logger.warn { "Cannot parse score '$scoreText' at row ${row.rowNum}, defaulting to 0" }
+            0.0
+        }).toInt()
     }
 }
