@@ -54,7 +54,11 @@ class GameEngine(
         else -> throw IllegalStateException("Unexpected state: $state")
     }
 
-    private fun processRightAnswer(result: RoundResult.Correct, state: GameState.InProgress, leftIndex: Int): GameState {
+    private fun processRightAnswer(
+        result: RoundResult.Correct,
+        state: GameState.InProgress,
+        leftIndex: Int
+    ): GameState {
         val round = result.updatedRound
         val gameScore = state.gameScore + 1
         val updatedEntry = round.pairAtLeftColumn(leftIndex)
@@ -74,7 +78,11 @@ class GameEngine(
         } else updatedState
     }
 
-    private fun processWrongAnswer(result: RoundResult.Wrong, state: GameState.InProgress, indexes: Pair<Int, Int>): GameState {
+    private fun processWrongAnswer(
+        result: RoundResult.Wrong,
+        state: GameState.InProgress,
+        indexes: Pair<Int, Int>
+    ): GameState {
         val round = result.updatedRound
         val updatedLeftEntry = round.pairAtLeftColumn(indexes.first)
         val updatedRightEntry = round.pairAtRightColumn(indexes.second)

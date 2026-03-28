@@ -3,7 +3,6 @@ version = "0.1.0"
 plugins {
     kotlin("jvm") version "2.3.0"
     application
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 java {
@@ -59,6 +58,6 @@ tasks.test {
 }
 
 tasks.wrapper {
-    gradleVersion = "8.2.1"
+    gradleVersion = "9.4.1"
     distributionType = Wrapper.DistributionType.ALL
 }
