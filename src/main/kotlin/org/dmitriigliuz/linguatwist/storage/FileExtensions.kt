@@ -1,15 +1,16 @@
 package org.dmitriigliuz.linguatwist.storage
 
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import java.io.File
 
 fun File.requireReadable() = also {
-    require(exists()) { "File does not exist: $absolutePath" }
-    require(canRead()) { "File is not readable: $absolutePath" }
+    require(exists()) { "${Messages.file_error_notExists}: $absolutePath" }
+    require(canRead()) { "${Messages.file_error_notReadable}: $absolutePath" }
 }
 
 fun File.requireValidExcel() = requireReadable(). also {
     require(extension == "xlsx") {
-    "File extension is not supported: ${extension}, it should be 'xlsx'"
+    Messages.file_error_unsupportedExtension(extension)
     }
 }
 

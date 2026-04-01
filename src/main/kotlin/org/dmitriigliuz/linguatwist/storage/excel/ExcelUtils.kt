@@ -3,6 +3,7 @@ package org.dmitriigliuz.linguatwist.storage.excel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.dhatim.fastexcel.reader.ReadableWorkbook
 import org.dhatim.fastexcel.reader.Row
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import java.io.File
 import java.io.FileInputStream
 import kotlin.use
@@ -23,23 +24,23 @@ fun readExcelRowsWithHeader(
     file: File,
     onHeader: (Row) -> Unit = {},
 ): Sequence<Row> = sequence {
-    logger.info { "Starting to read Excel file: ${file.absolutePath}" }
+    logger.debug { "Starting to read Excel file: ${file.absolutePath}" }
     FileInputStream(file).use { inputStream ->
         ReadableWorkbook(inputStream).use { workbook ->
             val sheet = workbook.firstSheet
-            logger.info { "Opened workbook and accessing first sheet: ${sheet.name}" }
+            logger.debug { "Opened workbook and accessing first sheet: ${sheet.name}" }
             sheet.openStream().use { rowStream ->
                 val iterator = rowStream.iterator()
-                require(iterator.hasNext()) { "Excel file is empty" }
+                require(iterator.hasNext()) { Messages.excel_error_emptyFile() }
                 val header = iterator.next()
-                require(header.cellCount >= 2) { "Excel file header must contain at least two columns" }
+                require(header.cellCount >= 2) { Messages.excel_error_headerTooShort }
                 onHeader(header)
-                logger.info { "Starting to iterate through data rows" }
+                logger.debug { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {
                     val row = iterator.next()
                     yield(row)
                 }
-                logger.info { "Finished reading all rows from Excel file" }
+                logger.debug { "Finished reading all rows from Excel file" }
             }
         }
     }

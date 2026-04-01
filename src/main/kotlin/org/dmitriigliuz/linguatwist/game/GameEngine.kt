@@ -1,5 +1,6 @@
 package org.dmitriigliuz.linguatwist.game
 
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.GameResult
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Round
@@ -51,7 +52,7 @@ class GameEngine(
                 vocabulary = updatedVocabulary,
             )
         }
-        else -> throw IllegalStateException("Unexpected state: $state")
+        else -> throw IllegalStateException("${Messages.state_error_unexpected}: $state")
     }
 
     private fun processRightAnswer(

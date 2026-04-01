@@ -3,6 +3,7 @@ version = "0.1.0"
 plugins {
     kotlin("jvm") version "2.3.0"
     application
+    id("de.comahe.i18n4k") version "0.11.1"
 }
 
 java {
@@ -30,6 +31,7 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.14")
     implementation("ch.qos.logback:logback-classic:1.5.29")
     implementation("com.github.ajalt.clikt:clikt:5.1.0")
+    implementation("de.comahe.i18n4k:i18n4k-core-jvm:0.11.1")
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
 }

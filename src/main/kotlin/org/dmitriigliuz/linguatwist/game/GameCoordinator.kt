@@ -1,5 +1,8 @@
 package org.dmitriigliuz.linguatwist.game
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import org.dmitriigliuz.linguatwist.i18n.Messages
+import org.dmitriigliuz.linguatwist.model.GameResult
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
@@ -7,6 +10,8 @@ import org.dmitriigliuz.linguatwist.storage.VocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.VocabularyWriter
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
+
+private val logger = KotlinLogging.logger { }
 
 class GameCoordinator(
     private val config: GameConfig,
@@ -25,17 +30,32 @@ class GameCoordinator(
             .mapCatching { loadResult ->
                 val vocabulary = loadResult.vocabulary
                 require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) {
-                    "Vocabulary must contain at least ${config.pairsPerRound} distinct entries"
+                    Messages.vocabulary_error_notEnoughDistinct(config.pairsPerRound)
                 }
                 loadResult
             }
 
     fun saveVocabulary(vocabulary: Vocabulary) = writer.save(config.spreadsheetPath, vocabulary)
 
-    fun startSession(totalRounds: Int): Pair<GameEngine, ValueTimeMark> = createEngine(totalRounds) to createTimeMark()
+    fun startSession(totalRounds: Int): Pair<GameEngine, ValueTimeMark> {
+        val engine = createEngine(totalRounds)
+        logger.info {
+            "Game session started: rounds=$totalRounds, pairsPerRound=${config.pairsPerRound}, maxMistakes=${engine.maxMistakes}"
+        }
+        return engine to createTimeMark()
+    }
 
-    fun finishSession(state: GameState, startTime: ValueTimeMark) = state
-        .getResultOrNull()?.copy(duration = startTime.elapsedNow())
+    fun finishSession(state: GameState, startTime: ValueTimeMark): GameResult? {
+        val result = state.getResultOrNull()?.copy(duration = startTime.elapsedNow())
+        if (result != null) {
+            logger.info {
+                "Game session finished: failed=${result.isFailed}, score=${result.score}, guessed=${result.totalGuessedAmount}/${result.totalPairsAmount}, mistakes=${result.mistakesCount}/${result.maxMistakes}, duration=${result.duration}"
+            }
+        } else {
+            logger.warn { "Game session finished without final result. state=${state::class.simpleName}" }
+        }
+        return result
+    }
 
     private fun createEngine(totalRounds: Int) = GameEngine(totalRounds, config)
 

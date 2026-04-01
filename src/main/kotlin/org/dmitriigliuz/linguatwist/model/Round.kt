@@ -48,7 +48,7 @@ data class Round(
         val (leftIndex, rightIndex) = selection
 
         return if (leftIndex !in pairs.indices || rightIndex !in pairs.indices) {
-             RoundResult.Invalid(ValidationError.INDEX_OUT_OF_RANGE)
+            RoundResult.Invalid(ValidationError.INDEX_OUT_OF_RANGE)
         } else if (pairAtLeftColumn(leftIndex).isGuessed || pairAtRightColumn(rightIndex).isGuessed) {
             RoundResult.Invalid(ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED)
         } else if (selection in wrongAttempts) {

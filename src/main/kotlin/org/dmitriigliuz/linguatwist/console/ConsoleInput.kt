@@ -8,6 +8,7 @@ import com.github.ajalt.mordant.terminal.prompt
 import com.github.ajalt.mordant.input.InputReceiver
 import com.github.ajalt.mordant.input.isCtrlC
 import com.github.ajalt.mordant.input.receiveKeyEvents
+import org.dmitriigliuz.linguatwist.i18n.Messages
 
 class ConsoleInput(
     private val terminal: Terminal,
@@ -29,26 +30,23 @@ class ConsoleInput(
     }
 
     fun promptVocabularyPath() = terminal.prompt(
-            prompt = colorTheme.promptStyle(
-                "📚 Input the valid path to the vocabulary spreadsheet (or press Enter to exit"),
+            prompt = colorTheme.promptStyle("📚 ${Messages.prompt_vocabulary_path}")
         )
 
     fun promptNumberOfRounds(default: Int, max: Int): Int {
-//        TODO Figure out how this function works
         return terminal.prompt(
-            prompt = colorTheme.promptStyle("🎯 Enter the number of rounds (default: $default, max: $max): "),
+            prompt = colorTheme.promptStyle("🎯 ${Messages.prompt_rounds(default, max)}"),
             default = default,
             convert = { input ->
                 val n = input.toIntOrNull()
                 if (n != null && n in 1..max) ConversionResult.Valid(n)
-                else ConversionResult.Invalid("1-$max: Your value is $n")
+                else ConversionResult.Invalid(Messages.prompt_rounds_invalid(default, max))
             }
         ) ?: default
     }
 
     fun promptPlayAgain(): Boolean = YesNoPrompt(
-//        TODO Figure out how this function works
-        prompt = "Do you want to play again? ",
+        prompt = "🔄 ${Messages.prompt_playAgain} ",
         terminal = terminal,
         default = true
     ).ask() ?: false

@@ -2,6 +2,7 @@ package org.dmitriigliuz.linguatwist.console
 
 import com.github.ajalt.mordant.terminal.Terminal
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import kotlin.system.exitProcess
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
@@ -30,8 +31,8 @@ class ConsoleApp private constructor(
     private fun mainMenu() {
         while (true) {
             when (input.selectMenuItem(
-                listOf("🎮 Start game", "🚪 Exit"),
-                "\n  » Main menu «"
+                listOf("🎮 ${Messages.menu_main_start}", "🚪 ${Messages.menu_main_exit}"),
+                "\n  » ${Messages.menu_main_title} «"
             )) {
                 0 -> startGame()
                 1 -> exitGame()
@@ -50,13 +51,13 @@ class ConsoleApp private constructor(
         do {
             gameSession(vocabulary).getUpdatedVocabularyOrNull()?.let { vocabulary = it }
         } while (input.promptPlayAgain())
-        renderer.withProgressMessage(Messages.SAVING_SCORES) { coordinator.saveVocabulary(vocabulary) }
+        renderer.withProgressMessage(Messages.game_saving_scores()) { coordinator.saveVocabulary(vocabulary) }
     }
 
     private fun loadVocabularyWithRetry(): Vocabulary {
         var customSpreadsheetPath: String? = null
         while (true) {
-            renderer.withProgressMessage(Messages.LOADING_VOCABULARY) {
+            renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
                 coordinator.loadVocabulary(customSpreadsheetPath)
             }?.let {
                 renderer.emptyLine()
@@ -78,7 +79,7 @@ class ConsoleApp private constructor(
         renderer.printLetsGo()
         renderer.emptyLine()
         var gameState: GameState = engine.startNewGame(vocabulary)
-        var feedbackMessage = Messages.INITIAL_FEEDBACK
+        var feedbackMessage = Messages.game_feedback_initial()
         var displayState: RoundDisplayState? = null
         while (gameState is GameState.InProgress) {
             displayState = gameState.toRoundDisplayState(feedbackMessage)

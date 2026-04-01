@@ -18,21 +18,15 @@ import com.github.ajalt.mordant.rendering.Widget
 import com.github.ajalt.mordant.table.Borders
 import com.github.ajalt.mordant.table.ColumnWidth
 import com.github.ajalt.mordant.table.verticalLayout
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
-
-internal object Messages {
-    const val INITIAL_FEEDBACK = "🎮 Ready to play? Match words with their translations! 🎯\n" +
-            "\uD83D\uDD22 Type two numbers separated by a space (e.g. 1 3)"
-    const val LOADING_VOCABULARY = "Loading vocabulary..."
-    const val SAVING_SCORES = "Saving scores to spreadsheet..."
-}
 
 
 internal class ConsoleRenderer(private val terminal: Terminal, private val colorTheme: ColorTheme) {
     internal val noResultFeedback = buildErrorFeedback(
-        "Unexpected error",
-        "Game result could not be calculated"
+        Messages.game_error_unexpected_caption(),
+        Messages.game_error_unexpected_message()
     )
 
     private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
@@ -58,9 +52,9 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
 
     internal fun buildRoundResultFeedback(roundResult: RoundResult) : String {
         return when (roundResult) {
-            is RoundResult.Correct -> colorTheme.success("✅ Right! +1 point 🔼\n") +
+            is RoundResult.Correct -> colorTheme.success("✅ ${Messages.round_result_correct} 🔼\n") +
                     "${roundResult.words.first} ⟷ ${roundResult.words.second}"
-            is RoundResult.Wrong -> colorTheme.warning("❌ Wrong! -1 point 🔽\n") +
+            is RoundResult.Wrong -> colorTheme.warning("❌ ${Messages.round_result_wrong} 🔽\n") +
                     "${roundResult.words.first} ↮ ${roundResult.words.second}"
             is RoundResult.Invalid -> buildInputErrorFeedback(roundResult.error)
         }
@@ -68,15 +62,15 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
 
     internal fun buildInputErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
         val message = errorMessage ?: when (error) {
-            null -> "The input must contain two numbers separated by space"
-            ValidationError.INDEX_OUT_OF_RANGE -> "Indexes are out of range"
-            ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> "Pair has already been guessed"
-            ValidationError.PAIR_HAS_ALREADY_BEEN_WRONG -> "Pair has already been wrong"
+            null -> Messages.input_error_default()
+            ValidationError.INDEX_OUT_OF_RANGE -> Messages.input_error_indexOutOfRange()
+            ValidationError.PAIR_HAS_ALREADY_BEEN_GUESSED -> Messages.input_error_pairAlreadyGuessed()
+            ValidationError.PAIR_HAS_ALREADY_BEEN_WRONG -> Messages.input_error_pairAlreadyWrong()
         }
-        return buildErrorFeedback("Input error", message)
+        return buildErrorFeedback(Messages.input_error_caption(), message)
     }
 
-    internal fun buildErrorFeedback(caption: String = "Error", message: String) = buildString {
+    internal fun buildErrorFeedback(caption: String = Messages.error_caption(), message: String) = buildString {
         append("🚫 ")
         appendLine(colorTheme.error(caption))
         append(message)
@@ -85,61 +79,63 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
     internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): T? {
         terminal.print(Text("⏳ $message "))
         return action()
-            .onSuccess { terminal.success("Done!") }
+            .onSuccess { terminal.success(Messages.game_progress_done()) }
             .onFailure { e -> printError(e.message ?: e.toString()) }
             .getOrNull()
     }
 
     internal fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(
-        "🚨 Maximal number of possible mistakes: $maxMistakes"
+        "🚨 ${Messages.game_maxMistakes}: $maxMistakes"
     )
 
     internal fun printGreetings() {
         terminal.println(Text("""
-            👋 Welcome to LinguaTwist! Match words with their translations.
-            💡 Enter two numbers separated by a space to pair them. Press Ctrl-C to quit.
-            🕹️ Use ↑↓ arrows and Enter to navigate menus.""".trimIndent())
+            👋 ${Messages.game_greetings_welcome} ${Messages.game_greetings_matchWords}
+            💡 ${Messages.game_greetings_enterTwoNumbers}
+            🕹️ ${Messages.game_greetings_useArrowKeys}""".trimIndent())
         )
     }
 
-    internal fun printLetsGo() = terminal.println(colorTheme.coloredMessage ("🚀 Let's go!"))
+    internal fun printLetsGo() = terminal.println(
+        colorTheme.coloredMessage ("🚀 ${Messages.game_letsGo}")
+    )
 
     internal fun buildGameResultOutput(result: GameResult) = buildString {
         appendLine(
             if (result.isFailed)
-                "😢 Sorry, you failed."
-            else "🎉 Congratulations, you finished!"
+                "😢 ${Messages.game_result_failed}"
+            else "🎉 ${Messages.game_result_finished}"
         )
-        appendLine("✅ Guessed pairs: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
-        appendLine("❌ Mistakes: ${result.mistakesCount} / ${result.maxMistakes}")
+        appendLine("✅ ${Messages.game_result_guessedPairs}: ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
+        appendLine("❌ ${Messages.game_result_mistakes}: ${result.mistakesCount} / ${result.maxMistakes}")
         appendLine("${result.verbalScore.emoji} ${result.verbalScore.description}")
         val duration = result.duration.toComponents { minutes, seconds, _ ->
             val formattedSeconds = seconds.toString().padStart(2, '0')
             "$minutes:$formattedSeconds"
         }
-        append("⏳ Duration: $duration")
+        append("⏳ ${Messages.game_result_duration}: $duration")
     }
 
     internal fun printError(message: String) = terminal.danger("❌ $message")
 
     internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
-        terminal.success("📚 The number of loaded words: ${vocabularyResult.vocabulary.size}")
+        terminal.success("📚 ${Messages.vocabulary_info_loadedWords}: ${vocabularyResult.vocabulary.size}")
         if (vocabularyResult.duplicates > 0) {
-            terminal.warning("⚠️ ${vocabularyResult.duplicates} duplicates found")
+            terminal.warning("⚠️ ${Messages.vocabulary_info_duplicates}: ${vocabularyResult.duplicates}")
         }
         if (vocabularyResult.overlappedPairs > 0) {
-            terminal.warning("⚠️ ${vocabularyResult.overlappedPairs} overlapping pairs found")
+            terminal.warning("⚠️ ${Messages.vocabulary_info_overlappedPairs}: ${vocabularyResult.overlappedPairs}")
         }
         if (vocabularyResult.invalidRows > 0) {
-            terminal.danger("❌ ${vocabularyResult.invalidRows} invalid rows found")
+            terminal.danger("❌ ${Messages.vocabulary_info_invalidRows}: ${vocabularyResult.invalidRows}")
         }
     }
 
     private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
         val roundTable = buildRoundTable(state.round)
         val gameStats = Text(
-            colorTheme.scoreStyle("🌟 Score: ${state.score}   ") +
-                    colorTheme.mistakeStyle("❌ Mistakes: ${state.totalMistakesMade}")
+            colorTheme.scoreStyle("🌟 ${Messages.round_stats_score}: ${state.score}   ") +
+                    colorTheme.mistakeStyle("❌ ${Messages.round_stats_mistakes}: ${state.totalMistakesMade}")
         )
 
         val feedback = Panel(
@@ -154,7 +150,7 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
             completeStyle = colorTheme.progressBarCompleted,
             pendingStyle = colorTheme.progressBarPending
         )
-        val inputIndexesPrompt = "✍️ Input indexes for matching words: "
+        val inputIndexesPrompt = "✍️ ${Messages.round_input_prompt}: "
         cell(roundTable)
         cell(gameStats)
         cell(feedback)
@@ -186,11 +182,11 @@ internal class ConsoleRenderer(private val terminal: Terminal, private val color
         }
 
         val mistakesInRound = if (round.mistakesInRound > 0) {
-            colorTheme.mistakeStyle("Mistakes in round: ${round.mistakesInRound}")
+            colorTheme.mistakeStyle("${Messages.round_mistakesInRound}: ${round.mistakesInRound}")
         } else ""
         return Panel(
             content = roundTable,
-            title = Text(colorTheme.title("Round ${round.number}")),
+            title = Text(colorTheme.title("${Messages.round_caption} ${round.number}")),
             bottomTitle = Text(mistakesInRound),
             borderStyle = colorTheme.panelBorder
         )

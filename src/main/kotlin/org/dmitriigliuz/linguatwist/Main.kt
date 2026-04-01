@@ -6,28 +6,35 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.Terminal
+import de.comahe.i18n4k.forLocaleTag
+import de.comahe.i18n4k.i18n4k
+import de.comahe.i18n4k.systemLocale
+import de.comahe.i18n4k.config.I18n4kConfigDefault
 import org.dmitriigliuz.linguatwist.console.ConsoleApp
 import org.dmitriigliuz.linguatwist.console.CyberpunkTheme
 import org.dmitriigliuz.linguatwist.console.DaylightTheme
 import org.dmitriigliuz.linguatwist.game.GameConfig
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.excel.ExcelVocabularyWriter
 
-
 class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
-    val file by option("-f", "--file", help = "Path to the vocabulary file")
+    val file by option("-f", "--file", help = Messages.cli_option_file_help())
         .default("vocabulary.xlsx")
-    val lang by option("-l", "--lang", help = "Localization language tag (e.g. en, ru, de, etc.)")
-        .default("en")
+    val lang by option("-l", "--lang", help = Messages.cli_option_lang_help())
+        .default(systemLocale.language.ifBlank { "en" })
     val lightTheme by option("--light-theme",
-        help = "Use light color theme optimized for light terminal backgrounds"
+        help = Messages.cli_option_lightTheme_help()
     ).flag(default = false)
 
     override fun run() {
+        i18n4k = I18n4kConfigDefault().apply {
+            locale = forLocaleTag(lang)
+        }
         val colorTheme = if (!lightTheme) CyberpunkTheme else DaylightTheme
         val terminal = Terminal(theme = colorTheme.toTerminalTheme())
-        Runtime.getRuntime().addShutdownHook(Thread { terminal.println("\n\n👋 Bye!") })
+        Runtime.getRuntime().addShutdownHook(Thread { terminal.println("\n\n👋 ${Messages.app_shutdown_bye}") })
         val config = GameConfig(spreadsheetPath = file, languageTag = lang)
         val coordinator = GameCoordinator(
             config = config,

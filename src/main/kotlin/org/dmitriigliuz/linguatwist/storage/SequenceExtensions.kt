@@ -18,12 +18,12 @@ internal fun Sequence<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) 
     for (entry in this@filterDuplicates) {
         if (entry in seenEntries) {
             stats.duplicates++
-            logger.debug { "Found duplicate entry: sourceText='${entry.sourceText}', translation='${entry.translation}'" }
+            logger.trace { "Found duplicate entry while filtering vocabulary" }
             continue
         }
         if (entry.normalizedSourceText in seenSourceTexts || entry.normalizedTranslation in seenTranslations) {
             stats.overlappedPairs += 2
-            logger.debug { "Found overlapped pair: sourceText='${entry.sourceText}', translation='${entry.translation}'" }
+            logger.trace { "Found overlapped pair while filtering vocabulary" }
         }
 
         seenEntries.add(entry)

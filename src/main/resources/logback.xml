@@ -10,8 +10,8 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="org.dmitriigliuz.linguatwist.storage" level="DEBUG"/>
-    <root level="DEBUG">
+    <logger name="org.dmitriigliuz.linguatwist.storage" level="INFO"/>
+    <root level="INFO">
     <appender-ref ref="FILE" />
     </root>
 </configuration>

@@ -2,6 +2,7 @@ package org.dmitriigliuz.linguatwist.storage.excel
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.dhatim.fastexcel.reader.Row
+import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
@@ -27,7 +28,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
             .filterDuplicates(deduplicationStats)
             .toSet()
 
-        require(uniqueEntries.isNotEmpty()) { "No unique entries found in Excel file: $path" }
+        require(uniqueEntries.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries}: $path" }
 
         val vocabulary = Vocabulary(uniqueEntries)
 
@@ -60,7 +61,6 @@ class ExcelVocabularyLoader: VocabularyLoader {
             if (sourceText.isEmpty() && translation.isEmpty()) continue
             if (sourceText.isEmpty() || translation.isEmpty()) {
                 logger.warn { "Row contains empty cell at row ${row.rowNum}" }
-                logger.trace { "Invalid row (one empty cell) at row ${row.rowNum}, source: '$sourceText', translation: '$translation'" }
                 state.invalidRows++
                 continue
             }
