@@ -12,7 +12,8 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 
 class ConsoleInput(
     private val terminal: Terminal,
-    private val colorTheme: ColorTheme
+    private val colorTheme: ColorTheme,
+    private val emoji: EmojiSet
 ) {
     fun promptIndexes(): IndexInput {
         val input = readLineRaw() ?: run { return IndexInput.Exit }
@@ -22,20 +23,21 @@ class ConsoleInput(
         }
         val correctRegex = """^\d+\s+\d+$""".toRegex()
         if (!correctRegex.matches(input)) return IndexInput.Invalid
-        val parts = input.split("""\s+""".toRegex()). map { it.toIntOrNull() }
+        val parts = input.split("""\s+""".toRegex()).map { it.toIntOrNull() }
         if (parts.any { it == null }) return IndexInput.Invalid
         val pair = parts[0]!! to parts[1]!!
-
         return IndexInput.Indexes(pair)
     }
 
     fun promptVocabularyPath() = terminal.prompt(
-            prompt = colorTheme.promptStyle("📚 ${Messages.prompt_vocabulary_path}")
-        )
+        prompt = colorTheme.promptStyle(emoji.vocabularyPath.prefixed(Messages.prompt_vocabulary_path()))
+    )
 
     fun promptNumberOfRounds(default: Int, max: Int): Int {
         return terminal.prompt(
-            prompt = colorTheme.promptStyle("🎯 ${Messages.prompt_rounds(default, max)}"),
+            prompt = colorTheme.promptStyle(
+                emoji.numberOfRounds.prefixed(Messages.prompt_rounds(default, max))
+            ),
             default = default,
             convert = { input ->
                 val n = input.toIntOrNull()
@@ -46,7 +48,7 @@ class ConsoleInput(
     }
 
     fun promptPlayAgain(): Boolean = YesNoPrompt(
-        prompt = "🔄 ${Messages.prompt_playAgain} ",
+        prompt = emoji.playAgain.prefixed(Messages.prompt_playAgain()),
         terminal = terminal,
         default = true
     ).ask() ?: false
@@ -74,7 +76,7 @@ class ConsoleInput(
                     InputReceiver.Status.Continue
                 }
                 else -> {
-                    if (event.key.length  == 1 && event.key[0].isDigit() || event.key == " ") {
+                    if (event.key.length == 1 && event.key[0].isDigit() || event.key == " ") {
                         buffer.append(event.key)
                         print(event.key)
                     }
@@ -86,7 +88,7 @@ class ConsoleInput(
 }
 
 sealed class IndexInput {
-    data class Indexes(val pair: Pair<Int, Int>): IndexInput()
-    object Invalid: IndexInput()
-    object Exit: IndexInput()
+    data class Indexes(val pair: Pair<Int, Int>) : IndexInput()
+    object Invalid : IndexInput()
+    object Exit : IndexInput()
 }

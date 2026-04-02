@@ -11,13 +11,15 @@ class ConsoleApp private constructor(
     private val coordinator: GameCoordinator,
     private val input: ConsoleInput,
     private val renderer: ConsoleRenderer,
+    private val emoji: EmojiSet
 ) {
     companion object {
-        fun create(coordinator: GameCoordinator, terminal: Terminal, colorTheme: ColorTheme): ConsoleApp {
+        fun create(coordinator: GameCoordinator, terminal: Terminal, colorTheme: ColorTheme, emoji: EmojiSet): ConsoleApp {
             return ConsoleApp(
                 coordinator = coordinator,
-                input = ConsoleInput(terminal, colorTheme),
-                renderer = ConsoleRenderer(terminal, colorTheme),
+                input = ConsoleInput(terminal, colorTheme, emoji),
+                renderer = ConsoleRenderer(terminal, colorTheme, emoji),
+                emoji = emoji
             )
         }
     }
@@ -31,8 +33,10 @@ class ConsoleApp private constructor(
     private fun mainMenu() {
         while (true) {
             when (input.selectMenuItem(
-                listOf("🎮 ${Messages.menu_main_start}", "🚪 ${Messages.menu_main_exit}"),
-                "\n  » ${Messages.menu_main_title} «"
+                listOf(
+                    emoji.startGame.prefixed(Messages.menu_main_start()),
+                    emoji.exit.prefixed(Messages.menu_main_exit())
+                ), "\n  » ${Messages.menu_main_title} «"
             )) {
                 0 -> startGame()
                 1 -> exitGame()

@@ -13,6 +13,9 @@ import de.comahe.i18n4k.config.I18n4kConfigDefault
 import org.dmitriigliuz.linguatwist.console.ConsoleApp
 import org.dmitriigliuz.linguatwist.console.CyberpunkTheme
 import org.dmitriigliuz.linguatwist.console.DaylightTheme
+import org.dmitriigliuz.linguatwist.console.DefaultEmoji
+import org.dmitriigliuz.linguatwist.console.NoEmoji
+import org.dmitriigliuz.linguatwist.console.prefixed
 import org.dmitriigliuz.linguatwist.game.GameConfig
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.i18n.Messages
@@ -27,6 +30,9 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
     val lightTheme by option("--light-theme",
         help = Messages.cli_option_lightTheme_help()
     ).flag(default = false)
+    val noEmoji by option("--no-emoji",
+        help = Messages.cli_option_noEmoji_help()
+    ).flag(default = false)
 
     override fun run() {
         i18n4k = I18n4kConfigDefault().apply {
@@ -34,14 +40,17 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
         }
         val colorTheme = if (!lightTheme) CyberpunkTheme else DaylightTheme
         val terminal = Terminal(theme = colorTheme.toTerminalTheme())
-        Runtime.getRuntime().addShutdownHook(Thread { terminal.println("\n\n👋 ${Messages.app_shutdown_bye}") })
+        val emojiSet = if (noEmoji) NoEmoji else DefaultEmoji
+        Runtime.getRuntime().addShutdownHook(Thread {
+            terminal.println("\n\n" + emojiSet.bye.prefixed(Messages.app_shutdown_bye()))
+        })
         val config = GameConfig(spreadsheetPath = file, languageTag = lang)
         val coordinator = GameCoordinator(
             config = config,
             loader = ExcelVocabularyLoader(),
             writer = ExcelVocabularyWriter(),
         )
-        val consoleApp = ConsoleApp.create(coordinator, terminal, colorTheme)
+        val consoleApp = ConsoleApp.create(coordinator, terminal, colorTheme, emojiSet)
         consoleApp.run()
     }
 }
