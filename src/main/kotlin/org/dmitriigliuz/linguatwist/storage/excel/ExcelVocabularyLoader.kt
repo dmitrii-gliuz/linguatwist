@@ -41,6 +41,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
 
         VocabularyLoadResult(
             vocabulary = vocabulary,
+            path = path,
             duplicates = deduplicationStats.duplicates,
             overlappedPairs = deduplicationStats.overlappedPairs,
             invalidRows = parsingStats.invalidRows

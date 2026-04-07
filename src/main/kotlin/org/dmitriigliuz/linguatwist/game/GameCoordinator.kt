@@ -35,7 +35,7 @@ class GameCoordinator(
                 loadResult
             }
 
-    fun saveVocabulary(vocabulary: Vocabulary) = writer.save(config.spreadsheetPath, vocabulary)
+    fun saveVocabulary(path: String, vocabulary: Vocabulary) = writer.save(path, vocabulary)
 
     fun startSession(totalRounds: Int): Pair<GameEngine, ValueTimeMark> {
         val engine = createEngine(totalRounds)

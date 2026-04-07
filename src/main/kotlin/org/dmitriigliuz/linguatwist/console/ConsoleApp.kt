@@ -6,6 +6,7 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 import kotlin.system.exitProcess
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
+import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 
 class ConsoleApp private constructor(
     private val coordinator: GameCoordinator,
@@ -51,14 +52,18 @@ class ConsoleApp private constructor(
 
     private fun startGame() {
         renderer.emptyLine()
-        var vocabulary: Vocabulary = loadVocabularyWithRetry()
+        val vocabularyLoadResult = loadVocabularyWithRetry()
+        var vocabulary = vocabularyLoadResult.vocabulary
+        val vocabularyPath = vocabularyLoadResult.path
         do {
             gameSession(vocabulary).getUpdatedVocabularyOrNull()?.let { vocabulary = it }
         } while (input.promptPlayAgain())
-        renderer.withProgressMessage(Messages.game_saving_scores()) { coordinator.saveVocabulary(vocabulary) }
+        renderer.withProgressMessage(Messages.game_saving_scores()) {
+            coordinator.saveVocabulary(vocabularyPath, vocabulary)
+        }
     }
 
-    private fun loadVocabularyWithRetry(): Vocabulary {
+    private fun loadVocabularyWithRetry(): VocabularyLoadResult {
         var customSpreadsheetPath: String? = null
         while (true) {
             renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
@@ -67,7 +72,7 @@ class ConsoleApp private constructor(
                 renderer.emptyLine()
                 renderer.printVocabularyInfo(it)
                 renderer.emptyLine()
-                return it.vocabulary
+                return it
             } ?: run {
                 customSpreadsheetPath = input.promptVocabularyPath()?.ifBlank { null } ?: exitGame()
             }
