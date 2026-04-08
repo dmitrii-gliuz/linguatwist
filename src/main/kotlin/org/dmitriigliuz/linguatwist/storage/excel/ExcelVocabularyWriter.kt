@@ -105,8 +105,8 @@ class ExcelVocabularyWriter : VocabularyWriter {
     }
 
     private fun extractNormalizedPair(row: Row): Pair<String, String> {
-        val sourceText = row.getCellTrimmedText(0)
-        val translation = row.getCellTrimmedText(1)
+        val sourceText = row.getCellTrimmedTextOrDefault(ORIGINAL_COLUMN_INDEX)
+        val translation = row.getCellTrimmedTextOrDefault(TRANSLATION_COLUMN_INDEX)
         val entry = LexicalEntry(sourceText, translation)
         return entry.normalizedSourceText to entry.normalizedTranslation
     }

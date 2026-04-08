@@ -13,7 +13,7 @@ private val logger = KotlinLogging.logger {}
 
 fun Row.getCellTrimmedText(columnIndex: Int) = getCellText(columnIndex).trim()
 
-fun Row.getCellTrimmedTextOrDefault(columnIndex: Int, default: String) = if (cellCount > columnIndex) {
+fun Row.getCellTrimmedTextOrDefault(columnIndex: Int, default: String = "") = if (cellCount > columnIndex) {
     getCellTrimmedText(columnIndex).ifEmpty { default }
 } else {
     default
