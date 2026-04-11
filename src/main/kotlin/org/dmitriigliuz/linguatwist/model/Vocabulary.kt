@@ -6,34 +6,41 @@ data class Vocabulary(
 ) {
     val size = entries.size
 
-    private fun refillPool(seen: Set<LexicalEntry>, newGroup: List<LexicalEntry>) = entries
-        .shuffled()
-        .sortedBy { it.entryScore }
-        .filter { !seen.contains(it) && !newGroup.contains(it) }
-        .map { it.withoutGuessed() }
-
-    fun hasEnoughDistinctEntries(groupSize: Int): Boolean {
-        val uniqueEntries = mutableSetOf<LexicalEntry>()
-        for (entry in entries) {
-            if (!uniqueEntries.any { it.overlaps(entry) }) uniqueEntries.add(entry)
-            if (uniqueEntries.size >= groupSize) return true
+    private fun findIndependentSet(
+        requiredSize: Int,
+        candidates: List<LexicalEntry>,
+        currentGroup: List<LexicalEntry> = emptyList()
+    ): List<LexicalEntry>? {
+        if (currentGroup.size == requiredSize) return currentGroup
+        if (candidates.isEmpty() || requiredSize > candidates.size) return null
+        for (currentEntry in candidates) {
+            val relevantCandidates = (candidates - currentEntry).filter { !it.overlaps(currentEntry) }
+            val nextSize = requiredSize - 1
+            val newGroup = currentGroup + currentEntry
+            return findIndependentSet(nextSize, relevantCandidates, newGroup) ?: continue
         }
-        return false
+        return null
     }
 
-    fun takeNextGroup(groupSize: Int): Pair<List<LexicalEntry>, Vocabulary> {
-        require(hasEnoughDistinctEntries(groupSize))
-        var currentPool = remainingPool.toMutableList()
-        val newGroup: List<LexicalEntry> = buildList {
-            val seen = mutableSetOf<LexicalEntry>()
+    private fun refillPool() = entries
+        .shuffled()
+        .sortedBy { it.entryScore }
+        .map { it.withoutGuessed() }
 
-            while (size < groupSize) {
-                if (currentPool.size < groupSize) currentPool = refillPool(seen, this).toMutableList()
-                val entry = currentPool.removeFirst()
-                if (this.any { it.overlaps(entry) }) seen.add(entry) else this.add(entry)
-            }
+    fun hasEnoughDistinctEntries(groupSize: Int) =
+        findIndependentSet(groupSize, entries.toList()) != null
+
+    fun takeNextGroup(groupSize: Int): Pair<List<LexicalEntry>, Vocabulary> {
+        var refilledPool: List<LexicalEntry>? = null
+        val independentSet = findIndependentSet(groupSize, remainingPool) ?: run {
+            refilledPool = refillPool()
+            findIndependentSet(groupSize, refilledPool) ?: error(
+                "Cannot find independent set of size $groupSize"
+            )
         }
-        return Pair(newGroup, copy(remainingPool = currentPool.toList()))
+
+        val newPool = (refilledPool ?: remainingPool) - independentSet.toSet()
+        return Pair(independentSet, copy(remainingPool = newPool))
     }
 
     fun withUpdatedScores(updatedScores: Map<LexicalEntry, Int>) = copy(
