@@ -139,7 +139,7 @@ internal class ConsoleRenderer(
             VerbalScore.VERY_POOR -> emoji.scoreVeryPoor
             VerbalScore.TRY_AGAIN -> emoji.scoreTryAgain
         }
-        return scoreEmoji.prefixed(verbalScore.description)
+        return scoreEmoji.prefixed(verbalScore.description.toString())
     }
 
     internal fun printError(message: String) = terminal.danger(emoji.error.prefixed(message))

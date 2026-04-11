@@ -27,22 +27,18 @@ class GameCoordinator(
         } else config.defaultRounds
 
     fun loadVocabulary(path: String? = null): Result<VocabularyLoadResult> = loader.load(path ?: config.spreadsheetPath)
-            .mapCatching { loadResult ->
-                val vocabulary = loadResult.vocabulary
-                require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) {
-                    Messages.vocabulary_error_notEnoughDistinct(config.pairsPerRound)
-                }
-                loadResult
+        .mapCatching { loadResult ->
+            val vocabulary = loadResult.vocabulary
+            require(vocabulary.hasEnoughDistinctEntries(config.pairsPerRound)) {
+                Messages.vocabulary_error_notEnoughDistinct(config.pairsPerRound)
             }
+            loadResult
+        }
 
     fun saveVocabulary(path: String, vocabulary: Vocabulary) = writer.save(path, vocabulary)
 
-    fun startSession(totalRounds: Int): Pair<GameEngine, ValueTimeMark> {
-        val engine = createEngine(totalRounds)
-        logger.info {
-            "Game session started: rounds=$totalRounds, pairsPerRound=${config.pairsPerRound}, maxMistakes=${engine.maxMistakes}"
-        }
-        return engine to createTimeMark()
+    fun startSession(totalRounds: Int) = Pair(createEngine(totalRounds), createTimeMark()).also {
+        logger.info { "Game session started: rounds=$totalRounds, pairsPerRound=${config.pairsPerRound}" }
     }
 
     fun finishSession(state: GameState, startTime: ValueTimeMark): GameResult? {
@@ -51,9 +47,7 @@ class GameCoordinator(
             logger.info {
                 "Game session finished: failed=${result.isFailed}, score=${result.score}, guessed=${result.totalGuessedAmount}/${result.totalPairsAmount}, mistakes=${result.mistakesCount}/${result.maxMistakes}, duration=${result.duration}"
             }
-        } else {
-            logger.warn { "Game session finished without final result. state=${state::class.simpleName}" }
-        }
+        } else logger.warn { "Game session finished without final result. state=${state::class.simpleName}" }
         return result
     }
 
