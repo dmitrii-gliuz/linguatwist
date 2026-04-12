@@ -10,7 +10,7 @@ internal data class DeduplicationStats(
     var overlappedPairs: Int = 0
 )
 
-internal fun Sequence<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) = sequence {
+internal fun Iterable<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) = buildList {
     val seenEntries = mutableSetOf<LexicalEntry>()
     val seenSourceTexts = mutableSetOf<String>()
     val seenTranslations = mutableSetOf<String>()
@@ -29,6 +29,8 @@ internal fun Sequence<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) 
         seenEntries.add(entry)
         seenSourceTexts.add(entry.normalizedSourceText)
         seenTranslations.add(entry.normalizedTranslation)
-        yield(entry)
+        add(entry)
     }
 }
+
+

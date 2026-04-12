@@ -49,7 +49,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
     }.onFailure { logger.error(it) { "Failed to load vocabulary from path: $path. Error: ${it.message}" } }
 
 
-    private fun Sequence<Row>.parseWithStats(state: ParsingStats): Sequence<LexicalEntry> = sequence {
+    private fun Iterable<Row>.parseWithStats(state: ParsingStats) = buildList {
         for (row in this@parseWithStats) {
             if (row.cellCount == 0) continue
             if (row.cellCount < 2) {
@@ -66,7 +66,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
                 continue
             }
             val score = if (row.cellCount > 2) extractScore(row) else 0
-            yield(LexicalEntry(sourceText, translation, entryScore = score))
+            add(LexicalEntry(sourceText, translation, entryScore = score))
         }
     }
 

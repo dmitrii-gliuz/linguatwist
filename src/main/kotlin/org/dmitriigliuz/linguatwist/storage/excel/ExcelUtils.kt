@@ -6,7 +6,6 @@ import org.dhatim.fastexcel.reader.Row
 import org.dmitriigliuz.linguatwist.i18n.Messages
 import java.io.File
 import java.io.FileInputStream
-import kotlin.use
 
 private val logger = KotlinLogging.logger {}
 
@@ -15,15 +14,10 @@ fun Row.getCellTrimmedText(columnIndex: Int) = getCellText(columnIndex).trim()
 
 fun Row.getCellTrimmedTextOrDefault(columnIndex: Int, default: String = "") = if (cellCount > columnIndex) {
     getCellTrimmedText(columnIndex).ifEmpty { default }
-} else {
-    default
-}
+} else default
 
 
-fun readExcelRowsWithHeader(
-    file: File,
-    onHeader: (Row) -> Unit = {},
-): Sequence<Row> = sequence {
+fun readExcelRowsWithHeader(file: File, onHeader: (Row) -> Unit = {}) = buildList {
     logger.debug { "Starting to read Excel file: ${file.absolutePath}" }
     FileInputStream(file).use { inputStream ->
         ReadableWorkbook(inputStream).use { workbook ->
@@ -38,7 +32,7 @@ fun readExcelRowsWithHeader(
                 logger.debug { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {
                     val row = iterator.next()
-                    yield(row)
+                    add(row)
                 }
                 logger.debug { "Finished reading all rows from Excel file" }
             }
