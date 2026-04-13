@@ -9,15 +9,19 @@ data class Vocabulary(
     private fun findIndependentSet(
         requiredSize: Int,
         candidates: List<LexicalEntry>,
-        currentGroup: List<LexicalEntry> = emptyList()
+        currentIndex: Int = 0,
+        collectedGroup: MutableList<LexicalEntry> = mutableListOf()
     ): List<LexicalEntry>? {
-        if (currentGroup.size == requiredSize) return currentGroup
-        if (candidates.isEmpty() || requiredSize > candidates.size) return null
-        for (currentEntry in candidates) {
-            val relevantCandidates = (candidates - currentEntry).filter { !it.overlaps(currentEntry) }
-            val nextSize = requiredSize - 1
-            val newGroup = currentGroup + currentEntry
-            return findIndependentSet(nextSize, relevantCandidates, newGroup) ?: continue
+        val needed = requiredSize - collectedGroup.size
+        if (needed == 0) return collectedGroup
+        val restCandidatesAmount = candidates.size - currentIndex
+        if (needed > restCandidatesAmount) return null
+        for (i in currentIndex until candidates.size) {
+            val currentEntry = candidates[i]
+            if (collectedGroup.any { it.overlaps(currentEntry) }) continue
+            collectedGroup.add(currentEntry)
+            val result = findIndependentSet(requiredSize, candidates, i + 1, collectedGroup)
+            if (result == null) collectedGroup.removeLast() else return result
         }
         return null
     }
@@ -43,7 +47,7 @@ data class Vocabulary(
         return Pair(independentSet, copy(remainingPool = newPool))
     }
 
-    fun withUpdatedScores(updatedScores: Map<LexicalEntry, Int>) = copy(
+    fun withUpdatedScores(updatedScores: Map<LexicalEntry, Int>) = if (updatedScores.isEmpty()) this else copy(
         entries = entries.mapTo(HashSet(entries.size)) { entry ->
             updatedScores[entry]?.let { entry.copy(entryScore = it) } ?: entry
         }

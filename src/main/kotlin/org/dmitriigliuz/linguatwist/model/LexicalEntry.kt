@@ -4,13 +4,10 @@ data class LexicalEntry(
     val sourceText: String,
     val translation: String,
     val isGuessed: Boolean = false,
-    val entryScore: Int = 0
+    val entryScore: Int = 0,
 ) {
-    val normalizedSourceText: String
-        get() = sourceText.trim().lowercase()
-
-    val normalizedTranslation: String
-        get() = translation.trim().lowercase()
+    val normalizedSourceText: String = sourceText.trim().lowercase()
+    val normalizedTranslation: String = translation.trim().lowercase()
 
     fun withGuessed() = copy(isGuessed = true, entryScore = entryScore + 1)
     fun withoutGuessed() = copy(isGuessed = false)
