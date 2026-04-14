@@ -15,8 +15,6 @@ data class LexicalEntry(
     fun isSourceTextSame(other: LexicalEntry) = normalizedSourceText == other.normalizedSourceText
     fun isTranslationSame(other: LexicalEntry) = normalizedTranslation == other.normalizedTranslation
 
-    fun overlaps(other: LexicalEntry) = isSourceTextSame(other) || isTranslationSame(other)
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LexicalEntry) return false
