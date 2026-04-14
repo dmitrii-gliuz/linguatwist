@@ -125,5 +125,3 @@ object DaylightTheme : ColorTheme {
     override val guessedWord = (strikethrough + dimGray)
     override val promptStyle = blue
 }
-
-

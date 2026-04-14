@@ -10,7 +10,9 @@ data class Vocabulary(
         requiredSize: Int,
         candidates: List<LexicalEntry>,
         currentIndex: Int = 0,
-        collectedGroup: MutableList<LexicalEntry> = mutableListOf()
+        collectedGroup: MutableList<LexicalEntry> = mutableListOf(),
+        seenOriginals: MutableSet<String> = mutableSetOf(),
+        seenTranslations: MutableSet<String> = mutableSetOf()
     ): List<LexicalEntry>? {
         val needed = requiredSize - collectedGroup.size
         if (needed == 0) return collectedGroup
@@ -18,10 +20,23 @@ data class Vocabulary(
         if (needed > restCandidatesAmount) return null
         for (i in currentIndex until candidates.size) {
             val currentEntry = candidates[i]
-            if (collectedGroup.any { it.overlaps(currentEntry) }) continue
+            if (currentEntry.normalizedSourceText in seenOriginals || currentEntry.normalizedTranslation in seenTranslations) continue
             collectedGroup.add(currentEntry)
-            val result = findIndependentSet(requiredSize, candidates, i + 1, collectedGroup)
-            if (result == null) collectedGroup.removeLast() else return result
+            seenOriginals.add(currentEntry.normalizedSourceText)
+            seenTranslations.add(currentEntry.normalizedTranslation)
+            val result = findIndependentSet(
+                requiredSize,
+                candidates,
+                i + 1,
+                collectedGroup,
+                seenOriginals,
+                seenTranslations
+            )
+            if (result == null) {
+                collectedGroup.removeLast()
+                seenOriginals.remove(currentEntry.normalizedSourceText)
+                seenTranslations.remove(currentEntry.normalizedTranslation)
+            } else return result
         }
         return null
     }
