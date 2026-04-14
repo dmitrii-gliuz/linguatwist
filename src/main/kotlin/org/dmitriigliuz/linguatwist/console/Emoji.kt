@@ -87,7 +87,7 @@ object DefaultEmoji : EmojiSet {
     const val WAVE_HAND = "👋"
     const val GOAL = "🎯"
     const val ROCKET = "🚀"
-    const val ARROW_UP = "✅"
+    const val ARROW_UP = "🔼"
     const val ARROW_DOWN = "🔽"
     const val LAMP = "💡"
     const val JOYSTICK = "🕹️"

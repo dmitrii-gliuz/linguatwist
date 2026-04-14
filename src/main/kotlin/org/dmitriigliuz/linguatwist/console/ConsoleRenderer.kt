@@ -181,7 +181,9 @@ internal class ConsoleRenderer(
             completeStyle = colorTheme.progressBarCompleted,
             pendingStyle = colorTheme.progressBarPending
         )
-        val inputIndexesPrompt = emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
+        val inputIndexesPrompt = if (state.showPrompt) {
+            emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
+        } else ""
         cell(roundTable)
         cell(gameStats)
         cell(feedback)
