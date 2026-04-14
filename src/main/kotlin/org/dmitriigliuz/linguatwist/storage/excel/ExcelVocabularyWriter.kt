@@ -10,6 +10,7 @@ import org.dmitriigliuz.linguatwist.storage.createTempFile
 import org.dmitriigliuz.linguatwist.storage.requireValidExcel
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlin.io.use
@@ -84,12 +85,21 @@ class ExcelVocabularyWriter : VocabularyWriter {
                 }
             }
             logger.debug { "Moving temp file to replace original file" }
-            Files.move(
-                tempFile.toPath(),
-                oldFile.toPath(),
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING
-            )
+            try {
+                Files.move(
+                    tempFile.toPath(),
+                    oldFile.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            } catch (e: AtomicMoveNotSupportedException) {
+                logger.warn(e) { "Atomic move is not supported, falling back to regular move" }
+                Files.move(
+                    tempFile.toPath(),
+                    oldFile.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            }
             logger.info { "Successfully saved ${vocabulary.entries.size} entries to path: $path" }
         }.onFailure {
             logger.error(it) { "Failed to save vocabulary to path: $path. Error: ${it.message}" }
