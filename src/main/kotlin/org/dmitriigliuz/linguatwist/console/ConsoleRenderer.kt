@@ -146,7 +146,7 @@ internal class ConsoleRenderer(
 
     internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
         terminal.success(emoji.vocabularyLoaded.prefixed(Messages.vocabulary_info_loadedWords()) +
-                "${Messages.vocabulary_info_loadedWords}: ${vocabularyResult.vocabulary.size}")
+                ": ${vocabularyResult.vocabulary.size}")
         if (vocabularyResult.duplicates > 0) {
             terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
                     ": ${vocabularyResult.duplicates}")
