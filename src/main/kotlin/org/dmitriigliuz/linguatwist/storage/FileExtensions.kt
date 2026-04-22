@@ -9,7 +9,7 @@ fun File.requireReadable() = also {
 }
 
 fun File.requireValidExcel() = requireReadable(). also {
-    require(extension == "xlsx") {
+    require(extension.lowercase() == "xlsx") {
     Messages.file_error_unsupportedExtension(extension)
     }
 }
