@@ -76,7 +76,7 @@ class ConsoleInput(
                     InputReceiver.Status.Continue
                 }
                 else -> {
-                    if (event.key.length == 1 && event.key[0].isDigit() || event.key == " ") {
+                    if ((event.key.length == 1 && event.key[0].isDigit()) || event.key == " ") {
                         buffer.append(event.key)
                         print(event.key)
                     }

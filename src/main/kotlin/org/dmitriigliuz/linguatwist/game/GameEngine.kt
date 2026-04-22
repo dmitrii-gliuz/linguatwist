@@ -71,9 +71,9 @@ class GameEngine(
             updatedScores = updatedScores,
         )
         return if (round.isFinished && round.number == totalRounds) {
-            val result = createResult(false, updatedState)
+            val gameResult = createResult(false, updatedState)
             val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
-            GameState.Finished(result, updatedVocabulary)
+            GameState.Finished(gameResult, updatedVocabulary)
         } else if (round.isFinished) {
             advanceToNewRound(updatedState)
         } else updatedState

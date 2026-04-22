@@ -2,6 +2,7 @@ package org.dmitriigliuz.linguatwist.storage
 
 import org.dmitriigliuz.linguatwist.i18n.Messages
 import java.io.File
+import java.nio.file.Files
 
 fun File.requireReadable() = also {
     require(exists()) { "${Messages.file_error_notExists}: $absolutePath" }
@@ -14,13 +15,8 @@ fun File.requireValidExcel() = requireReadable(). also {
     }
 }
 
-fun File.generateTempFileName(suffix: String = "_temp") = buildString {
-    append(nameWithoutExtension)
-    append(suffix)
-    if (extension.isNotEmpty()) append(".${extension}")
-}
-
-fun File.createTempFile(suffix: String = "_temp"): File {
-    return File(parent, generateTempFileName(suffix))
-}
-
+fun File.createTempFile(): File = Files.createTempFile(
+    parentFile.toPath(),
+    nameWithoutExtension,
+    ".$extension"
+).toFile()
