@@ -151,10 +151,6 @@ internal class ConsoleRenderer(
             terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
                     ": ${vocabularyResult.duplicates}")
         }
-        if (vocabularyResult.overlappedPairs > 0) {
-            terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_overlappedPairs()) +
-                    ": ${vocabularyResult.overlappedPairs}")
-        }
         if (vocabularyResult.invalidRows > 0) {
             terminal.danger(emoji.invalidRows.prefixed(Messages.vocabulary_info_invalidRows()) +
                     ": ${vocabularyResult.invalidRows}")

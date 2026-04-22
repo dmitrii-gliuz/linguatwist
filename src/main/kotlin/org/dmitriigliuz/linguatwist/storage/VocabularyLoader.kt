@@ -10,6 +10,5 @@ data class VocabularyLoadResult(
     val vocabulary: Vocabulary,
     val path: String,
     val duplicates: Int,
-    val overlappedPairs: Int,
     val invalidRows: Int
 )

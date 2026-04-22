@@ -10,27 +10,13 @@ internal data class DeduplicationStats(
     var overlappedPairs: Int = 0
 )
 
-internal fun Iterable<LexicalEntry>.filterDuplicates(stats: DeduplicationStats) = buildList {
-    val seenEntries = mutableSetOf<LexicalEntry>()
-    val seenSourceTexts = mutableSetOf<String>()
-    val seenTranslations = mutableSetOf<String>()
-
-    for (entry in this@filterDuplicates) {
-        if (entry in seenEntries) {
-            stats.duplicates++
-            logger.trace { "Found duplicate entry while filtering vocabulary" }
-            continue
-        }
-        if (entry.normalizedSourceText in seenSourceTexts || entry.normalizedTranslation in seenTranslations) {
-            stats.overlappedPairs += 2
-            logger.trace { "Found overlapped pair while filtering vocabulary" }
-        }
-
-        seenEntries.add(entry)
-        seenSourceTexts.add(entry.normalizedSourceText)
-        seenTranslations.add(entry.normalizedTranslation)
-        add(entry)
-    }
+internal fun Iterable<LexicalEntry>.filterDuplicates(stats: DeduplicationStats): List<LexicalEntry> {
+    val current = this.toList()
+    val unique = current.distinct()
+    val duplicates = current.size - unique.size
+    stats.duplicates = duplicates
+    logger.debug { "Removed $duplicates duplicates" }
+    return unique
 }
 
 

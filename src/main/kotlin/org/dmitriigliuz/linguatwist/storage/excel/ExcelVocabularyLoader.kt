@@ -43,7 +43,6 @@ class ExcelVocabularyLoader: VocabularyLoader {
             vocabulary = vocabulary,
             path = path,
             duplicates = deduplicationStats.duplicates,
-            overlappedPairs = deduplicationStats.overlappedPairs,
             invalidRows = parsingStats.invalidRows
         )
     }.onFailure { logger.error(it) { "Failed to load vocabulary from path: $path. Error: ${it.message}" } }
