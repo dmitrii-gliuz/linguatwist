@@ -7,8 +7,6 @@ import org.dmitriigliuz.linguatwist.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoader
-import org.dmitriigliuz.linguatwist.storage.DeduplicationStats
-import org.dmitriigliuz.linguatwist.storage.filterDuplicates
 import org.dmitriigliuz.linguatwist.storage.requireValidExcel
 import java.io.File
 
@@ -22,27 +20,24 @@ class ExcelVocabularyLoader: VocabularyLoader {
     override fun load(path: String): Result<VocabularyLoadResult> = runCatching {
         val file = File(path).requireValidExcel()
         val parsingStats = ParsingStats()
-        val deduplicationStats = DeduplicationStats()
-        val uniqueEntries = readExcelRowsWithHeader(file)
-            .parseWithStats(parsingStats)
-            .filterDuplicates(deduplicationStats)
-            .toSet()
+        val entries = readExcelRowsWithHeader(file).parseWithStats(parsingStats)
+        val unique = entries.toSet()
+        val duplicates = entries.size - unique.size
 
-        require(uniqueEntries.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries}: $path" }
+        require(unique.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries}: $path" }
 
-        val vocabulary = Vocabulary(uniqueEntries)
+        val vocabulary = Vocabulary(unique)
 
         logger.info {
-            "Loaded ${uniqueEntries.size} unique entries, " +
-                    "${deduplicationStats.duplicates} duplicates, " +
-                    "${deduplicationStats.overlappedPairs} overlapping pairs, " +
+            "Loaded ${entries.size} unique entries, " +
+                    "$duplicates duplicates, " +
                     "${parsingStats.invalidRows} invalid rows"
         }
 
         VocabularyLoadResult(
             vocabulary = vocabulary,
             path = path,
-            duplicates = deduplicationStats.duplicates,
+            duplicates = duplicates,
             invalidRows = parsingStats.invalidRows
         )
     }.onFailure { logger.error(it) { "Failed to load vocabulary from path: $path. Error: ${it.message}" } }
