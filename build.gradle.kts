@@ -46,13 +46,11 @@ sourceSets {
 
 application {
     mainClass.set("org.dmitriigliuz.linguatwist.MainKt")
-    applicationDefaultJvmArgs = listOf("-Xmx2g", "-Xms512m")
 }
-tasks.named<JavaExec>("run") {
-    standardInput = System.`in`
-}
+
 tasks.named<JavaExec>("run") {
     jvmArgs("-Xmx2g", "-Xms512m")
+    standardInput = System.`in`
 }
 
 tasks.test {
