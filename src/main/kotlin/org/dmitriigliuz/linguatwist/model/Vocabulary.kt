@@ -1,30 +1,31 @@
 package org.dmitriigliuz.linguatwist.model
 
 data class Vocabulary(
-    val entries: Set<LexicalEntry>,
-    private val remainingPool: List<LexicalEntry> = entries.shuffled().sortedBy { it.entryScore }
+    val entriesMap: Map<LexemeKey, LexicalEntry>,
+    private val remainingKeysPool: List<LexemeKey> = entriesMap.keys.shuffled().sortedBy { entriesMap[it]?.entryScore }
 ) {
-    val size = entries.size
+    val size = entriesMap.size
 
-    private fun findIndependentSet(
+    private fun findIndependentKeysSet(
         requiredSize: Int,
-        candidates: List<LexicalEntry>,
+        candidates: List<LexemeKey>,
         currentIndex: Int = 0,
-        collectedGroup: MutableList<LexicalEntry> = mutableListOf(),
+        collectedGroup: MutableList<LexemeKey> = mutableListOf(),
         seenOriginals: MutableSet<String> = mutableSetOf(),
         seenTranslations: MutableSet<String> = mutableSetOf()
-    ): List<LexicalEntry>? {
+    ): List<LexemeKey>? {
         val needed = requiredSize - collectedGroup.size
         if (needed == 0) return collectedGroup
         val restCandidatesAmount = candidates.size - currentIndex
         if (needed > restCandidatesAmount) return null
         for (i in currentIndex until candidates.size) {
-            val currentEntry = candidates[i]
-            if (currentEntry.normalizedSourceText in seenOriginals || currentEntry.normalizedTranslation in seenTranslations) continue
-            collectedGroup.add(currentEntry)
-            seenOriginals.add(currentEntry.normalizedSourceText)
-            seenTranslations.add(currentEntry.normalizedTranslation)
-            val result = findIndependentSet(
+            val currentKey = candidates[i]
+            val (sourceText, translation) = currentKey
+            if (sourceText in seenOriginals || translation in seenTranslations) continue
+            collectedGroup.add(currentKey)
+            seenOriginals.add(sourceText)
+            seenTranslations.add(translation)
+            val result = findIndependentKeysSet(
                 requiredSize,
                 candidates,
                 i + 1,
@@ -34,37 +35,32 @@ data class Vocabulary(
             )
             if (result == null) {
                 collectedGroup.removeLast()
-                seenOriginals.remove(currentEntry.normalizedSourceText)
-                seenTranslations.remove(currentEntry.normalizedTranslation)
+                seenOriginals.remove(sourceText)
+                seenTranslations.remove(translation)
             } else return result
         }
         return null
     }
 
-    private fun refillPool() = entries
-        .shuffled()
-        .sortedBy { it.entryScore }
-        .map { it.withoutGuessed() }
+    private fun refillPool() = entriesMap.keys.shuffled().sortedBy { entriesMap[it]?.entryScore }
 
     fun hasEnoughDistinctEntries(groupSize: Int) =
-        findIndependentSet(groupSize, entries.toList()) != null
+        findIndependentKeysSet(groupSize, entriesMap.keys.toList()) != null
 
     fun takeNextGroup(groupSize: Int): Pair<List<LexicalEntry>, Vocabulary> {
-        var refilledPool: List<LexicalEntry>? = null
-        val independentSet = findIndependentSet(groupSize, remainingPool) ?: run {
-            refilledPool = refillPool()
-            findIndependentSet(groupSize, refilledPool) ?: error(
+        var refilledKeysPool: List<LexemeKey>? = null
+        val independentKeysSet = findIndependentKeysSet(groupSize, remainingKeysPool) ?: run {
+            refilledKeysPool = refillPool()
+            findIndependentKeysSet(groupSize, refilledKeysPool) ?: error(
                 "Cannot find independent set of size $groupSize"
             )
         }
 
-        val newPool = (refilledPool ?: remainingPool) - independentSet.toSet()
-        return Pair(independentSet, copy(remainingPool = newPool))
+        val newPool = (refilledKeysPool ?: remainingKeysPool) - independentKeysSet.toSet()
+        return Pair(independentKeysSet.map { entriesMap.getValue(it).withoutGuessed() }, copy(remainingKeysPool = newPool))
     }
 
-    fun withUpdatedScores(updatedScores: Map<LexicalEntry, Int>) = if (updatedScores.isEmpty()) this else copy(
-        entries = entries.mapTo(HashSet(entries.size)) { entry ->
-            updatedScores[entry]?.let { entry.copy(entryScore = it) } ?: entry
-        }
+    fun withUpdatedScores(updatedScores: Map<LexemeKey, Int>) = if (updatedScores.isEmpty()) this else copy(
+        entriesMap = entriesMap.mapValues { (key, entry) -> updatedScores[key]?.let { entry.copy(entryScore = it) } ?: entry }
     )
 }

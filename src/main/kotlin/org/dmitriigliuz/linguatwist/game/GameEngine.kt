@@ -63,7 +63,7 @@ class GameEngine(
         val round = result.updatedRound
         val gameScore = state.gameScore + 1
         val updatedEntry = round.pairAtLeftColumn(leftIndex)
-        val updatedScores = state.updatedScores + (updatedEntry to updatedEntry.entryScore)
+        val updatedScores = state.updatedScores + (updatedEntry.key to updatedEntry.entryScore)
         val updatedState = state.copy(
             round = round,
             gameScore = gameScore,
@@ -90,7 +90,7 @@ class GameEngine(
         val gameScore = state.gameScore - 1
         val mistakesCount = state.mistakesCount + 1
         val updatedScores = state.updatedScores +
-                (updatedLeftEntry to updatedLeftEntry.entryScore) + (updatedRightEntry to updatedRightEntry.entryScore)
+                (updatedLeftEntry.key to updatedLeftEntry.entryScore) + (updatedRightEntry.key to updatedRightEntry.entryScore)
         val updatedState = state.copy(
             round = round,
             gameScore = gameScore,

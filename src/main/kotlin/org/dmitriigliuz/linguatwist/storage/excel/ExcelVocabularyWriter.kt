@@ -3,6 +3,7 @@ package org.dmitriigliuz.linguatwist.storage.excel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.dhatim.fastexcel.Workbook
 import org.dhatim.fastexcel.reader.Row
+import org.dmitriigliuz.linguatwist.model.LexemeKey
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyWriter
@@ -30,7 +31,7 @@ class ExcelVocabularyWriter : VocabularyWriter {
         return runCatching {
             oldFile.requireValidExcel()
             logger.debug { "Excel file validated successfully: $path" }
-            val vocabularyMap = vocabulary.entries.associateBy { it.normalizedSourceText to it.normalizedTranslation }
+            val vocabularyMap = vocabulary.entriesMap
             logger.debug { "Created vocabulary map with ${vocabularyMap.size} entries" }
             FileOutputStream(tempFile).use { outputStream ->
                 Workbook(outputStream, "LinguaTwist", "1.0").use { workbook ->
@@ -100,24 +101,23 @@ class ExcelVocabularyWriter : VocabularyWriter {
                     StandardCopyOption.REPLACE_EXISTING
                 )
             }
-            logger.info { "Successfully saved ${vocabulary.entries.size} entries to path: $path" }
+            logger.info { "Successfully saved ${vocabulary.entriesMap.size} entries to path: $path" }
         }.onFailure {
             logger.error(it) { "Failed to save vocabulary to path: $path. Error: ${it.message}" }
             tempFile.delete()
         }
     }
 
-    private fun resolveScore(row: Row, vocabularyMap: Map<Pair<String, String>, LexicalEntry>): String {
-        val pair = extractNormalizedPair(row)
+    private fun resolveScore(row: Row, vocabularyMap: Map<LexemeKey, LexicalEntry>): String {
+        val pair = extractLexemeKey(row)
         val oldScore = row.getCellTrimmedTextOrDefault(SCORE_COLUMN_INDEX, "0")
         val newScore = vocabularyMap[pair]?.entryScore?.toString()
         return newScore ?: oldScore
     }
 
-    private fun extractNormalizedPair(row: Row): Pair<String, String> {
+    private fun extractLexemeKey(row: Row): LexemeKey {
         val sourceText = row.getCellTrimmedTextOrDefault(ORIGINAL_COLUMN_INDEX)
         val translation = row.getCellTrimmedTextOrDefault(TRANSLATION_COLUMN_INDEX)
-        val entry = LexicalEntry(sourceText, translation)
-        return entry.normalizedSourceText to entry.normalizedTranslation
+        return LexemeKey.of(sourceText, translation)
     }
 }

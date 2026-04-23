@@ -3,6 +3,7 @@ package org.dmitriigliuz.linguatwist.storage.excel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.dhatim.fastexcel.reader.Row
 import org.dmitriigliuz.linguatwist.i18n.Messages
+import org.dmitriigliuz.linguatwist.model.LexemeKey
 import org.dmitriigliuz.linguatwist.model.LexicalEntry
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
@@ -12,43 +13,41 @@ import java.io.File
 
 private val logger = KotlinLogging.logger { }
 
-private data class ParsingStats(
-    var invalidRows: Int = 0
-)
 
 class ExcelVocabularyLoader: VocabularyLoader {
     override fun load(path: String): Result<VocabularyLoadResult> = runCatching {
         val file = File(path).requireValidExcel()
-        val parsingStats = ParsingStats()
-        val entries = readExcelRowsWithHeader(file).parseWithStats(parsingStats)
-        val unique = entries.toSet()
-        val duplicates = entries.size - unique.size
+        val rows = readExcelRowsWithHeader(file)
+        val (entriesMap, invalidRowsCount) = rows.parseAndFindInvalid()
+        val duplicates = rows.size - invalidRowsCount - entriesMap.size
 
-        require(unique.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries}: $path" }
+        require(entriesMap.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries}: $path" }
 
-        val vocabulary = Vocabulary(unique)
+        val vocabulary = Vocabulary(entriesMap)
 
         logger.info {
-            "Loaded ${entries.size} unique entries, " +
+            "Loaded ${entriesMap.size} unique entries, " +
                     "$duplicates duplicates, " +
-                    "${parsingStats.invalidRows} invalid rows"
+                    "$invalidRowsCount invalid rows"
         }
 
         VocabularyLoadResult(
             vocabulary = vocabulary,
             path = path,
             duplicates = duplicates,
-            invalidRows = parsingStats.invalidRows
+            invalidRows = invalidRowsCount
         )
     }.onFailure { logger.error(it) { "Failed to load vocabulary from path: $path. Error: ${it.message}" } }
 
 
-    private fun Iterable<Row>.parseWithStats(state: ParsingStats) = buildList {
-        for (row in this@parseWithStats) {
+    private fun Iterable<Row>.parseAndFindInvalid(): Pair<Map<LexemeKey, LexicalEntry>, Int> {
+        var invalidRows = 0
+        val entriesMap = mutableMapOf<LexemeKey, LexicalEntry>()
+        for (row in this@parseAndFindInvalid) {
             if (row.cellCount == 0) continue
             if (row.cellCount < 2) {
                 logger.warn { "Row must contain at least two columns at row ${row.rowNum}" }
-                state.invalidRows++
+                invalidRows++
                 continue
             }
             val sourceText = row.getCellTrimmedText(0)
@@ -56,12 +55,14 @@ class ExcelVocabularyLoader: VocabularyLoader {
             if (sourceText.isEmpty() && translation.isEmpty()) continue
             if (sourceText.isEmpty() || translation.isEmpty()) {
                 logger.warn { "Row contains empty cell at row ${row.rowNum}" }
-                state.invalidRows++
+                invalidRows++
                 continue
             }
             val score = if (row.cellCount > 2) extractScore(row) else 0
-            add(LexicalEntry(sourceText, translation, entryScore = score))
+            val entry = LexicalEntry(sourceText, translation, entryScore = score)
+            entriesMap[entry.key] = entry
         }
+        return entriesMap to invalidRows
     }
 
     private fun extractScore(row: Row): Int {
