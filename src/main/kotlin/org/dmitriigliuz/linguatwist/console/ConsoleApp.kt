@@ -3,7 +3,6 @@ package org.dmitriigliuz.linguatwist.console
 import com.github.ajalt.mordant.terminal.Terminal
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.i18n.Messages
-import kotlin.system.exitProcess
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
@@ -14,8 +13,15 @@ class ConsoleApp private constructor(
     private val renderer: ConsoleRenderer,
     private val emoji: EmojiSet
 ) {
+    enum class AppState { MainMenu, Exit }
+
     companion object {
-        fun create(coordinator: GameCoordinator, terminal: Terminal, colorTheme: ColorTheme, emoji: EmojiSet): ConsoleApp {
+        fun create(
+            coordinator: GameCoordinator,
+            terminal: Terminal,
+            colorTheme: ColorTheme,
+            emoji: EmojiSet
+        ): ConsoleApp {
             return ConsoleApp(
                 coordinator = coordinator,
                 input = ConsoleInput(terminal, colorTheme, emoji),
@@ -32,38 +38,39 @@ class ConsoleApp private constructor(
     }
 
     private fun mainMenu() {
-        while (true) {
+        var appState: AppState = AppState.MainMenu
+        while (appState == AppState.MainMenu) {
             when (input.selectMenuItem(
                 listOf(
                     emoji.startGame.prefixed(Messages.menu_main_start()),
                     emoji.exit.prefixed(Messages.menu_main_exit())
                 ), "\n  » ${Messages.menu_main_title} «"
             )) {
-                0 -> startGame()
-                1 -> exitGame()
+                0 -> appState = startGame()
+                1 -> appState = AppState.Exit
             }
         }
     }
-    
-    private fun exitGame(): Nothing {
-        renderer.stopRoundDisplay()
-        exitProcess(0)
-    }
 
-    private fun startGame() {
+    private fun startGame(): AppState {
         renderer.emptyLine()
-        val vocabularyLoadResult = loadVocabularyWithRetry()
+        val vocabularyLoadResult = loadVocabularyWithRetry() ?: return AppState.Exit
         var vocabulary = vocabularyLoadResult.vocabulary
         val vocabularyPath = vocabularyLoadResult.path
+        var gameState: GameState?
         do {
-            gameSession(vocabulary).getUpdatedVocabularyOrNull()?.let { vocabulary = it }
-        } while (input.promptPlayAgain())
+            gameState = gameSession(vocabulary).also { state ->
+                state.getUpdatedVocabularyOrNull()?.let { vocabulary = it }
+            }
+            renderer.stopRoundDisplay()
+        } while (gameState !is GameState.Aborted && input.promptPlayAgain())
         renderer.withProgressMessage(Messages.game_saving_scores()) {
             coordinator.saveVocabulary(vocabularyPath, vocabulary)
         }
+        return if (gameState is GameState.Aborted) AppState.Exit else AppState.MainMenu
     }
 
-    private fun loadVocabularyWithRetry(): VocabularyLoadResult {
+    private fun loadVocabularyWithRetry(): VocabularyLoadResult? {
         var customSpreadsheetPath: String? = null
         while (true) {
             renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
@@ -73,9 +80,7 @@ class ConsoleApp private constructor(
                 renderer.printVocabularyInfo(it)
                 renderer.emptyLine()
                 return it
-            } ?: run {
-                customSpreadsheetPath = input.promptVocabularyPath()?.ifBlank { null } ?: exitGame()
-            }
+            } ?: run { customSpreadsheetPath = input.promptVocabularyPath()?.ifBlank { null } ?: return null }
         }
     }
 
@@ -95,7 +100,7 @@ class ConsoleApp private constructor(
             renderer.updateRoundDisplay(displayState)
             when (val inputIndexesResult = input.promptIndexes()) {
                 is IndexInput.Invalid -> feedbackMessage = renderer.buildInputErrorFeedback()
-                is IndexInput.Exit -> exitGame()
+                is IndexInput.Exit -> return GameState.Aborted
                 is IndexInput.Indexes -> {
                     val (leftIndex, rightIndex) = inputIndexesResult.pair
                     val indexes = Pair(leftIndex - 1, rightIndex - 1)
@@ -105,12 +110,10 @@ class ConsoleApp private constructor(
                 }
             }
         }
-
         val result = coordinator.finishSession(gameState, startTime)
         feedbackMessage = if (result == null) renderer.noResultFeedback else renderer.buildGameResultOutput(result)
         displayState = result?.toDisplayState(feedbackMessage) ?: displayState!!.copy(feedbackMessage = feedbackMessage)
         renderer.updateRoundDisplay(displayState)
-        renderer.stopRoundDisplay()
         return gameState
     }
 }

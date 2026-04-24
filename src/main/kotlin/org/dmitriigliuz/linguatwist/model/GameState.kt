@@ -19,6 +19,7 @@ sealed class GameState {
     }
     data class Finished(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
     data class Failed(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
+    object Aborted : GameState()
 
     fun getResultOrNull() = when (this) {
         is Finished -> result
