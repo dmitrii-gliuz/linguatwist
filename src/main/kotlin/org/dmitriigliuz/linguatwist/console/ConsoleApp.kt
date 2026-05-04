@@ -76,7 +76,6 @@ class ConsoleApp private constructor(
             renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
                 coordinator.loadVocabulary(customSpreadsheetPath)
             }?.let {
-                renderer.emptyLine()
                 renderer.printVocabularyInfo(it)
                 renderer.emptyLine()
                 return it

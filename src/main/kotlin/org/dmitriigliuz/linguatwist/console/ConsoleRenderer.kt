@@ -36,12 +36,8 @@ internal class ConsoleRenderer(
 
     private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
 
-    internal fun emptyLine() = terminal.println()
+//    Beginning
 
-    internal fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
-
-    internal fun stopRoundDisplay() = roundDisplay.stop()
-    
     internal fun printLogo() {
         val art = colorTheme.logo("""
 █   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
@@ -54,6 +50,41 @@ internal class ConsoleRenderer(
             )
         )
     }
+
+    internal fun printGreetings() {
+        terminal.println(Text("""
+            ${emoji.welcome.prefixed(Messages.game_greetings_welcome())} ${Messages.game_greetings_matchWords}
+            ${emoji.advice.prefixed(Messages.game_greetings_enterTwoNumbers())}
+            ${emoji.controls.prefixed(Messages.game_greetings_useArrowKeys())}""".trimIndent())
+        )
+    }
+
+    internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
+        terminal.success(emoji.vocabularyLoaded.prefixed(Messages.vocabulary_info_loadedWords()) +
+                ": ${vocabularyResult.vocabulary.size}")
+        if (vocabularyResult.duplicates > 0) {
+            terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
+                    ": ${vocabularyResult.duplicates}")
+        }
+        if (vocabularyResult.invalidRows > 0) {
+            terminal.danger(emoji.invalidRows.prefixed(Messages.vocabulary_info_invalidRows()) +
+                    ": ${vocabularyResult.invalidRows}")
+        }
+    }
+
+    internal fun printAllowedMistakesNumber(allowedMistakes: Int) = terminal.println(
+        emoji.allowedMistakes.prefixed("${Messages.game_allowedMistakes}: $allowedMistakes")
+    )
+
+    internal fun printLetsGo() = terminal.println(
+        colorTheme.coloredMessage (emoji.letsGo.prefixed(Messages.game_letsGo()))
+    )
+
+//    Round flow
+
+    internal fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
+
+    internal fun stopRoundDisplay() = roundDisplay.stop()
 
     internal fun buildRoundResultFeedback(roundResult: RoundResult) : String {
         return when (roundResult) {
@@ -81,30 +112,6 @@ internal class ConsoleRenderer(
         appendLine(emoji.error.prefixed(colorTheme.error(caption)))
         append(message)
     }
-
-    internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): T? {
-        terminal.print(Text(emoji.processing.prefixed(message)))
-        return action()
-            .onSuccess { terminal.success(" " + Messages.game_progress_done()) }
-            .onFailure { e -> printError(e.message ?: e.toString()) }
-            .getOrNull()
-    }
-
-    internal fun printAllowedMistakesNumber(allowedMistakes: Int) = terminal.println(
-        emoji.allowedMistakes.prefixed("${Messages.game_allowedMistakes}: $allowedMistakes")
-    )
-
-    internal fun printGreetings() {
-        terminal.println(Text("""
-            ${emoji.welcome.prefixed(Messages.game_greetings_welcome())} ${Messages.game_greetings_matchWords}
-            ${emoji.advice.prefixed(Messages.game_greetings_enterTwoNumbers())}
-            ${emoji.controls.prefixed(Messages.game_greetings_useArrowKeys())}""".trimIndent())
-        )
-    }
-
-    internal fun printLetsGo() = terminal.println(
-        colorTheme.coloredMessage (emoji.letsGo.prefixed(Messages.game_letsGo()))
-    )
 
     internal fun buildGameResultOutput(result: GameResult) = buildString {
         appendLine(
@@ -140,21 +147,6 @@ internal class ConsoleRenderer(
             VerbalScore.TRY_AGAIN -> emoji.scoreTryAgain
         }
         return scoreEmoji.prefixed(verbalScore.description.toString())
-    }
-
-    internal fun printError(message: String) = terminal.danger(emoji.error.prefixed(message))
-
-    internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
-        terminal.success(emoji.vocabularyLoaded.prefixed(Messages.vocabulary_info_loadedWords()) +
-                ": ${vocabularyResult.vocabulary.size}")
-        if (vocabularyResult.duplicates > 0) {
-            terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
-                    ": ${vocabularyResult.duplicates}")
-        }
-        if (vocabularyResult.invalidRows > 0) {
-            terminal.danger(emoji.invalidRows.prefixed(Messages.vocabulary_info_invalidRows()) +
-                    ": ${vocabularyResult.invalidRows}")
-        }
     }
 
     private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
@@ -220,4 +212,18 @@ internal class ConsoleRenderer(
             borderStyle = colorTheme.panelBorder
         )
     }
+
+//    General
+
+    internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): T? {
+        terminal.print(Text(emoji.processing.prefixed(message)))
+        return action()
+            .onSuccess { terminal.success(" " + Messages.game_progress_done()) }
+            .onFailure { e -> printError(e.message ?: e.toString()) }
+            .getOrNull()
+    }
+
+    internal fun emptyLine() = terminal.println()
+
+    internal fun printError(message: String) = terminal.danger(emoji.error.prefixed(message))
 }
