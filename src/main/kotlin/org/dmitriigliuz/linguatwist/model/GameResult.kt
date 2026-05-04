@@ -10,7 +10,7 @@ data class GameResult(
     val totalGuessedAmount: Int,
     val totalPairsAmount: Int,
     val mistakesCount: Int,
-    val maxMistakes: Int,
+    val allowedMistakes: Int,
     val verbalScore: VerbalScore,
     val duration: Duration = Duration.ZERO
 )

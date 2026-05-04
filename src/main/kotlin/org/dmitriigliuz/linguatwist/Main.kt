@@ -44,7 +44,7 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
         Runtime.getRuntime().addShutdownHook(Thread {
             terminal.println("\n\n" + emojiSet.bye.prefixed(Messages.app_shutdown_bye()))
         })
-        val config = GameConfig(spreadsheetPath = file, languageTag = lang)
+        val config = GameConfig(spreadsheetPath = file,     languageTag = lang)
         val coordinator = GameCoordinator(
             config = config,
             loader = ExcelVocabularyLoader(),

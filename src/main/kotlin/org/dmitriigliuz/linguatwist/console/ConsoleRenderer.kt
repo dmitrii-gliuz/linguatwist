@@ -90,8 +90,8 @@ internal class ConsoleRenderer(
             .getOrNull()
     }
 
-    internal fun printMaxMistakesNumber(maxMistakes: Int) = terminal.println(
-        emoji.maxMistakes.prefixed("${Messages.game_maxMistakes}: $maxMistakes")
+    internal fun printAllowedMistakesNumber(allowedMistakes: Int) = terminal.println(
+        emoji.allowedMistakes.prefixed("${Messages.game_allowedMistakes}: $allowedMistakes")
     )
 
     internal fun printGreetings() {
@@ -115,7 +115,7 @@ internal class ConsoleRenderer(
         append(emoji.guessedPairs.prefixed(Messages.game_result_guessedPairs()))
         appendLine(": ${result.totalGuessedAmount} / ${result.totalPairsAmount}")
         append(emoji.mistakes.prefixed(Messages.game_result_mistakes()))
-        appendLine(": ${result.mistakesCount} / ${result.maxMistakes}")
+        appendLine(": ${result.mistakesCount} / ${result.allowedMistakes}")
         appendLine(buildVerbalScoreOutput(result.verbalScore))
         val duration = result.duration.toComponents { minutes, seconds, _ ->
             val formattedSeconds = seconds.toString().padStart(2, '0')

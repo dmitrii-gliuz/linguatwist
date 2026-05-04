@@ -19,7 +19,7 @@ interface EmojiSet {
         get() = ""
     val processing: String
         get() = ""
-    val maxMistakes: String
+    val allowedMistakes: String
         get() = ""
     val welcome: String
         get() = ""
@@ -107,7 +107,7 @@ object DefaultEmoji : EmojiSet {
     override val minusOnePoint = ARROW_DOWN
     override val error = "🚫"
     override val processing = HOURGLASS
-    override val maxMistakes = "💀"
+    override val allowedMistakes = "💀"
     override val welcome = WAVE_HAND
     override val bye = WAVE_HAND
     override val advice = LAMP

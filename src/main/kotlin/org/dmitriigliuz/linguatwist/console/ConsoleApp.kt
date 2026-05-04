@@ -88,7 +88,7 @@ class ConsoleApp private constructor(
         val defaultNumberOfRounds = coordinator.defaultNumberOfRounds(vocabulary)
         val totalRounds = input.promptNumberOfRounds(defaultNumberOfRounds, coordinator.maxRounds)
         val (engine, startTime) = coordinator.startSession(totalRounds)
-        renderer.printMaxMistakesNumber(engine.maxMistakes)
+        renderer.printAllowedMistakesNumber(engine.allowedMistakes)
         renderer.emptyLine()
         renderer.printLetsGo()
         renderer.emptyLine()

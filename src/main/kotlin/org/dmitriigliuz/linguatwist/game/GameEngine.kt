@@ -19,7 +19,7 @@ class GameEngine(
     private val totalRounds: Int,
     private val config: GameConfig,
 ) {
-    val maxMistakes = maxOf(1, totalRounds / 3)
+    val allowedMistakes = maxOf(1, totalRounds / 3)
 
     fun startNewGame(vocabulary: Vocabulary)= advanceToNewRound(GameState.Initial(vocabulary))
 
@@ -98,7 +98,7 @@ class GameEngine(
             error = null,
             updatedScores = updatedScores
         )
-        return if (mistakesCount >= maxMistakes) {
+        return if (mistakesCount > allowedMistakes) {
             val result = createResult(true, updatedState)
             val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
             GameState.Failed(result, updatedVocabulary)
@@ -108,7 +108,7 @@ class GameEngine(
     private fun createResult(failed: Boolean, state: GameState.InProgress): GameResult = with(state) {
         val performancePercentage = (
                 if (failed) 50 * state.totalGuessedAmount / totalPairs
-                else 100 - 50 * mistakesCount / (if (maxMistakes > 0) maxMistakes else 1)
+                else 100 - 50 * mistakesCount / allowedMistakes
                 ).coerceIn(0, 100)
 
         val verbalScore = VerbalScore.entries.first { it.percentage <= performancePercentage }
@@ -121,7 +121,7 @@ class GameEngine(
             totalGuessedAmount = totalGuessedAmount,
             totalPairsAmount = totalPairs,
             mistakesCount = mistakesCount,
-            maxMistakes = maxMistakes,
+            allowedMistakes = allowedMistakes,
             verbalScore = verbalScore
         )
     }
