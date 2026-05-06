@@ -41,13 +41,13 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
         val terminal = Terminal(theme = colorTheme.toTerminalTheme())
         val emojiSet = if (noEmoji) NoEmoji else DefaultEmoji
 
-        val config = GameConfig(spreadsheetPath = file,     languageTag = lang)
+        val config = GameConfig(spreadsheetPath = file, languageTag = lang)
         val coordinator = GameCoordinator(
             config = config,
             loader = ExcelVocabularyLoader(),
             writer = ExcelVocabularyWriter(),
         )
-        val consoleApp = ConsoleApp.create(coordinator, terminal, colorTheme, emojiSet)
+        val consoleApp = ConsoleApp.create(coordinator, terminal, colorTheme, emojiSet, config.pairsPerRound)
         consoleApp.run()
     }
 }

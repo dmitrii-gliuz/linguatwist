@@ -23,7 +23,6 @@ import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
 import org.dmitriigliuz.linguatwist.model.VerbalScore
 
-
 internal class ConsoleRenderer(
     private val terminal: Terminal,
     private val colorTheme: ColorTheme,
@@ -169,14 +168,16 @@ internal class ConsoleRenderer(
             completeStyle = colorTheme.progressBarCompleted,
             pendingStyle = colorTheme.progressBarPending
         )
-        val inputIndexesPrompt = if (state.showPrompt) {
-            emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
-        } else ""
+        val prompt = when (state.promptType) {
+            RoundDisplayPrompt.ENTER_INDEXES -> emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
+            RoundDisplayPrompt.CONFIRM_EXIT -> emoji.exit.prefixed(Messages.game_confirmExit() + " (y/N): ")
+            else -> ""
+        }
         cell(roundTable)
         cell(gameStats)
         cell(feedback)
         cell(progressBar)
-        cell(inputIndexesPrompt)
+        cell(prompt)
     }
 
     private fun buildRoundTable(round: Round): Widget {
@@ -214,6 +215,7 @@ internal class ConsoleRenderer(
     }
 
 //    Final
+
     internal fun printBye() = terminal.println("\n" + emoji.bye.prefixed(Messages.app_shutdown_bye()))
 
 //    General

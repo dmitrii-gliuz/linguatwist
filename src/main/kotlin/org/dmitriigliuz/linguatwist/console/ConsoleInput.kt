@@ -10,23 +10,43 @@ import com.github.ajalt.mordant.input.isCtrlC
 import com.github.ajalt.mordant.input.receiveKeyEvents
 import org.dmitriigliuz.linguatwist.i18n.Messages
 
+private fun String.isOneDigit() = length == 1 && this[0].isDigit()
+
 class ConsoleInput(
     private val terminal: Terminal,
     private val colorTheme: ColorTheme,
-    private val emoji: EmojiSet
+    private val emoji: EmojiSet,
+    private val pairsPerRound: Int
 ) {
     fun promptIndexes(): IndexInput {
-        val input = readLineRaw() ?: run { return IndexInput.Exit }
-        terminal.cursor.move {
-            startOfLine()
-            clearLine()
-        }
+        val digitsInIndexAmount = pairsPerRound.toString().length
+        val digitsRegex = Regex("""\d+""")
+
+        val input = readLineRaw { key, buffer ->
+            val parts = buffer.split(" ")
+            if (buffer.isEmpty()) {
+                key.isOneDigit()
+            } else if (buffer.length < digitsInIndexAmount && parts.size == 1) {
+                key.isOneDigit() || key == " "
+            } else if (buffer.matches(digitsRegex)) {
+                key == " "
+            } else if (parts.size == 2 && parts.last().length < digitsInIndexAmount) {
+                key.isOneDigit()
+            } else false
+        } ?: run { return IndexInput.Exit }
         val correctRegex = """^\d+\s+\d+$""".toRegex()
         if (!correctRegex.matches(input)) return IndexInput.Invalid
         val parts = input.split("""\s+""".toRegex()).map { it.toIntOrNull() }
         if (parts.any { it == null }) return IndexInput.Invalid
         val pair = parts[0]!! to parts[1]!!
         return IndexInput.Indexes(pair)
+    }
+
+    fun promptConfirmExit(): Boolean {
+        val input = readLineRaw { key, buffer ->
+            buffer.isEmpty() && key.length == 1 && key.lowercase() in listOf("y", "n")
+        }
+        return input?.lowercase() == "y"
     }
 
     fun promptVocabularyPath() = terminal.prompt(
@@ -62,11 +82,11 @@ class ConsoleInput(
         return items.indexOf(selected)
     }
 
-    private fun readLineRaw(): String? {
+    private fun readLineRaw(keyPressCondition: (String, StringBuilder) -> Boolean): String? {
         val buffer = StringBuilder()
-        return terminal.receiveKeyEvents { event ->
-            if (event.isCtrlC) return@receiveKeyEvents InputReceiver.Status.Finished(null)
-            when (event.key) {
+        val result = terminal.receiveKeyEvents { event ->
+            if (event.isCtrlC) InputReceiver.Status.Finished(null)
+            else when (event.key) {
                 "Enter" -> InputReceiver.Status.Finished(buffer.toString())
                 "Backspace" -> {
                     if (buffer.isNotEmpty()) {
@@ -76,14 +96,22 @@ class ConsoleInput(
                     InputReceiver.Status.Continue
                 }
                 else -> {
-                    if ((event.key.length == 1 && event.key[0].isDigit()) || event.key == " ") {
+                    if (keyPressCondition(event.key, buffer)) {
                         buffer.append(event.key)
                         print(event.key)
+                    } else {
+                        print("\u0007")
+                        System.out.flush()
                     }
                     InputReceiver.Status.Continue
                 }
             }
         }
+        terminal.cursor.move {
+            startOfLine()
+            clearLine()
+        }
+        return result
     }
 }
 

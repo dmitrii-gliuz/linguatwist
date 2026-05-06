@@ -5,13 +5,17 @@ import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Round
 
 
+enum class RoundDisplayPrompt {
+    ENTER_INDEXES, CONFIRM_EXIT, NONE
+}
+
 internal data class RoundDisplayState(
     val round: Round,
     val score: Int,
     val completionPercentage: Int,
     val totalMistakesMade: Int,
     val feedbackMessage: String,
-    val showPrompt: Boolean = true,
+    val promptType: RoundDisplayPrompt = RoundDisplayPrompt.ENTER_INDEXES,
 )
 
 internal fun GameState.InProgress.toRoundDisplayState(feedbackMessage: String) = RoundDisplayState(
@@ -28,5 +32,5 @@ internal fun GameResult.toDisplayState(feedbackMessage: String) = RoundDisplaySt
     completionPercentage = completionPercentage,
     totalMistakesMade = mistakesCount,
     feedbackMessage = feedbackMessage,
-    showPrompt = false
+    promptType = RoundDisplayPrompt.NONE
 )

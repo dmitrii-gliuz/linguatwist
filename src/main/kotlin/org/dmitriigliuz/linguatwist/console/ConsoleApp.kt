@@ -25,11 +25,12 @@ class ConsoleApp private constructor(
             coordinator: GameCoordinator,
             terminal: Terminal,
             colorTheme: ColorTheme,
-            emoji: EmojiSet
+            emoji: EmojiSet,
+            pairsPerRound: Int
         ): ConsoleApp {
             return ConsoleApp(
                 coordinator = coordinator,
-                input = ConsoleInput(terminal, colorTheme, emoji),
+                input = ConsoleInput(terminal, colorTheme, emoji, pairsPerRound),
                 renderer = ConsoleRenderer(terminal, colorTheme, emoji),
                 emoji = emoji
             )
@@ -148,7 +149,11 @@ class ConsoleApp private constructor(
             renderer.updateRoundDisplay(displayState)
             when (val inputIndexesResult = input.promptIndexes()) {
                 is IndexInput.Invalid -> feedbackMessage = renderer.buildInputErrorFeedback()
-                is IndexInput.Exit -> return GameState.Aborted
+                is IndexInput.Exit -> {
+                    val confirmExitDisplayState = displayState.copy(promptType = RoundDisplayPrompt.CONFIRM_EXIT)
+                    renderer.updateRoundDisplay(confirmExitDisplayState)
+                    if (input.promptConfirmExit()) return GameState.Aborted
+                }
                 is IndexInput.Indexes -> {
                     val (leftIndex, rightIndex) = inputIndexesResult.pair
                     val indexes = Pair(leftIndex - 1, rightIndex - 1)
