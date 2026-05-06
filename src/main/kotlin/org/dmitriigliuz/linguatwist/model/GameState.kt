@@ -16,8 +16,8 @@ sealed class GameState {
         val totalGuessedAmount
             get() = round.guessedCount + (round.previousNumber) * round.size
     }
-    data class Finished(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
-    data class Failed(val result: GameResult, val updatedVocabulary: Vocabulary) : GameState()
+    data class Finished(val result: GameResult, val vocabulary: Vocabulary) : GameState()
+    data class Failed(val result: GameResult, val vocabulary: Vocabulary) : GameState()
     object Aborted : GameState()
 
     fun getResultOrNull() = when (this) {
@@ -27,8 +27,9 @@ sealed class GameState {
     }
 
     fun getUpdatedVocabularyOrNull() = when (this) {
-        is Finished -> updatedVocabulary
-        is Failed -> updatedVocabulary
+        is Finished -> vocabulary
+        is Failed -> vocabulary
+        is InProgress -> vocabulary
         else -> null
     }
 }

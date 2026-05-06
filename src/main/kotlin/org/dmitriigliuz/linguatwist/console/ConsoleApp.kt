@@ -87,13 +87,11 @@ class ConsoleApp private constructor(
         val vocabularyLoadResult = loadVocabularyWithRetry() ?: return AppState.Exit
         var vocabulary = vocabularyLoadResult.vocabulary
         val vocabularyPath = vocabularyLoadResult.path
-        currentVocabularySnapshot = vocabularyPath to vocabulary
         var gameState: GameState?
         do {
-            gameState = gameSession(vocabulary).also { state ->
+            gameState = gameSession(vocabularyPath, vocabulary).also { state ->
                 state.getUpdatedVocabularyOrNull()?.let { vocabulary = it }
             }
-            currentVocabularySnapshot = vocabularyPath to vocabulary
             renderer.stopRoundDisplay()
         } while (gameState !is GameState.Aborted && input.promptPlayAgain())
         tryClaimSaveRight()?.let { saveWithFeedback(it) }
@@ -133,7 +131,7 @@ class ConsoleApp private constructor(
         }
     }
 
-    private fun gameSession(vocabulary: Vocabulary): GameState {
+    private fun gameSession(vocabularyPath: String, vocabulary: Vocabulary): GameState {
         val defaultNumberOfRounds = coordinator.defaultNumberOfRounds(vocabulary)
         val totalRounds = input.promptNumberOfRounds(defaultNumberOfRounds, coordinator.maxRounds)
         val (engine, startTime) = coordinator.startSession(totalRounds)
@@ -159,6 +157,9 @@ class ConsoleApp private constructor(
                     val indexes = Pair(leftIndex - 1, rightIndex - 1)
                     val (roundResult, newState) = engine.processAnswer(indexes, gameState)
                     gameState = newState
+                    gameState.getUpdatedVocabularyOrNull()?.let {
+                        currentVocabularySnapshot = vocabularyPath to it
+                    }
                     feedbackMessage = renderer.buildRoundResultFeedback(roundResult)
                 }
             }
