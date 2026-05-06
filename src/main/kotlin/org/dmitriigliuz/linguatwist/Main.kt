@@ -15,7 +15,6 @@ import org.dmitriigliuz.linguatwist.console.CyberpunkTheme
 import org.dmitriigliuz.linguatwist.console.DaylightTheme
 import org.dmitriigliuz.linguatwist.console.DefaultEmoji
 import org.dmitriigliuz.linguatwist.console.NoEmoji
-import org.dmitriigliuz.linguatwist.console.prefixed
 import org.dmitriigliuz.linguatwist.game.GameConfig
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.i18n.Messages
@@ -41,9 +40,7 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
         val colorTheme = if (!lightTheme) CyberpunkTheme else DaylightTheme
         val terminal = Terminal(theme = colorTheme.toTerminalTheme())
         val emojiSet = if (noEmoji) NoEmoji else DefaultEmoji
-        Runtime.getRuntime().addShutdownHook(Thread {
-            terminal.println("\n\n" + emojiSet.bye.prefixed(Messages.app_shutdown_bye()))
-        })
+
         val config = GameConfig(spreadsheetPath = file,     languageTag = lang)
         val coordinator = GameCoordinator(
             config = config,

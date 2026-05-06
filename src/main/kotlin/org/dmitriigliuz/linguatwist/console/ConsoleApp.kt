@@ -6,6 +6,8 @@ import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.GameState
 import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
+import java.util.concurrent.atomic.AtomicBoolean
+
 
 class ConsoleApp private constructor(
     private val coordinator: GameCoordinator,
@@ -13,6 +15,9 @@ class ConsoleApp private constructor(
     private val renderer: ConsoleRenderer,
     private val emoji: EmojiSet
 ) {
+    @Volatile
+    private var currentVocabularySnapshot: Pair<String, Vocabulary>? = null
+    private val savedOnce: AtomicBoolean = AtomicBoolean(false)
     enum class AppState { MainMenu, Exit }
 
     companion object {
@@ -32,6 +37,28 @@ class ConsoleApp private constructor(
     }
 
     fun run() {
+        Runtime.getRuntime().addShutdownHook(Thread {
+            val snapshotToSave = tryClaimSaveRight()
+            if (snapshotToSave != null) {
+                var saveResult: Result<Unit>? = null
+                try {
+                    renderer.emptyLine()
+                    saveResult = saveWithFeedback(snapshotToSave)
+                } catch (_: Exception) {
+                    if (saveResult == null) {
+                        print("Saving scores... ")
+                        val (vocabularyPath, vocabulary) = snapshotToSave
+                        saveResult = coordinator.saveVocabulary(vocabularyPath, vocabulary)
+                        if (saveResult.isFailure) println("Failed") else print("Done")
+                    }
+                }
+            }
+            try {
+                renderer.printBye()
+            } catch (_: Exception) {
+                println("Bye!")
+            }
+        })
         renderer.printLogo()
         renderer.printGreetings()
         mainMenu()
@@ -53,33 +80,55 @@ class ConsoleApp private constructor(
     }
 
     private fun startGame(): AppState {
+        currentVocabularySnapshot = null
+        savedOnce.compareAndSet(true, false)
         renderer.emptyLine()
         val vocabularyLoadResult = loadVocabularyWithRetry() ?: return AppState.Exit
         var vocabulary = vocabularyLoadResult.vocabulary
         val vocabularyPath = vocabularyLoadResult.path
+        currentVocabularySnapshot = vocabularyPath to vocabulary
         var gameState: GameState?
         do {
             gameState = gameSession(vocabulary).also { state ->
                 state.getUpdatedVocabularyOrNull()?.let { vocabulary = it }
             }
+            currentVocabularySnapshot = vocabularyPath to vocabulary
             renderer.stopRoundDisplay()
         } while (gameState !is GameState.Aborted && input.promptPlayAgain())
-        renderer.withProgressMessage(Messages.game_saving_scores()) {
-            coordinator.saveVocabulary(vocabularyPath, vocabulary)
-        }
+        tryClaimSaveRight()?.let { saveWithFeedback(it) }
         return if (gameState is GameState.Aborted) AppState.Exit else AppState.MainMenu
     }
+
+    private fun saveWithFeedback(snapshot: Pair<String, Vocabulary>): Result<Unit> {
+        val (vocabularyPath, vocabulary) = snapshot
+        val result = renderer.withProgressMessage(Messages.game_saving_scores()) {
+            coordinator.saveVocabulary(vocabularyPath, vocabulary)
+        }
+        return result
+    }
+
+
+    private fun tryClaimSaveRight(): Pair<String, Vocabulary>? {
+        val snapshot = currentVocabularySnapshot ?: return null
+        if (!savedOnce.compareAndSet(false, true)) return null
+        return snapshot
+    }
+
 
     private fun loadVocabularyWithRetry(): VocabularyLoadResult? {
         var customSpreadsheetPath: String? = null
         while (true) {
-            renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
+            val result = renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
                 coordinator.loadVocabulary(customSpreadsheetPath)
-            }?.let {
-                renderer.printVocabularyInfo(it)
+            }
+            if (result.isSuccess){
+                val vocabularyLoadResult = result.getOrThrow()
+                renderer.printVocabularyInfo(vocabularyLoadResult)
                 renderer.emptyLine()
-                return it
-            } ?: run { customSpreadsheetPath = input.promptVocabularyPath()?.ifBlank { null } ?: return null }
+                return vocabularyLoadResult
+            } else  {
+                customSpreadsheetPath = input.promptVocabularyPath()?.ifBlank { null } ?: return null
+            }
         }
     }
 

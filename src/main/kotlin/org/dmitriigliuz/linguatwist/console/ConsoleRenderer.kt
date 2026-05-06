@@ -213,14 +213,18 @@ internal class ConsoleRenderer(
         )
     }
 
+//    Final
+    internal fun printBye() = terminal.println("\n" + emoji.bye.prefixed(Messages.app_shutdown_bye()))
+
 //    General
 
-    internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): T? {
+    internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): Result<T> {
         terminal.print(Text(emoji.processing.prefixed(message)))
-        return action()
+        val result = action()
+        result
             .onSuccess { terminal.success(" " + Messages.game_progress_done()) }
             .onFailure { e -> printError(e.message ?: e.toString()) }
-            .getOrNull()
+        return result
     }
 
     internal fun emptyLine() = terminal.println()
