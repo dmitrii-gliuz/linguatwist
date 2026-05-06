@@ -63,16 +63,16 @@ class GameEngine(
         val round = result.updatedRound
         val gameScore = state.gameScore + 1
         val updatedEntry = round.pairAtLeftColumn(leftIndex)
-        val updatedScores = state.updatedScores + (updatedEntry.key to updatedEntry.entryScore)
+        val updatedScores = mapOf(updatedEntry.key to updatedEntry.entryScore)
+        val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         val updatedState = state.copy(
             round = round,
             gameScore = gameScore,
             error = null,
-            updatedScores = updatedScores,
+            vocabulary = updatedVocabulary
         )
         return if (round.isFinished && round.number == totalRounds) {
             val gameResult = createResult(false, updatedState)
-            val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
             GameState.Finished(gameResult, updatedVocabulary)
         } else if (round.isFinished) {
             advanceToNewRound(updatedState)
@@ -89,18 +89,20 @@ class GameEngine(
         val updatedRightEntry = round.pairAtRightColumn(indexes.second)
         val gameScore = state.gameScore - 1
         val mistakesCount = state.mistakesCount + 1
-        val updatedScores = state.updatedScores +
-                (updatedLeftEntry.key to updatedLeftEntry.entryScore) + (updatedRightEntry.key to updatedRightEntry.entryScore)
+        val updatedScores = mapOf(
+            updatedLeftEntry.key to updatedLeftEntry.entryScore,
+            updatedRightEntry.key to updatedRightEntry.entryScore
+        )
+        val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         val updatedState = state.copy(
             round = round,
             gameScore = gameScore,
             mistakesCount = mistakesCount,
             error = null,
-            updatedScores = updatedScores
+            vocabulary = updatedVocabulary
         )
         return if (mistakesCount > allowedMistakes) {
             val result = createResult(true, updatedState)
-            val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
             GameState.Failed(result, updatedVocabulary)
         } else updatedState
     }

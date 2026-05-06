@@ -8,7 +8,6 @@ sealed class GameState {
         val mistakesCount: Int,
         val vocabulary: Vocabulary,
         val error: ValidationError? = null,
-        val updatedScores: Map<LexemeKey, Int> = emptyMap(),
         val totalPairs: Int
     ) : GameState() {
         val completionPercentage: Int

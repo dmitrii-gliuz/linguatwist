@@ -60,7 +60,9 @@ data class Vocabulary(
         return Pair(independentKeysSet.map { entriesMap.getValue(it).withoutGuessed() }, copy(remainingKeysPool = newPool))
     }
 
-    fun withUpdatedScores(updatedScores: Map<LexemeKey, Int>) = if (updatedScores.isEmpty()) this else copy(
-        entriesMap = entriesMap.mapValues { (key, entry) -> updatedScores[key]?.let { entry.copy(entryScore = it) } ?: entry }
-    )
+    fun withUpdatedScores(updatedScores: Map<LexemeKey, Int>) = if (updatedScores.isEmpty()) this else {
+        val updatedEntries = updatedScores
+            .mapValues { (key, score) -> entriesMap.getValue(key).copy(entryScore = score) }
+        copy(entriesMap = entriesMap + updatedEntries)
+    }
 }
