@@ -39,47 +39,43 @@ class ConsoleApp private constructor(
 
     fun run() {
         Runtime.getRuntime().addShutdownHook(Thread {
-            val snapshotToSave = tryClaimSaveRight()
-            if (snapshotToSave != null) {
-                val (vocabularyPath, vocabulary) = snapshotToSave
-                var saveResult: Result<Unit>? = null
-                var backupCreated = false
-                try {
-                    coordinator.createVocabularyBackup(vocabularyPath)
-                    backupCreated = true
-                } catch (_: Exception) {
-                    try {
-                        renderer.printError(Messages.file_error_unableToBackup())
-                    } catch (_: Exception) {
-                        println(
-                            "The app has crashed unexpectedly and was unable to back up the previous vocabulary. " +
-                                    "Unfortunately, your current progress will not be saved."
-                        )
-                    }
-                }
-                if (backupCreated) {
-                    try {
-                        renderer.emptyLine()
-                        saveResult = saveWithFeedback(snapshotToSave)
-                    } catch (_: Exception) {
-                        if (saveResult == null) {
-                            print("Saving scores... ")
-                            saveResult = coordinator.saveVocabulary(vocabularyPath, vocabulary)
-                            if (saveResult.isFailure) println("Failed") else print("Done")
-                        }
-                    }
-                }
-            }
-            try {
-                renderer.printBye()
-            } catch (_: Exception) {
-                println("Bye!")
-            }
+            saveOnShutdownIfNeeded()
+            printByeSafely()
         })
         renderer.printLogo()
         renderer.printGreetings()
         mainMenu()
     }
+
+    private fun saveOnShutdownIfNeeded() {
+        val snapshot = tryClaimSaveRight() ?: return
+        val (vocabularyPath, vocabulary) = snapshot
+        if (tryCreateBackup(vocabularyPath).isFailure) return
+        val saveResult = runCatching {
+            renderer.emptyLine()
+            saveWithFeedback(snapshot)
+        }.getOrElse  {
+                println("TUI rendering failed, using plain output")
+                fallbackSavePlain(vocabularyPath, vocabulary)
+            }
+        saveResult.onFailure { println("Failed to save scores") }
+    }
+
+    private fun fallbackSavePlain(vocabularyPath: String, vocabulary: Vocabulary): Result<Unit> {
+        print("Saving scores... ")
+        return coordinator.saveVocabulary(vocabularyPath, vocabulary).onSuccess {
+            println("Done")
+        }
+    }
+
+    private fun tryCreateBackup(path: String) = runCatching { coordinator.createVocabularyBackup(path) }
+        .onFailure {
+            runCatching { renderer.printError(Messages.file_error_unableToBackup()) }
+                .onFailure { println("The app has crashed unexpectedly and was unable to back up the previous vocabulary. " +
+                        "Unfortunately, your current progress will not be saved.") }
+        }
+
+    private fun printByeSafely() = runCatching { renderer.printBye() }.onFailure { println("Bye!") }
 
     private fun mainMenu() {
         var appState: AppState = AppState.MainMenu
