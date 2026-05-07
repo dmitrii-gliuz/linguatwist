@@ -73,6 +73,12 @@ class ConsoleInput(
         default = true
     ).ask() ?: false
 
+    fun promptSaveScores(): Boolean = YesNoPrompt(
+        prompt = emoji.saveScores.prefixed(Messages.prompt_saveScores()),
+        terminal = terminal,
+        default = true
+    ).ask() ?: false
+
     fun selectMenuItem(items: List<String>, title: String): Int {
         val selected = terminal.interactiveSelectList {
             entries(items)

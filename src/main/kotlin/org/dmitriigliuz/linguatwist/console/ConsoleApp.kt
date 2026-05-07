@@ -41,16 +41,32 @@ class ConsoleApp private constructor(
         Runtime.getRuntime().addShutdownHook(Thread {
             val snapshotToSave = tryClaimSaveRight()
             if (snapshotToSave != null) {
+                val (vocabularyPath, vocabulary) = snapshotToSave
                 var saveResult: Result<Unit>? = null
+                var backupCreated = false
                 try {
-                    renderer.emptyLine()
-                    saveResult = saveWithFeedback(snapshotToSave)
+                    coordinator.createVocabularyBackup(vocabularyPath)
+                    backupCreated = true
                 } catch (_: Exception) {
-                    if (saveResult == null) {
-                        print("Saving scores... ")
-                        val (vocabularyPath, vocabulary) = snapshotToSave
-                        saveResult = coordinator.saveVocabulary(vocabularyPath, vocabulary)
-                        if (saveResult.isFailure) println("Failed") else print("Done")
+                    try {
+                        renderer.printError(Messages.file_error_unableToBackup())
+                    } catch (_: Exception) {
+                        println(
+                            "The app has crashed unexpectedly and was unable to back up the previous vocabulary. " +
+                                    "Unfortunately, your current progress will not be saved."
+                        )
+                    }
+                }
+                if (backupCreated) {
+                    try {
+                        renderer.emptyLine()
+                        saveResult = saveWithFeedback(snapshotToSave)
+                    } catch (_: Exception) {
+                        if (saveResult == null) {
+                            print("Saving scores... ")
+                            saveResult = coordinator.saveVocabulary(vocabularyPath, vocabulary)
+                            if (saveResult.isFailure) println("Failed") else print("Done")
+                        }
                     }
                 }
             }
@@ -94,7 +110,9 @@ class ConsoleApp private constructor(
             }
             renderer.stopRoundDisplay()
         } while (gameState !is GameState.Aborted && input.promptPlayAgain())
-        tryClaimSaveRight()?.let { saveWithFeedback(it) }
+        if (currentVocabularySnapshot != null && input.promptSaveScores()) {
+            tryClaimSaveRight()?.let { saveWithFeedback(it) }
+        } else savedOnce.set(true)
         return if (gameState is GameState.Aborted) AppState.Exit else AppState.MainMenu
     }
 

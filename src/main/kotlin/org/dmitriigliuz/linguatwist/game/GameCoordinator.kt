@@ -8,6 +8,7 @@ import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoader
 import org.dmitriigliuz.linguatwist.storage.VocabularyWriter
+import org.dmitriigliuz.linguatwist.storage.createBackup
 import kotlin.time.TimeSource
 import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
@@ -36,6 +37,8 @@ class GameCoordinator(
         }
 
     fun saveVocabulary(path: String, vocabulary: Vocabulary) = writer.save(path, vocabulary)
+
+    fun createVocabularyBackup(vocabularyPath: String) = createBackup(vocabularyPath)
 
     fun startSession(totalRounds: Int) = Pair(createEngine(totalRounds), createTimeMark()).also {
         logger.info { "Game session started: rounds=$totalRounds, pairsPerRound=${config.pairsPerRound}" }

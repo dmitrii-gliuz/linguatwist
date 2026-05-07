@@ -77,6 +77,8 @@ interface EmojiSet {
         get() = ""
     val scoreTryAgain: String
         get() = ""
+    val saveScores: String
+        get() = ""
 
     fun framed(leftEmoji: String, text: String, rightEmoji: String = leftEmoji): String =
         if (leftEmoji.isBlank() && rightEmoji.isBlank()) text else "$leftEmoji $text $rightEmoji"
@@ -136,6 +138,7 @@ object DefaultEmoji : EmojiSet {
     override val scorePoor = "😟"
     override val scoreVeryPoor = "😢"
     override val scoreTryAgain = CRYING_FACE
+    override val saveScores = "💾"
 }
 
 

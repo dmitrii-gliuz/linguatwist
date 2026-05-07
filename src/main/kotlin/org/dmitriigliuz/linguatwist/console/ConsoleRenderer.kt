@@ -170,7 +170,7 @@ internal class ConsoleRenderer(
         )
         val prompt = when (state.promptType) {
             RoundDisplayPrompt.ENTER_INDEXES -> emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
-            RoundDisplayPrompt.CONFIRM_EXIT -> emoji.exit.prefixed(Messages.game_confirmExit() + " (y/N): ")
+            RoundDisplayPrompt.CONFIRM_EXIT -> emoji.exit.prefixed(Messages.prompt_confirmExit() + " (y/N): ")
             else -> ""
         }
         cell(roundTable)
