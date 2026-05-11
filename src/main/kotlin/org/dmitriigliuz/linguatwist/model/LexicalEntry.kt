@@ -1,12 +1,5 @@
 package org.dmitriigliuz.linguatwist.model
 
-data class LexemeKey(val normalizedSourceText: String, val normalizedTranslation: String) {
-    companion object {
-        fun of(sourceText: String, translation: String) =
-            LexemeKey(sourceText.trim().lowercase(), translation.trim().lowercase())
-    }
-}
-
 
 data class LexicalEntry(
     val sourceText: String,
