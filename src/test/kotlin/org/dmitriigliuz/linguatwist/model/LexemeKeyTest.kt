@@ -1,5 +1,6 @@
 package org.dmitriigliuz.linguatwist.model
 
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -127,6 +128,37 @@ class LexemeKeyTest {
         val keyDecomposed = LexemeKey.of(decomposedEAcute, decomposedEAcute)
         val keyComposed = LexemeKey.of(composedEAcute, composedEAcute)
         assertEquals(keyComposed, keyDecomposed)
+    }
 
+    /**
+     * Validates that ASCII letters are normalized consistently regardless of the system's current locale settings.
+     *
+     * The test ensures that string normalization behaves identically under different locale contexts, such as
+     * Turkish ("tr-TR") and US English ("en-US"), which have distinct behavior for specific characters (e.g., 'I' vs 'ı').
+     *
+     * Steps:
+     * - Sets the locale to Turkish and creates a `LexemeKey` instance from an uppercase string.
+     * - Switches the locale to English and creates another `LexemeKey` instance from the same string.
+     * - Validates that the `LexemeKey` instances are equivalent and their normalized source texts match
+     *   the expected lowercase representation.
+     *
+     * Restores the original locale after execution to avoid side effects on the environment.
+     */
+    @Test
+    fun `normalizes ASCII letters independently of system locale`() {
+        val originalLocale = Locale.getDefault()
+        val lowercaseTestString = "input"
+        val uppercaseTestString = "INPUT"
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+            val onTurkish = LexemeKey.of(uppercaseTestString, translationString)
+            Locale.setDefault(Locale.forLanguageTag("en-US"))
+            val onEnglish = LexemeKey.of(uppercaseTestString, translationString)
+            assertEquals(onTurkish, onEnglish)
+            assertEquals(lowercaseTestString, onTurkish.normalizedSourceText)
+            assertEquals(lowercaseTestString, onEnglish.normalizedSourceText)
+        } finally {
+            Locale.setDefault(originalLocale)
+        }
     }
 }
