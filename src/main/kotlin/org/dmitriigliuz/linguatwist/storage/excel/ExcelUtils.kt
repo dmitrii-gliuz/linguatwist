@@ -27,7 +27,7 @@ fun readExcelRowsWithHeader(file: File, onHeader: (Row) -> Unit = {}) = buildLis
                 val iterator = rowStream.iterator()
                 require(iterator.hasNext()) { Messages.excel_error_emptyFile() }
                 val header = iterator.next()
-                require(header.cellCount >= 2) { Messages.excel_error_headerTooShort }
+                require(header.cellCount >= 2) { Messages.excel_error_headerTooShort() }
                 onHeader(header)
                 logger.debug { "Starting to iterate through data rows" }
                 while (iterator.hasNext()) {

@@ -84,7 +84,7 @@ class ConsoleApp private constructor(
                 listOf(
                     emoji.startGame.prefixed(Messages.menu_main_start()),
                     emoji.exit.prefixed(Messages.menu_main_exit())
-                ), "\n  » ${Messages.menu_main_title} «"
+                ), "\n  » ${Messages.menu_main_title()} «"
             )) {
                 0 -> appState = startGame()
                 1 -> appState = AppState.Exit

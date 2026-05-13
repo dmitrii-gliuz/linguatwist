@@ -52,7 +52,7 @@ class GameEngine(
                 vocabulary = updatedVocabulary,
             )
         }
-        else -> throw IllegalStateException("${Messages.state_error_unexpected}: $state")
+        else -> throw IllegalStateException("${Messages.state_error_unexpected()}: $state")
     }
 
     private fun processRightAnswer(

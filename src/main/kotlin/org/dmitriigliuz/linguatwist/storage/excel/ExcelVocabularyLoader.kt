@@ -21,7 +21,7 @@ class ExcelVocabularyLoader: VocabularyLoader {
         val (entriesMap, invalidRowsCount) = rows.parseAndFindInvalid()
         val duplicates = rows.size - invalidRowsCount - entriesMap.size
 
-        require(entriesMap.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries}: $path" }
+        require(entriesMap.isNotEmpty()) { "${Messages.vocabulary_error_noUniqueEntries()}: $path" }
 
         val vocabulary = Vocabulary(entriesMap)
 

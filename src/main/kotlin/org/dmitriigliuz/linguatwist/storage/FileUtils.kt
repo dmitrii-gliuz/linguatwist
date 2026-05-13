@@ -9,8 +9,8 @@ fun createBackup(path: String) = File(path).copyTo(File("$path.bak"), overwrite 
 
 
 fun File.requireReadable() = also {
-    require(exists()) { "${Messages.file_error_notExists}: $absolutePath" }
-    require(canRead()) { "${Messages.file_error_notReadable}: $absolutePath" }
+    require(exists()) { "${Messages.file_error_notExists()}: $absolutePath" }
+    require(canRead()) { "${Messages.file_error_notReadable()}: $absolutePath" }
 }
 
 fun File.requireValidExcel() = requireReadable(). also {

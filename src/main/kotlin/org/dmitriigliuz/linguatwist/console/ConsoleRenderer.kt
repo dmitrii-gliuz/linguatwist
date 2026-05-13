@@ -52,7 +52,7 @@ internal class ConsoleRenderer(
 
     internal fun printGreetings() {
         terminal.println(Text("""
-            ${emoji.welcome.prefixed(Messages.game_greetings_welcome())} ${Messages.game_greetings_matchWords}
+            ${emoji.welcome.prefixed(Messages.game_greetings_welcome())} ${Messages.game_greetings_matchWords()}
             ${emoji.advice.prefixed(Messages.game_greetings_enterTwoNumbers())}
             ${emoji.controls.prefixed(Messages.game_greetings_useArrowKeys())}""".trimIndent())
         )
@@ -72,7 +72,7 @@ internal class ConsoleRenderer(
     }
 
     internal fun printAllowedMistakesNumber(allowedMistakes: Int) = terminal.println(
-        emoji.allowedMistakes.prefixed("${Messages.game_allowedMistakes}: $allowedMistakes")
+        emoji.allowedMistakes.prefixed("${Messages.game_allowedMistakes()}: $allowedMistakes")
     )
 
     internal fun printLetsGo() = terminal.println(
@@ -204,11 +204,11 @@ internal class ConsoleRenderer(
         }
 
         val mistakesInRound = if (round.mistakesInRound > 0) {
-            colorTheme.mistakeStyle("${Messages.round_mistakesInRound}: ${round.mistakesInRound}")
+            colorTheme.mistakeStyle("${Messages.round_mistakesInRound()}: ${round.mistakesInRound}")
         } else ""
         return Panel(
             content = roundTable,
-            title = Text(colorTheme.title("${Messages.round_caption} ${round.number}")),
+            title = Text(colorTheme.title("${Messages.round_caption()} ${round.number}")),
             bottomTitle = Text(mistakesInRound),
             borderStyle = colorTheme.panelBorder
         )
