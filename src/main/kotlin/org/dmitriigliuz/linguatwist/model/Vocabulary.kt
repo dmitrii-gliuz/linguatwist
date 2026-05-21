@@ -6,6 +6,10 @@ data class Vocabulary(
 ) {
     val size = entriesMap.size
 
+    companion object {
+        fun fromEntries(entries: Iterable<LexicalEntry>) = Vocabulary(entries.associateBy { it.key })
+    }
+
     private fun findIndependentKeysSet(
         requiredSize: Int,
         candidates: List<LexemeKey>,

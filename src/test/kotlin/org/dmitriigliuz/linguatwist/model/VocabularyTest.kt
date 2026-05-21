@@ -7,17 +7,16 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VocabularyTest {
-    val threeEntriesVocabulary = vocabularyOf(
+    private val threeEntriesVocabulary = vocabularyOf(
         LexicalEntry("a", "b"),
         LexicalEntry("c", "d"),
         LexicalEntry("e", "f")
     )
 
-    val fifteenEntriesVocabulary = Vocabulary(
-        (1..15).map { LexicalEntry("a$it", "b$it") }.associateBy { it.key }
-    )
+    private val fifteenEntries = (1..15).map { LexicalEntry("a$it", "b$it") }
+    private val fifteenEntriesVocabulary = Vocabulary.fromEntries(fifteenEntries)
 
-    val conflictingEntriesVocabulary = vocabularyOf(
+    private val conflictingEntriesVocabulary = vocabularyOf(
         LexicalEntry("a", "x"),
         LexicalEntry("a", "y"), // same source as a/x
         LexicalEntry("b", "x"), // same translation as a/x
@@ -25,7 +24,7 @@ class VocabularyTest {
         LexicalEntry("d", "w"),
     )
 
-    val emptyVocabulary = Vocabulary(emptyMap())
+    private val emptyVocabulary = Vocabulary(emptyMap())
 
     @Test
     fun `size return number of entries used to create vocabulary`() {
@@ -138,5 +137,40 @@ class VocabularyTest {
         assertEquals(3, group.map { it.key.normalizedSourceText }.toSet().size)
         assertEquals(3, group.map { it.key.normalizedTranslation }.toSet().size)
     }
+
+    @Test
+    fun `takeNextGroup returns entries without guessed flag`() {
+        val entries = fifteenEntries.map { it.withGuessed() }
+        val vocabulary = Vocabulary.fromEntries(entries)
+        val group = vocabulary.takeNextGroup(3).first
+        assertTrue { group.none { it.isGuessed } }
+    }
+
+    @Test
+    fun `takeNextGroup resets guessed flag when vocabulary has entries with mixed guessed state`() {
+        val entries = fifteenEntries.mapIndexed { index, entry ->
+            if (index % 2 == 0) entry.withGuessed() else entry
+        }
+        val vocabulary = Vocabulary.fromEntries(entries)
+        val guessedKeys = vocabulary.entriesMap.filter { it.value.isGuessed }.map { it.key }
+        val notGuessedKeys = vocabulary.entriesMap.filter { !it.value.isGuessed }.map { it.key }
+        val group = vocabulary.takeNextGroup(15).first
+
+        assertTrue { group.any { it.key in guessedKeys } }
+        assertTrue { group.any { it.key in notGuessedKeys } }
+        assertTrue { group.none { it.isGuessed } }
+    }
+
+    @Test
+    fun `takeNextGroup returns group with same score which was in vocabulary before`() {
+        val entries = fifteenEntries.mapIndexed { index, entry -> entry.copy(entryScore = index + 1) }
+        val keysToScore = entries.associate { it.key to it.entryScore }
+        val vocabulary = Vocabulary.fromEntries(entries)
+        val group = vocabulary.takeNextGroup(3).first
+        group.forEach {
+            assertEquals( it.entryScore, keysToScore.getValue(it.key))
+        }
+    }
+
     private fun vocabularyOf(vararg entries: LexicalEntry) = Vocabulary(entries.associateBy { it.key })
 }
