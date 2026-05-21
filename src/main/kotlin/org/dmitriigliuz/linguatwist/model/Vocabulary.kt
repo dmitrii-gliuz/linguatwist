@@ -44,8 +44,10 @@ data class Vocabulary(
 
     private fun refillPool() = entriesMap.keys.shuffled().sortedBy { entriesMap[it]?.entryScore }
 
-    fun hasEnoughDistinctEntries(groupSize: Int) =
-        findIndependentKeysSet(groupSize, entriesMap.keys.toList()) != null
+    fun hasEnoughDistinctEntries(groupSize: Int): Boolean {
+        require(groupSize > 1) { "groupSize must be more than 1, got $groupSize" }
+        return findIndependentKeysSet(groupSize, entriesMap.keys.toList()) != null
+    }
 
     fun takeNextGroup(groupSize: Int): Pair<List<LexicalEntry>, Vocabulary> {
         var refilledKeysPool: List<LexemeKey>? = null
