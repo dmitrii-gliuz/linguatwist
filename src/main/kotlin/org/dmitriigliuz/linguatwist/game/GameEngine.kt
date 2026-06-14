@@ -39,8 +39,10 @@ class GameEngine(
             val newRound = Round(newGroup, 1)
             GameState.InProgress(
                 round = newRound,
+                totalRounds = totalRounds,
                 gameScore = 0,
                 mistakesCount = 0,
+                allowedMistakes = allowedMistakes,
                 vocabulary =  updatedVocabulary,
                 totalPairs = totalRounds * config.pairsPerRound)
         }
@@ -56,11 +58,11 @@ class GameEngine(
     }
 
     private fun processRightAnswer(
-        result: RoundResult.Correct,
+        roundResult: RoundResult.Correct,
         state: GameState.InProgress,
         leftIndex: Int
     ): GameState {
-        val round = result.updatedRound
+        val round = roundResult.updatedRound
         val gameScore = state.gameScore + 1
         val updatedEntry = round.pairAtLeftColumn(leftIndex)
         val updatedScores = mapOf(updatedEntry.key to updatedEntry.entryScore)
@@ -80,11 +82,11 @@ class GameEngine(
     }
 
     private fun processWrongAnswer(
-        result: RoundResult.Wrong,
+        roundResult: RoundResult.Wrong,
         state: GameState.InProgress,
         indexes: Pair<Int, Int>
     ): GameState {
-        val round = result.updatedRound
+        val round = roundResult.updatedRound
         val updatedLeftEntry = round.pairAtLeftColumn(indexes.first)
         val updatedRightEntry = round.pairAtRightColumn(indexes.second)
         val gameScore = state.gameScore - 1
@@ -118,6 +120,7 @@ class GameEngine(
         return GameResult(
             completionPercentage,
             lastRound = round,
+            totalRounds = totalRounds,
             isFailed = failed,
             score = gameScore,
             totalGuessedAmount = totalGuessedAmount,

@@ -2,6 +2,7 @@ package org.dmitriigliuz.linguatwist.console
 
 import com.github.ajalt.mordant.animation.animation
 import com.github.ajalt.mordant.rendering.BorderType
+import com.github.ajalt.mordant.rendering.TextStyle
 import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.danger
@@ -12,55 +13,70 @@ import com.github.ajalt.mordant.widgets.Panel
 import com.github.ajalt.mordant.widgets.ProgressBar
 import com.github.ajalt.mordant.widgets.Text
 import org.dmitriigliuz.linguatwist.model.GameResult
-import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 import com.github.ajalt.mordant.rendering.Widget
 import com.github.ajalt.mordant.table.Borders
 import com.github.ajalt.mordant.table.ColumnWidth
 import com.github.ajalt.mordant.table.verticalLayout
+import com.github.ajalt.mordant.widgets.HorizontalRule
+import org.dmitriigliuz.linguatwist.console.theming.LogoDecoration
+import org.dmitriigliuz.linguatwist.console.theming.Theme
 import org.dmitriigliuz.linguatwist.i18n.Messages
+import org.dmitriigliuz.linguatwist.model.Round
 import org.dmitriigliuz.linguatwist.model.RoundResult
 import org.dmitriigliuz.linguatwist.model.ValidationError
 import org.dmitriigliuz.linguatwist.model.VerbalScore
 
-internal class ConsoleRenderer(
+class ConsoleRenderer(
     private val terminal: Terminal,
-    private val colorTheme: ColorTheme,
-    private val emoji: EmojiSet
+    private val theme: Theme,
 ) {
+    private val colorTheme = theme.colorTheme
+    private val emoji = theme.emoji
+
     internal val noResultFeedback = buildErrorFeedback(
         Messages.game_error_unexpected_caption(),
         Messages.game_error_unexpected_message()
     )
 
-    private val roundDisplay = terminal.animation<RoundDisplayState> { state -> buildRoundWidget(state) }
+    private val roundDisplay = terminal.animation<GameDisplayState> { state -> buildGameWidget(state) }
 
 //    Beginning
 
     internal fun printLogo() {
-        val art = colorTheme.logo("""
-█   █ █▄ █ █▀▀ █ █ █▀█ ▀█▀ █   █ █ ▄▀▀ ▀█▀
-█   █ █ ▀█ █ ▀ █ █ █▀█  █  █ █ █ █  ▀▄  █ 
-▀▀▀ ▀ ▀  ▀ ▀▀▀ ▀▀▀ ▀ ▀  ▀   ▀ ▀  ▀ ▀▀▀  ▀""".trimIndent())
-        terminal.println(
-            Panel(Text(art),
-                padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
-                borderStyle = colorTheme.panelBorder
+        when (theme.logoDecoration) {
+            LogoDecoration.PANEL -> terminal.println(
+                Panel(Text(theme.logo),
+                    padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
+                    borderStyle = colorTheme.panelBorder
+                )
             )
-        )
+
+            LogoDecoration.HORIZONTAL_LINE -> {
+                terminal.println(
+                    Text(theme.logo)
+                )
+                terminal.println(HorizontalRule())
+            }
+        }
+        terminal.println()
     }
 
     internal fun printGreetings() {
-        terminal.println(Text("""
-            ${emoji.welcome.prefixed(Messages.game_greetings_welcome())} ${Messages.game_greetings_matchWords()}
-            ${emoji.advice.prefixed(Messages.game_greetings_enterTwoNumbers())}
-            ${emoji.controls.prefixed(Messages.game_greetings_useArrowKeys())}""".trimIndent())
-        )
+        val greeting = buildString {
+            appendLine(theme.welcomeMessage())
+            if (!theme.showMenuInstructions) {
+                appendLine()
+                append(emoji.controls.prefixed(Messages.game_greetings_useArrowKeys()))
+            }
+        }
+        terminal.println(Text(greeting))
     }
 
     internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
-        terminal.success(emoji.vocabularyLoaded.prefixed(Messages.vocabulary_info_loadedWords()) +
-                ": ${vocabularyResult.vocabulary.size}")
+        terminal.success(emoji.vocabularyLoaded.prefixed("${vocabularyResult.vocabulary.size} " +
+                Messages.vocabulary_info_loadedWords())
+        )
         if (vocabularyResult.duplicates > 0) {
             terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
                     ": ${vocabularyResult.duplicates}")
@@ -75,29 +91,32 @@ internal class ConsoleRenderer(
         emoji.allowedMistakes.prefixed("${Messages.game_allowedMistakes()}: $allowedMistakes")
     )
 
-    internal fun printLetsGo() = terminal.println(
-        colorTheme.coloredMessage (emoji.letsGo.prefixed(Messages.game_letsGo()))
-    )
+    internal fun printStartingGameMessage() {
+        val message = theme.startingGameMessage().ifBlank { return }
+        emptyLine()
+        terminal.println(message)
+        emptyLine()
+    }
 
 //    Round flow
 
-    internal fun updateRoundDisplay(state: RoundDisplayState) = roundDisplay.update(state)
+    internal fun updateGameDisplay(state: GameDisplayState) = roundDisplay.update(state)
 
     internal fun stopRoundDisplay() = roundDisplay.stop()
 
-    internal fun buildRoundResultFeedback(roundResult: RoundResult) : String {
+    internal fun buildRoundResultFeedback(roundResult: RoundResult) : Feedback {
         return when (roundResult) {
-            is RoundResult.Correct -> colorTheme.success(
+            is RoundResult.Correct -> Feedback.Correct(
                 emoji.framed(emoji.correct, Messages.round_result_correct(), emoji.plusOnePoint)
                         + "\n${roundResult.words.first} ⟷ ${roundResult.words.second}")
-            is RoundResult.Wrong -> colorTheme.warning(
+            is RoundResult.Wrong -> Feedback.Wrong(
                 emoji.framed(emoji.wrong, Messages.round_result_wrong(), emoji.minusOnePoint) +
                         "\n${roundResult.words.first} ↮ ${roundResult.words.second}")
             is RoundResult.Invalid -> buildInputErrorFeedback(roundResult.error)
         }
     }
 
-    internal fun buildInputErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): String {
+    internal fun buildInputErrorFeedback(error: ValidationError? = null, errorMessage: String? = null): Feedback {
         val message = errorMessage ?: when (error) {
             null -> Messages.input_error_default()
             ValidationError.INDEX_OUT_OF_RANGE -> Messages.input_error_indexOutOfRange()
@@ -107,12 +126,11 @@ internal class ConsoleRenderer(
         return buildErrorFeedback(Messages.input_error_caption(), message)
     }
 
-    internal fun buildErrorFeedback(caption: String = Messages.error_caption(), message: String) = buildString {
-        appendLine(emoji.error.prefixed(colorTheme.error(caption)))
-        append(message)
-    }
+    internal fun buildErrorFeedback(caption: String = Messages.error_caption(), message: String) = Feedback.Invalid(
+        emoji.error.prefixed(caption) + "\n" + message
+    )
 
-    internal fun buildGameResultOutput(result: GameResult) = buildString {
+    internal fun buildGameResultFeedback(result: GameResult) = Feedback.Finished(buildString {
         appendLine(
             if (result.isFailed)
                 emoji.youFailed.prefixed(Messages.game_result_failed())
@@ -129,7 +147,7 @@ internal class ConsoleRenderer(
         }
         append(emoji.duration.prefixed(Messages.game_result_duration()))
         append(": $duration")
-    }
+    })
 
     private fun buildVerbalScoreOutput(verbalScore: VerbalScore): String {
         val scoreEmoji =  when (verbalScore) {
@@ -148,69 +166,104 @@ internal class ConsoleRenderer(
         return scoreEmoji.prefixed(verbalScore.description.toString())
     }
 
-    private fun buildRoundWidget(state: RoundDisplayState): Widget = verticalLayout {
-        val roundTable = buildRoundTable(state.round)
+    private fun buildGameWidget(state: GameDisplayState): Widget = verticalLayout {
+        val roundTitle = Text(colorTheme.title(
+            "${emoji.round.prefixed(Messages.round_caption())} ${state.round.number} / ${state.totalRounds}"
+        ))
+        val (selectedLeft, selectedRight) = state.selectedIndexes
+        val roundTable = buildRoundTable(state.round, selectedLeft, selectedRight)
         val gameStats = Text(
-            colorTheme.scoreStyle(emoji.score.prefixed(Messages.round_stats_score()) + ": ${state.score}   ") +
-                    colorTheme.mistakeStyle(emoji.mistakes.prefixed(Messages.round_stats_mistakes()) +
-                            ": ${state.totalMistakesMade}")
+            colorTheme.score(emoji.score.prefixed(Messages.round_stats_score()) + ": ${state.score}   ") +
+                    colorTheme.mistake(emoji.mistakes.prefixed(Messages.round_stats_mistakes()) +
+                            ": ${state.mistakesCount} / ${state.allowedMistakes}")
         )
-
-        val feedback = Panel(
-            content = state.feedbackMessage,
-            borderStyle = colorTheme.feedbackPanelBorder,
+        val feedbackPanelStyle = when (state.feedback) {
+            is Feedback.Correct -> colorTheme.success
+            is Feedback.Wrong -> colorTheme.wrong
+            is Feedback.Invalid -> colorTheme.error
+            else -> colorTheme.feedbackPanelBorder
+        }
+        val feedbackPanel = Panel(
+            content = state.feedback.message,
+            borderStyle = feedbackPanelStyle,
             padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
-            borderType = BorderType.ASCII
+            borderType = theme.feedbackPanelBorderType
         )
         val progressBar = ProgressBar(
             completed = state.completionPercentage.toLong(),
             total = 100,
             completeStyle = colorTheme.progressBarCompleted,
-            pendingStyle = colorTheme.progressBarPending
+            pendingStyle = colorTheme.progressBarPending,
+            showPulse = true
         )
         val prompt = when (state.promptType) {
-            RoundDisplayPrompt.ENTER_INDEXES -> emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
+            RoundDisplayPrompt.ENTER_PAIR -> emoji.inputIndexes.prefixed(Messages.round_input_prompt()) + ": "
             RoundDisplayPrompt.CONFIRM_EXIT -> emoji.exit.prefixed(Messages.prompt_confirmExit() + " (y/N): ")
             else -> ""
         }
+        cell(roundTitle)
         cell(roundTable)
         cell(gameStats)
-        cell(feedback)
+        cell(feedbackPanel)
         cell(progressBar)
-        cell(prompt)
+        cell(prompt + state.userInput)
     }
 
-    private fun buildRoundTable(round: Round): Widget {
-        fun styleIfGuessed(text: String, index: Int) =
-            if (index in round.guessedIndexes) colorTheme.guessedWord(text) else text
+    private fun buildRoundTable(round: Round, selectedIndexLeft: Int?, selectedIndexRight: Int?): Widget {
+        fun detectValueState(indexInTable: Int, column: Column): RoundValueState {
+            val originalIndex = if (column == Column.RIGHT) {
+                round.originalPairIndex(indexInTable)
+            } else indexInTable
+            return if ((selectedIndexLeft == originalIndex && column == Column.LEFT) || (selectedIndexRight == indexInTable && column == Column.RIGHT)) {
+                if (originalIndex in round.guessedIndexes) {
+                    RoundValueState.GUESSED_SELECTED
+                } else RoundValueState.SELECTED
+            } else if (originalIndex in round.guessedIndexes) {
+                RoundValueState.GUESSED
+            } else RoundValueState.DEFAULT
+        }
+
+        fun applyStyle(text: String, state: RoundValueState, defaultStyle: TextStyle = colorTheme.defaultText) =
+            when (state) {
+                RoundValueState.DEFAULT -> defaultStyle(text)
+                RoundValueState.SELECTED -> colorTheme.selectedValue(text)
+                RoundValueState.GUESSED -> colorTheme.guessedValue(text)
+                RoundValueState.GUESSED_SELECTED -> colorTheme.wrongSelectedValue(text)
+            }
+
+        fun printedIndex(index: Int, state: RoundValueState): String {
+            val printedIndex = (index + 1).toString()
+            return applyStyle(printedIndex, state, colorTheme.index)
+        }
 
         val roundTable = table {
 //            Without these widths, Mordant in some cases draws the table without the second column with indexes
 //            Probably because of some bug in the way Mordant calculates proportions
             column(0) { width = ColumnWidth.Fixed(1) }
             column(2) { width = ColumnWidth.Fixed(1) }
-            borderType = BorderType.BLANK
+            borderType = BorderType.ROUNDED
+            borderStyle = colorTheme.roundTableBorderStyle
             body {
                 cellBorders = Borders.NONE
-                for (i in 0 until round.size) {
-                    val leftPair = round.pairAtLeftColumn(i)
-                    val rightPair = round.pairAtRightColumn(i)
-                    val leftText = styleIfGuessed(leftPair.sourceText, i)
-                    val rightText = styleIfGuessed(rightPair.translation, round.originalPairIndex(i))
-                    val printedIndex = i + 1
-                    row(printedIndex, leftText, printedIndex, rightText)
+                column(1) { cellBorders = Borders.RIGHT }
+                for (indexInTable in 0 until round.size) {
+                    val leftPair = round.pairAtLeftColumn(indexInTable)
+                    val leftState = detectValueState(indexInTable, Column.LEFT)
+                    val leftPrintedIndex = printedIndex(indexInTable, leftState)
+                    val leftText = applyStyle(leftPair.sourceText, leftState)
+
+                    val rightPair = round.pairAtRightColumn(indexInTable)
+                    val rightState = detectValueState(indexInTable, Column.RIGHT)
+                    val rightPrintedIndex = printedIndex(indexInTable, rightState)
+                    val rightText = applyStyle(rightPair.translation, rightState)
+                    row(leftPrintedIndex, leftText, rightPrintedIndex, rightText)
                 }
             }
         }
-
-        val mistakesInRound = if (round.mistakesInRound > 0) {
-            colorTheme.mistakeStyle("${Messages.round_mistakesInRound()}: ${round.mistakesInRound}")
-        } else ""
         return Panel(
             content = roundTable,
-            title = Text(colorTheme.title("${Messages.round_caption()} ${round.number}")),
-            bottomTitle = Text(mistakesInRound),
-            borderStyle = colorTheme.panelBorder
+            borderStyle = colorTheme.panelBorder,
+            borderType = theme.roundPanelBorderType
         )
     }
 
@@ -232,4 +285,12 @@ internal class ConsoleRenderer(
     internal fun emptyLine() = terminal.println()
 
     internal fun printError(message: String) = terminal.danger(emoji.error.prefixed(message))
+}
+
+private enum class Column {
+    LEFT, RIGHT
+}
+
+private enum class RoundValueState {
+    DEFAULT, GUESSED, SELECTED, GUESSED_SELECTED
 }

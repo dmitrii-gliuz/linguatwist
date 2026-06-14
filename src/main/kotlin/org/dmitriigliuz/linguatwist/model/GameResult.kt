@@ -5,6 +5,7 @@ import kotlin.time.Duration
 data class GameResult(
     val completionPercentage: Int,
     val lastRound: Round,
+    val totalRounds: Int,
     val isFailed: Boolean,
     val score: Int,
     val totalGuessedAmount: Int,

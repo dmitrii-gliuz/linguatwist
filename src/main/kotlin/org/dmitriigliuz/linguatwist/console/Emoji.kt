@@ -3,7 +3,7 @@ package org.dmitriigliuz.linguatwist.console
 interface EmojiSet {
     val vocabularyPath: String
         get() = ""
-    val numberOfRounds: String
+    val round: String
         get() = ""
     val playAgain: String
         get() = ""
@@ -101,7 +101,7 @@ object DefaultEmoji : EmojiSet {
     const val WRITING_HAND = "✍️"
     const val GAMEPAD = "🎮"
     override val vocabularyPath = BOOKS
-    override val numberOfRounds = GOAL
+    override val round = GOAL
     override val playAgain = "🔄"
     override val correct = GREEN_MARK
     override val plusOnePoint = ARROW_UP

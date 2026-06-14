@@ -1,6 +1,7 @@
 package org.dmitriigliuz.linguatwist.console
 
 import com.github.ajalt.mordant.terminal.Terminal
+import org.dmitriigliuz.linguatwist.console.theming.Theme
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.GameState
@@ -13,8 +14,10 @@ class ConsoleApp private constructor(
     private val coordinator: GameCoordinator,
     private val input: ConsoleInput,
     private val renderer: ConsoleRenderer,
-    private val emoji: EmojiSet
+    private val theme: Theme,
 ) {
+    private val emoji = theme.emoji
+
     @Volatile
     private var currentVocabularySnapshot: Pair<String, Vocabulary>? = null
     private val savedOnce: AtomicBoolean = AtomicBoolean(false)
@@ -24,15 +27,14 @@ class ConsoleApp private constructor(
         fun create(
             coordinator: GameCoordinator,
             terminal: Terminal,
-            colorTheme: ColorTheme,
-            emoji: EmojiSet,
+            theme: Theme,
             pairsPerRound: Int
         ): ConsoleApp {
             return ConsoleApp(
                 coordinator = coordinator,
-                input = ConsoleInput(terminal, colorTheme, emoji, pairsPerRound),
-                renderer = ConsoleRenderer(terminal, colorTheme, emoji),
-                emoji = emoji
+                input = ConsoleInput(terminal, theme, pairsPerRound),
+                renderer = ConsoleRenderer(terminal, theme),
+                theme = theme
             )
         }
     }
@@ -150,38 +152,42 @@ class ConsoleApp private constructor(
         val totalRounds = input.promptNumberOfRounds(defaultNumberOfRounds, coordinator.maxRounds)
         val (engine, startTime) = coordinator.startSession(totalRounds)
         renderer.printAllowedMistakesNumber(engine.allowedMistakes)
-        renderer.emptyLine()
-        renderer.printLetsGo()
-        renderer.emptyLine()
+        renderer.printStartingGameMessage()
         var gameState: GameState = engine.startNewGame(vocabulary)
-        var feedbackMessage = Messages.game_feedback_initial()
-        var displayState: RoundDisplayState? = null
+        var feedback: Feedback = Feedback.Initial(Messages.game_feedback_initial())
+        var displayState: GameDisplayState? = null
         while (gameState is GameState.InProgress) {
-            displayState = gameState.toRoundDisplayState(feedbackMessage)
-            renderer.updateRoundDisplay(displayState)
-            when (val inputIndexesResult = input.promptIndexes()) {
-                is IndexInput.Invalid -> feedbackMessage = renderer.buildInputErrorFeedback()
+            displayState = gameState.toRoundDisplayState(feedback)
+            renderer.updateGameDisplay(displayState)
+            val inputIndexesResult = input.promptIndexes {
+                renderer.updateGameDisplay(displayState!!.copy(userInput = it))
+            }
+            when (inputIndexesResult) {
+                is IndexInput.Invalid -> feedback = renderer.buildInputErrorFeedback()
                 is IndexInput.Exit -> {
-                    val confirmExitDisplayState = displayState.copy(promptType = RoundDisplayPrompt.CONFIRM_EXIT)
-                    renderer.updateRoundDisplay(confirmExitDisplayState)
-                    if (input.promptConfirmExit()) return GameState.Aborted
+                    displayState = displayState.confirmExit()
+                    renderer.updateGameDisplay(displayState)
+                    val exitConfirmed = input.promptConfirmExit {
+                        renderer.updateGameDisplay(displayState!!.copy(userInput = it))
+                    }
+                    if (exitConfirmed) return GameState.Aborted
                 }
                 is IndexInput.Indexes -> {
                     val (leftIndex, rightIndex) = inputIndexesResult.pair
-                    val indexes = Pair(leftIndex - 1, rightIndex - 1)
+                    val indexes = Pair(leftIndex, rightIndex)
                     val (roundResult, newState) = engine.processAnswer(indexes, gameState)
                     gameState = newState
                     gameState.getUpdatedVocabularyOrNull()?.let {
                         currentVocabularySnapshot = vocabularyPath to it
                     }
-                    feedbackMessage = renderer.buildRoundResultFeedback(roundResult)
+                    feedback = renderer.buildRoundResultFeedback(roundResult)
                 }
             }
         }
         val result = coordinator.finishSession(gameState, startTime)
-        feedbackMessage = if (result == null) renderer.noResultFeedback else renderer.buildGameResultOutput(result)
-        displayState = result?.toDisplayState(feedbackMessage) ?: displayState!!.copy(feedbackMessage = feedbackMessage)
-        renderer.updateRoundDisplay(displayState)
+        feedback = if (result == null) renderer.noResultFeedback else renderer.buildGameResultFeedback(result)
+        displayState = result?.toDisplayState(feedback) ?: displayState!!.copy(feedback = feedback)
+        renderer.updateGameDisplay(displayState)
         return gameState
     }
 }

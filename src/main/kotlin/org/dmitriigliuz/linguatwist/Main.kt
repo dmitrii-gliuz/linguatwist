@@ -11,10 +11,11 @@ import de.comahe.i18n4k.i18n4k
 import de.comahe.i18n4k.systemLocale
 import de.comahe.i18n4k.config.I18n4kConfigDefault
 import org.dmitriigliuz.linguatwist.console.ConsoleApp
-import org.dmitriigliuz.linguatwist.console.CyberpunkTheme
-import org.dmitriigliuz.linguatwist.console.DaylightTheme
+import org.dmitriigliuz.linguatwist.console.theming.CyberpunkTheme
+//import org.dmitriigliuz.linguatwist.console.theming.DaylightTheme
 import org.dmitriigliuz.linguatwist.console.DefaultEmoji
 import org.dmitriigliuz.linguatwist.console.NoEmoji
+import org.dmitriigliuz.linguatwist.console.theming.RetroGame
 import org.dmitriigliuz.linguatwist.game.GameConfig
 import org.dmitriigliuz.linguatwist.game.GameCoordinator
 import org.dmitriigliuz.linguatwist.i18n.Messages
@@ -37,9 +38,11 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
         i18n4k = I18n4kConfigDefault().apply {
             locale = forLocaleTag(lang)
         }
-        val colorTheme = if (!lightTheme) CyberpunkTheme else DaylightTheme
-        val terminal = Terminal(theme = colorTheme.toTerminalTheme())
-        val emojiSet = if (noEmoji) NoEmoji else DefaultEmoji
+//        val colorTheme = if (!lightTheme) CyberpunkTheme else DaylightTheme
+        val theme = RetroGame(noEmoji = noEmoji)
+//        TODO Add parameter for choosing theme
+        val terminalColorTheme = theme.colorTheme.toTerminalTheme()
+        val terminal = Terminal(theme = terminalColorTheme)
 
         val config = GameConfig(spreadsheetPath = file, languageTag = lang)
         val coordinator = GameCoordinator(
@@ -47,7 +50,7 @@ class LinguaTwistCommand: CliktCommand(name = "linguatwist") {
             loader = ExcelVocabularyLoader(),
             writer = ExcelVocabularyWriter(),
         )
-        val consoleApp = ConsoleApp.create(coordinator, terminal, colorTheme, emojiSet, config.pairsPerRound)
+        val consoleApp = ConsoleApp.create(coordinator, terminal, theme, config.pairsPerRound)
         consoleApp.run()
     }
 }

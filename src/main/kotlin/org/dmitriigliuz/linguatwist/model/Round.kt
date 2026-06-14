@@ -17,7 +17,6 @@ data class Round(
     val number: Int,
     val guessedIndexes: Set<Int> = emptySet(),
     val wrongAttempts: Set<Pair<Int, Int>> = emptySet(),
-    val mistakesInRound: Int = 0,
     val rightColumnPermutation: List<Int> = pairs.indices.shuffled()
 ) {
     val previousNumber = number - 1
@@ -70,14 +69,14 @@ data class Round(
                     }
                 }
                 val updatedWrongAttempts = wrongAttempts + selection
-                val updatedMistakes = mistakesInRound + 1
                 val updatedRound = copy(
                     pairs = updatedPairs,
                     wrongAttempts = updatedWrongAttempts,
-                    mistakesInRound = updatedMistakes
                 )
                 RoundResult.Wrong(selectedWords, updatedRound)
             }
         }
     }
 }
+
+

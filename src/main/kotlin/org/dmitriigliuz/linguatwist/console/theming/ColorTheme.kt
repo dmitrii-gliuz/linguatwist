@@ -1,4 +1,4 @@
-package org.dmitriigliuz.linguatwist.console
+package org.dmitriigliuz.linguatwist.console.theming
 
 import com.github.ajalt.mordant.rendering.TextColors.Companion.rgb
 import com.github.ajalt.mordant.rendering.TextStyle
@@ -8,6 +8,7 @@ import com.github.ajalt.mordant.rendering.Theme
 
 interface ColorTheme {
     // Semantic styles
+    val defaultText: TextStyle
     val progressBarCompleted: TextStyle
     val progressBarPending: TextStyle
     val feedbackPanelBorder: TextStyle
@@ -15,19 +16,24 @@ interface ColorTheme {
     val coloredMessage: TextStyle
     val title: TextStyle
     val success: TextStyle
+    val wrong: TextStyle
     val error: TextStyle
     val warning: TextStyle
     val muted: TextStyle
     val logo: TextStyle
+    val roundTableBorderStyle: TextStyle
     val selectTitle: TextStyle
     val selectSelected: TextStyle
     val selectUnselected: TextStyle
     val selectCursor: TextStyle
 
     // Game-specific
-    val scoreStyle: TextStyle
-    val mistakeStyle: TextStyle
-    val guessedWord: TextStyle
+    val index: TextStyle
+    val score: TextStyle
+    val mistake: TextStyle
+    val selectedValue: TextStyle
+    val wrongSelectedValue: TextStyle
+    val guessedValue: TextStyle
     val promptStyle: TextStyle
 
     fun toTerminalTheme(): Theme {
@@ -67,6 +73,7 @@ object CyberpunkTheme : ColorTheme {
     val warmYellow = rgb("#FCE300")
 
     // Semantic styles
+    override val defaultText = TextStyle()
     override val progressBarCompleted = neonGreen
     override val progressBarPending = darkPurple
     override val feedbackPanelBorder = dimGray
@@ -74,54 +81,63 @@ object CyberpunkTheme : ColorTheme {
     override val coloredMessage = neonCyan
     override val title = (bold + neonCyan)
     override val success = (neonGreen)
+    override val wrong = neonRed
     override val error = (bold + neonRed)
     override val warning = neonYellow
     override val muted = dimGray
     override val logo = (bold + warmYellow)
+    override val roundTableBorderStyle = dimGray
     override val selectTitle = (bold + neonIndigo)
     override val selectCursor = neonCyan
     override val selectSelected = bold + neonGreen
     override val selectUnselected = TextStyle()
 
     // Game-specific
-    override val scoreStyle = neonGreen
-    override val mistakeStyle = neonMagenta
-    override val guessedWord = (strikethrough + dimGray)
+    override val index = neonCyan
+    override val score = neonGreen
+    override val mistake = neonMagenta
+    override val selectedValue = neonYellow
+    override val wrongSelectedValue = strikethrough + neonRed
+    override val guessedValue = (strikethrough + dimGray)
     override val promptStyle = neonCyan
 }
 
-object DaylightTheme : ColorTheme {
-    // Palette
-    val black = rgb("#000000")
-    val blue = rgb("#1a0099")
-    val magenta = rgb("#6a1080")
-    val indigo = rgb("#5B4FBE")
-    val green = rgb("#145a27")
-    val red = rgb("#c0392b")
-    val yellow = rgb("#7a4e00")
-    val dimGray = rgb("#555555")
-    val softGray = rgb("#e8e8f0")
-
-    // Semantic styles
-    override val progressBarCompleted = green
-    override val progressBarPending = softGray
-    override val feedbackPanelBorder = dimGray
-    override val panelBorder = indigo
-    override val coloredMessage = blue
-    override val title = (bold + blue)
-    override val success = (bold + green)
-    override val error = (bold + red)
-    override val warning = (bold + yellow)
-    override val muted = dimGray
-    override val logo = (bold + black)
-    override val selectTitle = title
-    override val selectCursor = blue
-    override val selectSelected = bold + green
-    override val selectUnselected = TextStyle()
-
-    // Game-specific
-    override val scoreStyle = green
-    override val mistakeStyle = magenta
-    override val guessedWord = (strikethrough + dimGray)
-    override val promptStyle = blue
-}
+//object DaylightTheme : ColorTheme {
+//    // Palette
+//    val black = rgb("#000000")
+//    val blue = rgb("#1a0099")
+//    val magenta = rgb("#6a1080")
+//    val indigo = rgb("#5B4FBE")
+//    val green = rgb("#145a27")
+//    val red = rgb("#c0392b")
+//    val yellow = rgb("#7a4e00")
+//    val dimGray = rgb("#555555")
+//    val softGray = rgb("#e8e8f0")
+//
+//    // Semantic styles
+//    override val progressBarCompleted = green
+//    override val progressBarPending = softGray
+//    override val feedbackPanelBorder = dimGray
+//    override val panelBorder = indigo
+//    override val coloredMessage = blue
+//    override val title = (bold + blue)
+//    override val success = (bold + green)
+//    override val wrong = red
+//    override val error = (bold + red)
+//    override val warning = (bold + yellow)
+//    override val muted = dimGray
+//    override val logo = (bold + black)
+//    override val roundTableBorderStyle = softGray
+//    override val selectTitle = title
+//    override val selectCursor = blue
+//    override val selectSelected = bold + green
+//    override val selectUnselected = TextStyle()
+//
+//    // Game-specific
+//    override val index = blue
+//    override val score = green
+//    override val mistake = magenta
+//    override val selectedValue = yellow
+//    override val guessedValue = (strikethrough + dimGray)
+//    override val promptStyle = blue
+//}

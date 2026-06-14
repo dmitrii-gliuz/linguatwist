@@ -4,8 +4,10 @@ sealed class GameState {
     data class Initial(val vocabulary: Vocabulary) : GameState()
     data class InProgress(
         val round: Round,
+        val totalRounds: Int,
         val gameScore: Int,
         val mistakesCount: Int,
+        val allowedMistakes: Int,
         val vocabulary: Vocabulary,
         val error: ValidationError? = null,
         val totalPairs: Int
