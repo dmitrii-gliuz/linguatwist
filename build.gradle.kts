@@ -36,20 +36,13 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.1")
 }
 
-sourceSets {
-    main {
-        kotlin {
-            exclude("**/legacy/**")
-        }
-    }
-}
-
 application {
     mainClass.set("org.dmitriigliuz.linguatwist.MainKt")
+    applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
 }
 
 tasks.named<JavaExec>("run") {
-    jvmArgs("-Xmx2g", "-Xms512m")
+    jvmArgs("-Xmx512m", "--enable-native-access=ALL-UNNAMED")
     standardInput = System.`in`
 }
 
