@@ -1,3 +1,7 @@
+### Build and tooling output
+target/
+.kotlin/
+logs/
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -5,10 +9,7 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -43,3 +44,14 @@ bin/
 /node_modules/
 /package.json
 /dev/
+
+### Agent and assistant scratch
+.claude/
+.ai/
+.aiassistant/
+
+### Node leftovers from an earlier life
+package-lock.json
+
+### Personal vocabularies — never in the repository
+/*.xlsx
