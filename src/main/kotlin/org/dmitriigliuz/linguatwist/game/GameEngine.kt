@@ -40,7 +40,6 @@ class GameEngine(
             GameState.InProgress(
                 round = newRound,
                 totalRounds = totalRounds,
-                gameScore = 0,
                 mistakesCount = 0,
                 allowedMistakes = allowedMistakes,
                 vocabulary =  updatedVocabulary,
@@ -63,13 +62,11 @@ class GameEngine(
         leftIndex: Int
     ): GameState {
         val round = roundResult.updatedRound
-        val gameScore = state.gameScore + 1
         val updatedEntry = round.pairAtLeftColumn(leftIndex)
         val updatedScores = mapOf(updatedEntry.key to updatedEntry.entryScore)
         val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         val updatedState = state.copy(
             round = round,
-            gameScore = gameScore,
             error = null,
             vocabulary = updatedVocabulary
         )
@@ -89,7 +86,6 @@ class GameEngine(
         val round = roundResult.updatedRound
         val updatedLeftEntry = round.pairAtLeftColumn(indexes.first)
         val updatedRightEntry = round.pairAtRightColumn(indexes.second)
-        val gameScore = state.gameScore - 1
         val mistakesCount = state.mistakesCount + 1
         val updatedScores = mapOf(
             updatedLeftEntry.key to updatedLeftEntry.entryScore,
@@ -98,7 +94,6 @@ class GameEngine(
         val updatedVocabulary = state.vocabulary.withUpdatedScores(updatedScores)
         val updatedState = state.copy(
             round = round,
-            gameScore = gameScore,
             mistakesCount = mistakesCount,
             error = null,
             vocabulary = updatedVocabulary
@@ -122,7 +117,6 @@ class GameEngine(
             lastRound = round,
             totalRounds = totalRounds,
             isFailed = failed,
-            score = gameScore,
             totalGuessedAmount = totalGuessedAmount,
             totalPairsAmount = totalPairs,
             mistakesCount = mistakesCount,

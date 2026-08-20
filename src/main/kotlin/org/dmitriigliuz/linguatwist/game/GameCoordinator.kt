@@ -48,7 +48,7 @@ class GameCoordinator(
         val result = state.getResultOrNull()?.copy(duration = startTime.elapsedNow())
         if (result != null) {
             logger.info {
-                "Game session finished: failed=${result.isFailed}, score=${result.score}, guessed=${result.totalGuessedAmount}/${result.totalPairsAmount}, mistakes=${result.mistakesCount}/${result.allowedMistakes}, duration=${result.duration}"
+                "Game session finished: failed=${result.isFailed}, guessed=${result.totalGuessedAmount}/${result.totalPairsAmount}, mistakes=${result.mistakesCount}/${result.allowedMistakes}, duration=${result.duration}"
             }
         } else logger.warn { "Game session finished without final result. state=${state::class.simpleName}" }
         return result

@@ -3,29 +3,21 @@ package org.dmitriigliuz.linguatwist.console
 import com.github.ajalt.mordant.animation.animation
 import com.github.ajalt.mordant.rendering.BorderType
 import com.github.ajalt.mordant.rendering.TextStyle
+import com.github.ajalt.mordant.rendering.Widget
+import com.github.ajalt.mordant.table.Borders
+import com.github.ajalt.mordant.table.ColumnWidth
 import com.github.ajalt.mordant.table.table
+import com.github.ajalt.mordant.table.verticalLayout
 import com.github.ajalt.mordant.terminal.Terminal
 import com.github.ajalt.mordant.terminal.danger
 import com.github.ajalt.mordant.terminal.success
 import com.github.ajalt.mordant.terminal.warning
-import com.github.ajalt.mordant.widgets.Padding
-import com.github.ajalt.mordant.widgets.Panel
-import com.github.ajalt.mordant.widgets.ProgressBar
-import com.github.ajalt.mordant.widgets.Text
-import org.dmitriigliuz.linguatwist.model.GameResult
-import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
-import com.github.ajalt.mordant.rendering.Widget
-import com.github.ajalt.mordant.table.Borders
-import com.github.ajalt.mordant.table.ColumnWidth
-import com.github.ajalt.mordant.table.verticalLayout
-import com.github.ajalt.mordant.widgets.HorizontalRule
+import com.github.ajalt.mordant.widgets.*
 import org.dmitriigliuz.linguatwist.console.theming.LogoDecoration
 import org.dmitriigliuz.linguatwist.console.theming.Theme
 import org.dmitriigliuz.linguatwist.i18n.Messages
-import org.dmitriigliuz.linguatwist.model.Round
-import org.dmitriigliuz.linguatwist.model.RoundResult
-import org.dmitriigliuz.linguatwist.model.ValidationError
-import org.dmitriigliuz.linguatwist.model.VerbalScore
+import org.dmitriigliuz.linguatwist.model.*
+import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 
 class ConsoleRenderer(
     private val terminal: Terminal,
@@ -46,7 +38,8 @@ class ConsoleRenderer(
     internal fun printLogo() {
         when (theme.logoDecoration) {
             LogoDecoration.PANEL -> terminal.println(
-                Panel(Text(theme.logo),
+                Panel(
+                    Text(theme.logo),
                     padding = Padding(top = 0, right = 1, bottom = 0, left = 1),
                     borderStyle = colorTheme.panelBorder
                 )
@@ -74,16 +67,23 @@ class ConsoleRenderer(
     }
 
     internal fun printVocabularyInfo(vocabularyResult: VocabularyLoadResult) {
-        terminal.success(emoji.vocabularyLoaded.prefixed("${vocabularyResult.vocabulary.size} " +
-                Messages.vocabulary_info_loadedWords())
+        terminal.success(
+            emoji.vocabularyLoaded.prefixed(
+                "${vocabularyResult.vocabulary.size} " +
+                        Messages.vocabulary_info_loadedWords()
+            )
         )
         if (vocabularyResult.duplicates > 0) {
-            terminal.warning(emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
-                    ": ${vocabularyResult.duplicates}")
+            terminal.warning(
+                emoji.warning.prefixed(Messages.vocabulary_info_duplicates()) +
+                        ": ${vocabularyResult.duplicates}"
+            )
         }
         if (vocabularyResult.invalidRows > 0) {
-            terminal.danger(emoji.invalidRows.prefixed(Messages.vocabulary_info_invalidRows()) +
-                    ": ${vocabularyResult.invalidRows}")
+            terminal.danger(
+                emoji.invalidRows.prefixed(Messages.vocabulary_info_invalidRows()) +
+                        ": ${vocabularyResult.invalidRows}"
+            )
         }
     }
 
@@ -104,14 +104,18 @@ class ConsoleRenderer(
 
     internal fun stopRoundDisplay() = roundDisplay.stop()
 
-    internal fun buildRoundResultFeedback(roundResult: RoundResult) : Feedback {
+    internal fun buildRoundResultFeedback(roundResult: RoundResult): Feedback {
         return when (roundResult) {
             is RoundResult.Correct -> Feedback.Correct(
                 emoji.framed(emoji.correct, Messages.round_result_correct(), emoji.plusOnePoint)
-                        + "\n${roundResult.words.first} ⟷ ${roundResult.words.second}")
+                        + "\n${roundResult.words.first} ⟷ ${roundResult.words.second}"
+            )
+
             is RoundResult.Wrong -> Feedback.Wrong(
                 emoji.framed(emoji.wrong, Messages.round_result_wrong(), emoji.minusOnePoint) +
-                        "\n${roundResult.words.first} ↮ ${roundResult.words.second}")
+                        "\n${roundResult.words.first} ↮ ${roundResult.words.second}"
+            )
+
             is RoundResult.Invalid -> buildInputErrorFeedback(roundResult.error)
         }
     }
@@ -150,7 +154,7 @@ class ConsoleRenderer(
     })
 
     private fun buildVerbalScoreOutput(verbalScore: VerbalScore): String {
-        val scoreEmoji =  when (verbalScore) {
+        val scoreEmoji = when (verbalScore) {
             VerbalScore.PERFECT -> emoji.scorePerfect
             VerbalScore.ALMOST_PERFECT -> emoji.scoreAlmostPerfect
             VerbalScore.EXCELLENT -> emoji.scoreExcellent
@@ -167,15 +171,18 @@ class ConsoleRenderer(
     }
 
     private fun buildGameWidget(state: GameDisplayState): Widget = verticalLayout {
-        val roundTitle = Text(colorTheme.title(
-            "${emoji.round.prefixed(Messages.round_caption())} ${state.round.number} / ${state.totalRounds}"
-        ))
+        val roundTitle = Text(
+            colorTheme.title(
+                "${emoji.round.prefixed(Messages.round_caption())} ${state.round.number} / ${state.totalRounds}"
+            )
+        )
         val (selectedLeft, selectedRight) = state.selectedIndexes
         val roundTable = buildRoundTable(state.round, selectedLeft, selectedRight)
         val gameStats = Text(
-            colorTheme.score(emoji.score.prefixed(Messages.round_stats_score()) + ": ${state.score}   ") +
-                    colorTheme.mistake(emoji.mistakes.prefixed(Messages.round_stats_mistakes()) +
-                            ": ${state.mistakesCount} / ${state.allowedMistakes}")
+            colorTheme.mistake(
+                emoji.mistakes.prefixed(Messages.round_stats_mistakes()) +
+                        ": ${state.mistakesCount} / ${state.allowedMistakes}"
+            )
         )
         val feedbackPanelStyle = when (state.feedback) {
             is Feedback.Correct -> colorTheme.success

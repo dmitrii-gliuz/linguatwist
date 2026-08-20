@@ -7,7 +7,6 @@ data class GameResult(
     val lastRound: Round,
     val totalRounds: Int,
     val isFailed: Boolean,
-    val score: Int,
     val totalGuessedAmount: Int,
     val totalPairsAmount: Int,
     val mistakesCount: Int,
