@@ -1,10 +1,15 @@
 .gradle
 build/
+target/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+.kotlin/
+logs/
+/data/
 
 ### IntelliJ IDEA ###
+.idea/
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
@@ -43,3 +48,20 @@ bin/
 /node_modules/
 /package.json
 /dev/
+
+### AI
+.claude/
+.ai/
+.aiassistant/
+package-lock.json
+/CLAUDE.md
+
+### Excel
+/*.xlsx
+
+
+### SQLite
+/*.db
+/*.db-wal
+/*.db-shm
+/*.db.bak
