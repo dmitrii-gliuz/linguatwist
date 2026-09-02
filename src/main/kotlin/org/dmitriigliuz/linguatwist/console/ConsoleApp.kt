@@ -9,7 +9,6 @@ import org.dmitriigliuz.linguatwist.model.Vocabulary
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
 import java.util.concurrent.atomic.AtomicBoolean
 
-
 class ConsoleApp private constructor(
     private val coordinator: GameCoordinator,
     private val input: ConsoleInput,
@@ -17,10 +16,8 @@ class ConsoleApp private constructor(
     private val theme: Theme,
 ) {
     private val emoji = theme.emoji
+    private val pendingSave = PendingSave()
 
-    @Volatile
-    private var currentVocabularySnapshot: Pair<String, Vocabulary>? = null
-    private val savedOnce: AtomicBoolean = AtomicBoolean(false)
     enum class AppState { MainMenu, Exit }
 
     companion object {
@@ -50,32 +47,40 @@ class ConsoleApp private constructor(
     }
 
     private fun saveOnShutdownIfNeeded() {
-        val snapshot = tryClaimSaveRight() ?: return
-        val (vocabularyPath, vocabulary) = snapshot
-        if (tryCreateBackup(vocabularyPath).isFailure) return
-        val saveResult = runCatching {
-            renderer.emptyLine()
-            saveWithFeedback(snapshot)
-        }.getOrElse  {
-                println("TUI rendering failed, using plain output")
-                fallbackSavePlain(vocabularyPath, vocabulary)
-            }
-        saveResult.onFailure { println("Failed to save scores") }
+        pendingSave.attemptSave { snapshot ->
+            tryCreateBackup(snapshot).fold(
+                onSuccess = {
+                    runCatching {
+                        renderer.emptyLine()
+                        saveWithFeedback(snapshot)
+                    }.getOrElse {
+                        println("TUI rendering failed, using plain output")
+                        fallbackSavePlain(snapshot)
+                    }.onFailure { println("Failed to save scores") }
+                },
+                onFailure =  { error -> Result.failure(error) }
+            )
+        }
     }
 
-    private fun fallbackSavePlain(vocabularyPath: String, vocabulary: Vocabulary): Result<Unit> {
+    private fun fallbackSavePlain(snapshot: VocabularySnapshot): Result<Unit> {
         print("Saving scores... ")
-        return coordinator.saveVocabulary(vocabularyPath, vocabulary).onSuccess {
+        return coordinator.saveVocabulary(snapshot.path, snapshot.vocabulary).onSuccess {
             println("Done")
         }
     }
 
-    private fun tryCreateBackup(path: String) = runCatching { coordinator.createVocabularyBackup(path) }
-        .onFailure {
-            runCatching { renderer.printError(Messages.file_error_unableToBackup()) }
-                .onFailure { println("The app has crashed unexpectedly and was unable to back up the previous vocabulary. " +
-                        "Unfortunately, your current progress will not be saved.") }
-        }
+    private fun tryCreateBackup(snapshot: VocabularySnapshot) = runCatching {
+        coordinator.createVocabularyBackup(snapshot.path)
+    }.onFailure {
+        runCatching { renderer.printError(Messages.file_error_unableToBackup()) }
+            .onFailure {
+                println(
+                    "The app has crashed unexpectedly and was unable to back up the previous vocabulary. " +
+                            "Unfortunately, your current progress will not be saved."
+                )
+            }
+    }
 
     private fun printByeSafely() = runCatching { renderer.printBye() }.onFailure { println("Bye!") }
 
@@ -95,8 +100,7 @@ class ConsoleApp private constructor(
     }
 
     private fun startGame(): AppState {
-        currentVocabularySnapshot = null
-        savedOnce.compareAndSet(true, false)
+        pendingSave.reset()
         renderer.emptyLine()
         val vocabularyLoadResult = loadVocabularyWithRetry() ?: return AppState.Exit
         var vocabulary = vocabularyLoadResult.vocabulary
@@ -108,27 +112,19 @@ class ConsoleApp private constructor(
             }
             renderer.stopRoundDisplay()
         } while (gameState !is GameState.Aborted && input.promptPlayAgain())
-        if (currentVocabularySnapshot != null && input.promptSaveScores()) {
-            tryClaimSaveRight()?.let { saveWithFeedback(it) }
-        } else savedOnce.set(true)
+        if (pendingSave.hasSnapshot() && input.promptSaveScores()) {
+            pendingSave.attemptSave { saveWithFeedback(it) }
+        } else pendingSave.preventFurtherSaveAttempts()
         return if (gameState is GameState.Aborted) AppState.Exit else AppState.MainMenu
     }
 
-    private fun saveWithFeedback(snapshot: Pair<String, Vocabulary>): Result<Unit> {
+    private fun saveWithFeedback(snapshot: VocabularySnapshot): Result<Unit> {
         val (vocabularyPath, vocabulary) = snapshot
         val result = renderer.withProgressMessage(Messages.game_saving_scores()) {
             coordinator.saveVocabulary(vocabularyPath, vocabulary)
         }
         return result
     }
-
-
-    private fun tryClaimSaveRight(): Pair<String, Vocabulary>? {
-        val snapshot = currentVocabularySnapshot ?: return null
-        if (!savedOnce.compareAndSet(false, true)) return null
-        return snapshot
-    }
-
 
     private fun loadVocabularyWithRetry(): VocabularyLoadResult? {
         var customSpreadsheetPath: String? = null
@@ -178,7 +174,7 @@ class ConsoleApp private constructor(
                     val (roundResult, newState) = engine.processAnswer(indexes, gameState)
                     gameState = newState
                     gameState.getUpdatedVocabularyOrNull()?.let {
-                        currentVocabularySnapshot = vocabularyPath to it
+                        pendingSave.update(VocabularySnapshot(vocabularyPath, it))
                     }
                     feedback = renderer.buildRoundResultFeedback(roundResult)
                 }
@@ -191,3 +187,40 @@ class ConsoleApp private constructor(
         return gameState
     }
 }
+
+internal class PendingSave {
+    @Volatile
+    private var vocabularySnapshot: VocabularySnapshot? = null
+    private val savedOnce: AtomicBoolean = AtomicBoolean(false)
+
+    internal fun attemptSave(saveOperation: (VocabularySnapshot ) -> Result<Unit>): Result<Unit>? {
+        val snapshot = tryClaimSaveRight() ?: return null
+        return saveOperation(snapshot)
+    }
+
+    private fun tryClaimSaveRight(): VocabularySnapshot? {
+        val snapshot = vocabularySnapshot
+        return if (snapshot == null || !savedOnce.compareAndSet(false, true)) {
+            null
+        } else snapshot
+    }
+
+    internal fun preventFurtherSaveAttempts() {
+        savedOnce.set(true)
+    }
+
+    fun hasSnapshot() = vocabularySnapshot != null
+
+    fun reset() {
+        vocabularySnapshot = null
+        savedOnce.compareAndSet(true, false)
+    }
+
+    fun update(snapshot: VocabularySnapshot?) {
+        vocabularySnapshot = snapshot
+    }
+
+}
+
+
+internal data class VocabularySnapshot(val path: String, val vocabulary: Vocabulary)
