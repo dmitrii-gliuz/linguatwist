@@ -193,7 +193,7 @@ internal class PendingSave {
     private var vocabularySnapshot: VocabularySnapshot? = null
     private val savedOnce: AtomicBoolean = AtomicBoolean(false)
 
-    internal fun attemptSave(saveOperation: (VocabularySnapshot ) -> Result<Unit>): Result<Unit>? {
+    internal fun attemptSave(saveOperation: (VocabularySnapshot) -> Result<Unit>): Result<Unit>? {
         val snapshot = tryClaimSaveRight() ?: return null
         return saveOperation(snapshot)
     }
@@ -219,7 +219,6 @@ internal class PendingSave {
     fun update(snapshot: VocabularySnapshot?) {
         vocabularySnapshot = snapshot
     }
-
 }
 
 
