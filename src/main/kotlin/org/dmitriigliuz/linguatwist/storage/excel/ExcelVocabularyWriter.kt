@@ -27,8 +27,9 @@ class ExcelVocabularyWriter : VocabularyWriter {
     override fun save(path: String, vocabulary: Vocabulary): Result<Unit> {
         logger.debug { "Starting vocabulary save to path: $path" }
         val oldFile = File(path)
-        val tempFile = oldFile.createTempFile()
+        var tempFile: File? = null
         return runCatching {
+            tempFile = oldFile.createTempFile()
             oldFile.requireValidExcel()
             logger.debug { "Excel file validated successfully: $path" }
             val vocabularyMap = vocabulary.entriesMap
@@ -104,7 +105,7 @@ class ExcelVocabularyWriter : VocabularyWriter {
             logger.info { "Successfully saved ${vocabulary.entriesMap.size} entries to path: $path" }
         }.onFailure {
             logger.error(it) { "Failed to save vocabulary to path: $path. Error: ${it.message}" }
-            tempFile.delete()
+            tempFile?.delete()
         }
     }
 

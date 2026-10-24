@@ -1,11 +1,24 @@
 package org.dmitriigliuz.linguatwist.storage
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.dmitriigliuz.linguatwist.i18n.Messages
 import java.io.File
 import java.nio.file.Files
 
 
-fun createBackup(path: String) = File(path).copyTo(File("$path.bak"), overwrite = true)
+private val logger = KotlinLogging.logger { }
+
+fun createBackup(path: String) = runCatching {
+    File(path).copyTo(File("$path.bak"), overwrite = true)
+}.fold(
+    onSuccess = { Result.success(Unit) },
+    onFailure = {
+        logger.error(it) { "Failed to create backup for $path" }
+        Result.failure(BackupFailedException(it))
+    }
+)
+
+class BackupFailedException(cause: Throwable) : Exception(cause)
 
 
 fun File.requireReadable() = also {

@@ -38,51 +38,16 @@ class ConsoleApp private constructor(
 
     fun run() {
         Runtime.getRuntime().addShutdownHook(Thread {
-            saveOnShutdownIfNeeded()
-            printByeSafely()
+            if (pendingSave.hasSnapshot()) {
+                renderer.emptyLine()
+                pendingSave.attemptSave { snapshot -> saveWithFeedback(snapshot) }
+            }
+            renderer.printBye()
         })
         renderer.printLogo()
         renderer.printGreetings()
         mainMenu()
     }
-
-    private fun saveOnShutdownIfNeeded() {
-        pendingSave.attemptSave { snapshot ->
-            tryCreateBackup(snapshot).fold(
-                onSuccess = {
-                    runCatching {
-                        renderer.emptyLine()
-                        saveWithFeedback(snapshot)
-                    }.getOrElse {
-                        println("TUI rendering failed, using plain output")
-                        fallbackSavePlain(snapshot)
-                    }.onFailure { println("Failed to save scores") }
-                },
-                onFailure =  { error -> Result.failure(error) }
-            )
-        }
-    }
-
-    private fun fallbackSavePlain(snapshot: VocabularySnapshot): Result<Unit> {
-        print("Saving scores... ")
-        return coordinator.saveVocabulary(snapshot.path, snapshot.vocabulary).onSuccess {
-            println("Done")
-        }
-    }
-
-    private fun tryCreateBackup(snapshot: VocabularySnapshot) = runCatching {
-        coordinator.createVocabularyBackup(snapshot.path)
-    }.onFailure {
-        runCatching { renderer.printError(Messages.file_error_unableToBackup()) }
-            .onFailure {
-                println(
-                    "The app has crashed unexpectedly and was unable to back up the previous vocabulary. " +
-                            "Unfortunately, your current progress will not be saved."
-                )
-            }
-    }
-
-    private fun printByeSafely() = runCatching { renderer.printBye() }.onFailure { println("Bye!") }
 
     private fun mainMenu() {
         var appState: AppState = AppState.MainMenu
@@ -118,12 +83,11 @@ class ConsoleApp private constructor(
         return if (gameState is GameState.Aborted) AppState.Exit else AppState.MainMenu
     }
 
-    private fun saveWithFeedback(snapshot: VocabularySnapshot): Result<Unit> {
-        val (vocabularyPath, vocabulary) = snapshot
-        val result = renderer.withProgressMessage(Messages.game_saving_scores()) {
-            coordinator.saveVocabulary(vocabularyPath, vocabulary)
-        }
-        return result
+    private fun saveWithFeedback(snapshot: VocabularySnapshot) = renderer.withProgressMessage(
+        message = Messages.game_saving_scores(),
+        errorMessageBuilder = renderer::buildSaveErrorMessage
+    ) {
+        coordinator.saveVocabulary(snapshot.path, snapshot.vocabulary)
     }
 
     private fun loadVocabularyWithRetry(): VocabularyLoadResult? {
@@ -132,7 +96,7 @@ class ConsoleApp private constructor(
             val result = renderer.withProgressMessage(Messages.game_loading_vocabulary()) {
                 coordinator.loadVocabulary(customSpreadsheetPath)
             }
-            if (result.isSuccess){
+            if (result.isSuccess) {
                 val vocabularyLoadResult = result.getOrThrow()
                 renderer.printVocabularyInfo(vocabularyLoadResult)
                 renderer.emptyLine()

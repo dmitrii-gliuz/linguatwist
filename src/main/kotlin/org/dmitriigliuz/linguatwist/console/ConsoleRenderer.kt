@@ -17,7 +17,9 @@ import org.dmitriigliuz.linguatwist.console.theming.LogoDecoration
 import org.dmitriigliuz.linguatwist.console.theming.Theme
 import org.dmitriigliuz.linguatwist.i18n.Messages
 import org.dmitriigliuz.linguatwist.model.*
+import org.dmitriigliuz.linguatwist.storage.BackupFailedException
 import org.dmitriigliuz.linguatwist.storage.VocabularyLoadResult
+import java.io.IOException
 
 class ConsoleRenderer(
     private val terminal: Terminal,
@@ -276,20 +278,42 @@ class ConsoleRenderer(
 
 //    Final
 
-    internal fun printBye() = terminal.println("\n" + emoji.bye.prefixed(Messages.app_shutdown_bye()))
+    internal fun buildSaveErrorMessage(error: Throwable): String = when (error) {
+        is BackupFailedException -> Messages.file_error_unableToBackup()
+        is IOException -> Messages.file_error_failedToSave()
+        else -> error.message ?: error.toString()
+    }
+
+    internal fun printBye() = renderOrPlain("\n" + emoji.bye.prefixed(Messages.app_shutdown_bye()) + "\n")
 
 //    General
 
-    internal fun <T> withProgressMessage(message: String, action: () -> Result<T>): Result<T> {
-        terminal.print(Text(emoji.processing.prefixed(message)))
-        val result = action()
-        result
-            .onSuccess { terminal.success(" " + Messages.game_progress_done()) }
-            .onFailure { e -> printError(e.message ?: e.toString()) }
-        return result
+    internal fun <T> withProgressMessage(
+        message: String,
+        errorMessageBuilder: (Throwable) -> String = { e -> e.message ?: e.toString() },
+        action: () -> Result<T>
+    ): Result<T> {
+        renderOrPlain(emoji.processing.prefixed(message))
+        return action()
+            .onSuccess {
+                renderOrPlain(" " + Messages.game_progress_done(),  terminal::success,  true)
+            }.onFailure {
+                renderOrPlain(errorMessageBuilder(it), ::printError, true)
+            }
     }
 
-    internal fun emptyLine() = terminal.println()
+    private fun renderOrPlain(
+        message: String,
+        render: (String) -> Unit = terminal::print,
+        newLine: Boolean = false
+    ) = runCatching {
+        render(message)
+    }.onFailure {
+        print(message)
+        if (newLine) println()
+    }
+
+    internal fun emptyLine() = renderOrPlain("\n")
 
     internal fun printError(message: String) = terminal.danger(emoji.error.prefixed(message))
 }

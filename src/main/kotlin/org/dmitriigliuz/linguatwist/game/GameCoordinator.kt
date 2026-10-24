@@ -36,9 +36,11 @@ class GameCoordinator(
             loadResult
         }
 
-    fun saveVocabulary(path: String, vocabulary: Vocabulary) = writer.save(path, vocabulary)
-
-    fun createVocabularyBackup(vocabularyPath: String) = createBackup(vocabularyPath)
+    fun saveVocabulary(vocabularyPath: String, vocabulary: Vocabulary): Result<Unit> {
+        val createBackupResult = createBackup(vocabularyPath)
+        if (createBackupResult.isFailure) return createBackupResult
+        return writer.save(vocabularyPath, vocabulary)
+    }
 
     fun startSession(totalRounds: Int) = Pair(createEngine(totalRounds), createTimeMark()).also {
         logger.info { "Game session started: rounds=$totalRounds, pairsPerRound=${config.pairsPerRound}" }
